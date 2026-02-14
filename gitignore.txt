@@ -1,0 +1,38 @@
+# Create a comprehensive .gitignore file
+cat > .gitignore << 'EOF'
+## Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+## Visual Studio files
+*.csproj.user
+*.vbproj.user
+*.vcxproj.user
+*.vcxproj.filters
+
+## NuGet Packages
+packages/
+*.nupkg
+
+## Project-specific
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+EOF
