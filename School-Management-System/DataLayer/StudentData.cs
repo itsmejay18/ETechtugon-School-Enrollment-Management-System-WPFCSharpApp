@@ -1,6 +1,6 @@
 using System;
 using System.Data;
-using System.Data.SqlClient;
+using MySql.Data.MySqlClient;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Interfaces;
 using School_Management_System.Models;
@@ -31,7 +31,7 @@ SELECT
     Phone,
     Address,
     CreatedAt
-FROM dbo.Student
+FROM Student
 WHERE IsActive = 1
 ORDER BY LastName, FirstName;";
 
@@ -55,7 +55,7 @@ SELECT
     Phone,
     Address,
     CreatedAt
-FROM dbo.Student
+FROM Student
 WHERE IsActive = 1
   AND (
         StudentNumber LIKE @Q
@@ -71,21 +71,21 @@ ORDER BY LastName, FirstName;";
                 CommandType.Text,
                 new[]
                 {
-                    new SqlParameter("@Q", SqlDbType.NVarChar, 100) { Value = "%" + query + "%" }
+                    new MySqlParameter("@Q", "%" + query + "%")
                 });
         }
 
         public string GetNextStudentNumber()
         {
             const string sql = @"
-DECLARE @prefix nvarchar(20) = 'STU-' + CONVERT(nvarchar(4), YEAR(GETDATE())) + '-';
-DECLARE @maxNum int =
-(
-    SELECT MAX(TRY_CONVERT(int, RIGHT(StudentNumber, 4)))
-    FROM dbo.Student
-    WHERE StudentNumber LIKE @prefix + '____'
-);
-SELECT @prefix + RIGHT('0000' + CONVERT(nvarchar(10), ISNULL(@maxNum, 0) + 1), 4);";
+SELECT CONCAT(
+    'STU-',
+    YEAR(UTC_DATE()),
+    '-',
+    LPAD(IFNULL(MAX(CAST(RIGHT(StudentNumber, 4) AS UNSIGNED)), 0) + 1, 4, '0')
+)
+FROM Student
+WHERE StudentNumber LIKE CONCAT('STU-', YEAR(UTC_DATE()), '-', '____');";
 
             var result = _db.ExecuteScalar(sql, CommandType.Text, null);
 
@@ -97,7 +97,7 @@ SELECT @prefix + RIGHT('0000' + CONVERT(nvarchar(10), ISNULL(@maxNum, 0) + 1), 4
             Guard.NotNull(student, nameof(student));
 
             const string sql = @"
-INSERT INTO dbo.Student
+INSERT INTO Student
 (
     StudentNumber,
     FirstName,
@@ -123,24 +123,23 @@ VALUES
     @Phone,
     @Address,
     1,
-    SYSUTCDATETIME()
-);
-SELECT CAST(SCOPE_IDENTITY() as int);";
+    UTC_TIMESTAMP()
+);";
 
-            var id = _db.ExecuteScalar(
+            var id = _db.ExecuteInsert(
                 sql,
                 CommandType.Text,
                 new[]
                 {
-                    new SqlParameter("@StudentNumber", SqlDbType.NVarChar, 30) { Value = (object)student.StudentNumber ?? DBNull.Value },
-                    new SqlParameter("@FirstName", SqlDbType.NVarChar, 50) { Value = (object)student.FirstName ?? DBNull.Value },
-                    new SqlParameter("@LastName", SqlDbType.NVarChar, 50) { Value = (object)student.LastName ?? DBNull.Value },
-                    new SqlParameter("@MiddleName", SqlDbType.NVarChar, 50) { Value = (object)student.MiddleName ?? DBNull.Value },
-                    new SqlParameter("@Gender", SqlDbType.NVarChar, 20) { Value = (object)student.Gender ?? DBNull.Value },
-                    new SqlParameter("@BirthDate", SqlDbType.Date) { Value = (object)student.BirthDate ?? DBNull.Value },
-                    new SqlParameter("@Email", SqlDbType.NVarChar, 100) { Value = (object)student.Email ?? DBNull.Value },
-                    new SqlParameter("@Phone", SqlDbType.NVarChar, 30) { Value = (object)student.Phone ?? DBNull.Value },
-                    new SqlParameter("@Address", SqlDbType.NVarChar, 250) { Value = (object)student.Address ?? DBNull.Value }
+                    new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
+                    new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
+                    new MySqlParameter("@LastName", (object)student.LastName ?? DBNull.Value),
+                    new MySqlParameter("@MiddleName", (object)student.MiddleName ?? DBNull.Value),
+                    new MySqlParameter("@Gender", (object)student.Gender ?? DBNull.Value),
+                    new MySqlParameter("@BirthDate", (object)student.BirthDate ?? DBNull.Value),
+                    new MySqlParameter("@Email", (object)student.Email ?? DBNull.Value),
+                    new MySqlParameter("@Phone", (object)student.Phone ?? DBNull.Value),
+                    new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value)
                 });
 
             return Convert.ToInt32(id);
@@ -151,7 +150,7 @@ SELECT CAST(SCOPE_IDENTITY() as int);";
             Guard.NotNull(student, nameof(student));
 
             const string sql = @"
-UPDATE dbo.Student
+UPDATE Student
 SET
     StudentNumber = @StudentNumber,
     FirstName = @FirstName,
@@ -162,7 +161,7 @@ SET
     Email = @Email,
     Phone = @Phone,
     Address = @Address,
-    UpdatedAt = SYSUTCDATETIME()
+    UpdatedAt = UTC_TIMESTAMP()
 WHERE StudentId = @StudentId;";
 
             _db.ExecuteNonQuery(
@@ -170,34 +169,34 @@ WHERE StudentId = @StudentId;";
                 CommandType.Text,
                 new[]
                 {
-                    new SqlParameter("@StudentId", SqlDbType.Int) { Value = student.StudentId },
-                    new SqlParameter("@StudentNumber", SqlDbType.NVarChar, 30) { Value = (object)student.StudentNumber ?? DBNull.Value },
-                    new SqlParameter("@FirstName", SqlDbType.NVarChar, 50) { Value = (object)student.FirstName ?? DBNull.Value },
-                    new SqlParameter("@LastName", SqlDbType.NVarChar, 50) { Value = (object)student.LastName ?? DBNull.Value },
-                    new SqlParameter("@MiddleName", SqlDbType.NVarChar, 50) { Value = (object)student.MiddleName ?? DBNull.Value },
-                    new SqlParameter("@Gender", SqlDbType.NVarChar, 20) { Value = (object)student.Gender ?? DBNull.Value },
-                    new SqlParameter("@BirthDate", SqlDbType.Date) { Value = (object)student.BirthDate ?? DBNull.Value },
-                    new SqlParameter("@Email", SqlDbType.NVarChar, 100) { Value = (object)student.Email ?? DBNull.Value },
-                    new SqlParameter("@Phone", SqlDbType.NVarChar, 30) { Value = (object)student.Phone ?? DBNull.Value },
-                    new SqlParameter("@Address", SqlDbType.NVarChar, 250) { Value = (object)student.Address ?? DBNull.Value }
+                    new MySqlParameter("@StudentId", student.StudentId),
+                    new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
+                    new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
+                    new MySqlParameter("@LastName", (object)student.LastName ?? DBNull.Value),
+                    new MySqlParameter("@MiddleName", (object)student.MiddleName ?? DBNull.Value),
+                    new MySqlParameter("@Gender", (object)student.Gender ?? DBNull.Value),
+                    new MySqlParameter("@BirthDate", (object)student.BirthDate ?? DBNull.Value),
+                    new MySqlParameter("@Email", (object)student.Email ?? DBNull.Value),
+                    new MySqlParameter("@Phone", (object)student.Phone ?? DBNull.Value),
+                    new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value)
                 });
         }
 
         public void Delete(int studentId)
         {
-            const string sql = @"UPDATE dbo.Student SET IsActive = 0, UpdatedAt = SYSUTCDATETIME() WHERE StudentId = @StudentId;";
+            const string sql = @"UPDATE Student SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE StudentId = @StudentId;";
             _db.ExecuteNonQuery(
                 sql,
                 CommandType.Text,
                 new[]
                 {
-                    new SqlParameter("@StudentId", SqlDbType.Int) { Value = studentId }
+                    new MySqlParameter("@StudentId", studentId)
                 });
         }
 
         public int GetActiveCount()
         {
-            const string sql = @"SELECT COUNT(1) FROM dbo.Student WHERE IsActive = 1;";
+            const string sql = @"SELECT COUNT(1) FROM Student WHERE IsActive = 1;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
         }
     }

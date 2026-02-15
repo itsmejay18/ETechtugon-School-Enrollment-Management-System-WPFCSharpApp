@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using MySql.Data.MySqlClient;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Interfaces;
 using School_Management_System.Models;
@@ -22,26 +22,27 @@ namespace School_Management_System.DataLayer
             Guard.NotNullOrWhiteSpace(username, nameof(username));
 
             const string sql = @"
-SELECT TOP 1
+SELECT
     UserId,
     Username,
     PasswordHash,
     PasswordSalt,
-    Role,
+    `Role` AS Role,
     DisplayName,
     IsActive,
     CreatedAt,
     UpdatedAt,
     LastLoginAt
-FROM dbo.Users
-WHERE Username = @Username;";
+FROM Users
+WHERE Username = @Username
+LIMIT 1;";
 
             var dt = _db.ExecuteDataTable(
                 sql,
                 CommandType.Text,
                 new[]
                 {
-                    new SqlParameter("@Username", SqlDbType.NVarChar, 50) { Value = username.Trim() }
+                    new MySqlParameter("@Username", username.Trim())
                 });
 
             if (dt.Rows.Count == 0)
@@ -67,15 +68,14 @@ WHERE Username = @Username;";
 
         public void UpdateLastLogin(int userId)
         {
-            const string sql = @"UPDATE dbo.Users SET LastLoginAt = SYSUTCDATETIME() WHERE UserId = @UserId;";
+            const string sql = @"UPDATE Users SET LastLoginAt = UTC_TIMESTAMP() WHERE UserId = @UserId;";
             _db.ExecuteNonQuery(
                 sql,
                 CommandType.Text,
                 new[]
                 {
-                    new SqlParameter("@UserId", SqlDbType.Int) { Value = userId }
+                    new MySqlParameter("@UserId", userId)
                 });
         }
     }
 }
-

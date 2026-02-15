@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
+using MySql.Data.MySqlClient;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Logging;
 
@@ -33,7 +33,7 @@ namespace School_Management_System.DataLayer
         {
             try
             {
-                using (var conn = new SqlConnection(_connectionString))
+                using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
                     errorMessage = null;
@@ -48,11 +48,11 @@ namespace School_Management_System.DataLayer
             }
         }
 
-        public int ExecuteNonQuery(string sql, CommandType commandType, IEnumerable<SqlParameter> parameters)
+        public int ExecuteNonQuery(string sql, CommandType commandType, IEnumerable<MySqlParameter> parameters)
         {
             try
             {
-                using (var conn = new SqlConnection(_connectionString))
+                using (var conn = new MySqlConnection(_connectionString))
                 using (var cmd = CreateCommand(conn, sql, commandType, parameters))
                 {
                     conn.Open();
@@ -66,11 +66,11 @@ namespace School_Management_System.DataLayer
             }
         }
 
-        public object ExecuteScalar(string sql, CommandType commandType, IEnumerable<SqlParameter> parameters)
+        public object ExecuteScalar(string sql, CommandType commandType, IEnumerable<MySqlParameter> parameters)
         {
             try
             {
-                using (var conn = new SqlConnection(_connectionString))
+                using (var conn = new MySqlConnection(_connectionString))
                 using (var cmd = CreateCommand(conn, sql, commandType, parameters))
                 {
                     conn.Open();
@@ -84,13 +84,32 @@ namespace School_Management_System.DataLayer
             }
         }
 
-        public DataTable ExecuteDataTable(string sql, CommandType commandType, IEnumerable<SqlParameter> parameters)
+        public long ExecuteInsert(string sql, CommandType commandType, IEnumerable<MySqlParameter> parameters)
         {
             try
             {
-                using (var conn = new SqlConnection(_connectionString))
+                using (var conn = new MySqlConnection(_connectionString))
                 using (var cmd = CreateCommand(conn, sql, commandType, parameters))
-                using (var da = new SqlDataAdapter(cmd))
+                {
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                    return cmd.LastInsertedId;
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.LogError("DatabaseHelper.ExecuteInsert", ex);
+                throw;
+            }
+        }
+
+        public DataTable ExecuteDataTable(string sql, CommandType commandType, IEnumerable<MySqlParameter> parameters)
+        {
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                using (var cmd = CreateCommand(conn, sql, commandType, parameters))
+                using (var da = new MySqlDataAdapter(cmd))
                 {
                     var dt = new DataTable();
                     da.Fill(dt);
@@ -104,13 +123,13 @@ namespace School_Management_System.DataLayer
             }
         }
 
-        public DataSet ExecuteDataSet(string sql, CommandType commandType, IEnumerable<SqlParameter> parameters)
+        public DataSet ExecuteDataSet(string sql, CommandType commandType, IEnumerable<MySqlParameter> parameters)
         {
             try
             {
-                using (var conn = new SqlConnection(_connectionString))
+                using (var conn = new MySqlConnection(_connectionString))
                 using (var cmd = CreateCommand(conn, sql, commandType, parameters))
-                using (var da = new SqlDataAdapter(cmd))
+                using (var da = new MySqlDataAdapter(cmd))
                 {
                     var ds = new DataSet();
                     da.Fill(ds);
@@ -124,9 +143,33 @@ namespace School_Management_System.DataLayer
             }
         }
 
-        private static SqlCommand CreateCommand(SqlConnection connection, string sql, CommandType commandType, IEnumerable<SqlParameter> parameters)
+        public void ExecuteInTransaction(Action<MySqlConnection, MySqlTransaction> action)
         {
-            var cmd = new SqlCommand(sql, connection);
+            if (action == null) throw new ArgumentNullException(nameof(action));
+
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        action(conn, tx);
+                        tx.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        try { tx.Rollback(); } catch { }
+                        FileLogger.LogError("DatabaseHelper.ExecuteInTransaction", ex);
+                        throw;
+                    }
+                }
+            }
+        }
+
+        private static MySqlCommand CreateCommand(MySqlConnection connection, string sql, CommandType commandType, IEnumerable<MySqlParameter> parameters)
+        {
+            var cmd = new MySqlCommand(sql, connection);
             cmd.CommandType = commandType;
             cmd.CommandTimeout = 30;
 
@@ -145,4 +188,3 @@ namespace School_Management_System.DataLayer
         }
     }
 }
-

@@ -21,6 +21,7 @@ namespace School_Management_System.Presentation.Forms
         private Panel _sidebar;
         private Panel _content;
         private Panel _header;
+        private Panel _body;
         private Label _lblHeader;
         private Label _lblUser;
 
@@ -29,6 +30,13 @@ namespace School_Management_System.Presentation.Forms
         private readonly Dictionary<string, UserControl> _cache = new Dictionary<string, UserControl>(StringComparer.OrdinalIgnoreCase);
 
         private StudentService _studentService;
+        private FacultyService _facultyService;
+        private CourseService _courseService;
+        private SubjectService _subjectService;
+        private LookupService _lookupService;
+        private CurriculumService _curriculumService;
+        private EnrollmentService _enrollmentService;
+        private UserManagementService _userManagementService;
 
         public DashboardForm(DatabaseHelper db)
         {
@@ -46,6 +54,27 @@ namespace School_Management_System.Presentation.Forms
         {
             IStudentData studentData = new StudentData(_db);
             _studentService = new StudentService(studentData);
+
+            IFacultyData facultyData = new FacultyData(_db);
+            _facultyService = new FacultyService(facultyData);
+
+            ICourseData courseData = new CourseData(_db);
+            _courseService = new CourseService(courseData);
+
+            ISubjectData subjectData = new SubjectData(_db);
+            _subjectService = new SubjectService(subjectData);
+
+            ILookupData lookupData = new LookupData(_db);
+            _lookupService = new LookupService(lookupData);
+
+            ICurriculumData curriculumData = new CurriculumData(_db);
+            _curriculumService = new CurriculumService(curriculumData);
+
+            IEnrollmentData enrollmentData = new EnrollmentData(_db);
+            _enrollmentService = new EnrollmentService(enrollmentData);
+
+            IUserManagementData userMgmtData = new UserManagementData(_db);
+            _userManagementService = new UserManagementService(userMgmtData);
         }
 
         private void InitializeComponent()
@@ -95,17 +124,6 @@ namespace School_Management_System.Presentation.Forms
             };
             _sidebar.Controls.Add(_nav);
 
-            AddNavButton("Dashboard", "D", ThemeColors.Secondary, () => LoadModule("dashboard", () => new DashboardHomeControl(_studentService)));
-            AddNavButton("Students", "S", ThemeColors.Success, () => LoadModule("students", () => new StudentControl(_studentService)));
-
-            // Placeholders for other required modules (wired in, implemented incrementally).
-            AddNavButton("Faculty", "F", ThemeColors.Secondary, () => LoadModule("faculty", () => new PlaceholderControl("Faculty module is next.")));
-            AddNavButton("Courses", "C", ThemeColors.Secondary, () => LoadModule("courses", () => new PlaceholderControl("Course module is next.")));
-            AddNavButton("Subjects", "U", ThemeColors.Secondary, () => LoadModule("subjects", () => new PlaceholderControl("Subject module is next.")));
-            AddNavButton("Users", "A", ThemeColors.Secondary, () => LoadModule("users", () => new PlaceholderControl("Users module is next.")));
-            AddNavButton("Curriculum", "L", ThemeColors.Secondary, () => LoadModule("curriculum", () => new PlaceholderControl("Curriculum module is next (ListView + checkboxes).")));
-            AddNavButton("Enrollment", "E", ThemeColors.Secondary, () => LoadModule("enrollment", () => new PlaceholderControl("Enrollment transaction is next (multi-step).")));
-
             _header = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = ThemeColors.CardBackground, Padding = new Padding(18, 14, 18, 14) };
             _lblHeader = new Label { Dock = DockStyle.Left, Width = 420, Font = ThemeFonts.SubHeader, ForeColor = ThemeColors.Text, Text = "Dashboard", TextAlign = ContentAlignment.MiddleLeft };
             _lblUser = new Label { Dock = DockStyle.Right, Width = 320, Font = ThemeFonts.Label, ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.MiddleRight };
@@ -115,47 +133,60 @@ namespace School_Management_System.Presentation.Forms
 
             _content.Controls.Add(_header);
 
-            var body = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background, Padding = new Padding(18) };
-            _content.Controls.Add(body);
+            _body = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background, Padding = new Padding(18) };
+            _content.Controls.Add(_body);
+
+            var role = (UserSession.CurrentUser != null ? (UserSession.CurrentUser.Role ?? string.Empty) : string.Empty).Trim();
+            var isAdmin = string.Equals(role, AppConstants.Roles.Admin, StringComparison.OrdinalIgnoreCase);
+
+            AddNavButton("Dashboard", "D", ThemeColors.Secondary, () => LoadModule("dashboard", () => new DashboardHomeControl(_studentService, _facultyService, _courseService, _subjectService)));
+            AddNavButton("Students", "S", ThemeColors.Success, () => LoadModule("students", () => new StudentControl(_studentService)));
+
+            AddNavButton("Faculty", "F", ThemeColors.Secondary, () => LoadModule("faculty", () => new FacultyControl(_facultyService)));
+            AddNavButton("Courses", "C", ThemeColors.Secondary, () => LoadModule("courses", () => new CourseControl(_courseService)));
+            AddNavButton("Subjects", "U", ThemeColors.Secondary, () => LoadModule("subjects", () => new SubjectControl(_subjectService, _courseService)));
+            AddNavButton("Curriculum", "L", ThemeColors.Secondary, () => LoadModule("curriculum", () => new CurriculumControl(_curriculumService, _courseService, _lookupService)));
+            AddNavButton("Enrollment", "E", ThemeColors.Secondary, () => LoadModule("enrollment", () => new EnrollmentControl(_enrollmentService, _studentService, _curriculumService, _courseService, _lookupService)));
+
+            if (isAdmin)
+            {
+                AddNavButton("Users", "A", ThemeColors.Secondary, () => LoadModule("users", () => new UsersControl(_userManagementService)));
+            }
 
             // Default page.
-            LoadInto(body, "dashboard", () => new DashboardHomeControl(_studentService));
+            LoadModule("dashboard", () => new DashboardHomeControl(_studentService, _facultyService, _courseService, _subjectService));
+        }
 
-            void LoadInto(Panel container, string key, Func<UserControl> factory)
+        private void LoadModule(string key, Func<UserControl> factory)
+        {
+            _lblHeader.Text = GetHeaderForKey(key);
+
+            _body.Controls.Clear();
+            var ctrl = GetOrCreate(key, factory);
+            ctrl.Dock = DockStyle.Fill;
+            _body.Controls.Add(ctrl);
+        }
+
+        private void AddNavButton(string text, string iconLetter, Color iconColor, Action onClick)
+        {
+            var btn = new Button { Text = "  " + text, Width = _sidebar.Width - 2, Height = 42 };
+            btn.Image = IconFactory.CreateCircleIcon(iconColor, iconLetter, 24);
+            ThemeManager.StyleSidebarButton(btn);
+            btn.Click += (s, e) => onClick();
+            _nav.Controls.Add(btn);
+        }
+
+        private UserControl GetOrCreate(string key, Func<UserControl> factory)
+        {
+            UserControl existing;
+            if (_cache.TryGetValue(key, out existing))
             {
-                container.Controls.Clear();
-                var ctrl = GetOrCreate(key, factory);
-                ctrl.Dock = DockStyle.Fill;
-                container.Controls.Add(ctrl);
+                return existing;
             }
 
-            void LoadModule(string key, Func<UserControl> factory)
-            {
-                _lblHeader.Text = GetHeaderForKey(key);
-                LoadInto(body, key, factory);
-            }
-
-            void AddNavButton(string text, string iconLetter, Color iconColor, Action onClick)
-            {
-                var btn = new Button { Text = "  " + text, Width = _sidebar.Width - 2, Height = 42 };
-                btn.Image = IconFactory.CreateCircleIcon(iconColor, iconLetter, 24);
-                ThemeManager.StyleSidebarButton(btn);
-                btn.Click += (s, e) => onClick();
-                _nav.Controls.Add(btn);
-            }
-
-            UserControl GetOrCreate(string key, Func<UserControl> factory)
-            {
-                UserControl existing;
-                if (_cache.TryGetValue(key, out existing))
-                {
-                    return existing;
-                }
-
-                var created = factory();
-                _cache[key] = created;
-                return created;
-            }
+            var created = factory();
+            _cache[key] = created;
+            return created;
         }
 
         private static string GetHeaderForKey(string key)
@@ -181,4 +212,3 @@ namespace School_Management_System.Presentation.Forms
         }
     }
 }
-
