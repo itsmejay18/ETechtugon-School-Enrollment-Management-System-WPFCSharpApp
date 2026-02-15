@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
+using School_Management_System.DataLayer.Configuration;
 using School_Management_System.DataLayer.Logging;
 
 namespace School_Management_System.DataLayer
@@ -20,13 +20,7 @@ namespace School_Management_System.DataLayer
 
         public static DatabaseHelper FromConfig()
         {
-            var cs = ConfigurationManager.ConnectionStrings[AppConstants.ConnectionStringName];
-            if (cs == null || string.IsNullOrWhiteSpace(cs.ConnectionString))
-            {
-                throw new InvalidOperationException("Missing connection string '" + AppConstants.ConnectionStringName + "' in App.config.");
-            }
-
-            return new DatabaseHelper(cs.ConnectionString);
+            return new DatabaseHelper(ConnectionStringProvider.GetDefault());
         }
 
         public bool TestConnection(out string errorMessage)
