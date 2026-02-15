@@ -7,6 +7,11 @@ namespace School_Management_System.Presentation.UserControls
 {
     public sealed class PlaceholderControl : BaseUserControl
     {
+        public PlaceholderControl()
+            : this("Designer preview")
+        {
+        }
+
         public PlaceholderControl(string message)
         {
             BackColor = ThemeColors.Background;
@@ -26,6 +31,17 @@ namespace School_Management_System.Presentation.UserControls
             card.Controls.Add(lbl);
             Controls.Add(card);
         }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            // 
+            // PlaceholderControl
+            // 
+            this.Name = "PlaceholderControl";
+            this.Size = new System.Drawing.Size(852, 496);
+            this.ResumeLayout(false);
+
+        }
     }
 }
-

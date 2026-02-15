@@ -64,6 +64,11 @@ namespace School_Management_System.Presentation.UserControls
         private readonly PrintDocument _printDocument = new PrintDocument();
         private string _printText;
 
+        public EnrollmentControl()
+            : this(null, null, null, null, null)
+        {
+        }
+
         public EnrollmentControl(
             EnrollmentService enrollmentService,
             StudentService studentService,
@@ -71,14 +76,22 @@ namespace School_Management_System.Presentation.UserControls
             CourseService courseService,
             LookupService lookupService)
         {
-            _enrollmentService = enrollmentService ?? throw new ArgumentNullException(nameof(enrollmentService));
-            _studentService = studentService ?? throw new ArgumentNullException(nameof(studentService));
-            _curriculumService = curriculumService ?? throw new ArgumentNullException(nameof(curriculumService));
-            _courseService = courseService ?? throw new ArgumentNullException(nameof(courseService));
-            _lookupService = lookupService ?? throw new ArgumentNullException(nameof(lookupService));
+            _enrollmentService = enrollmentService;
+            _studentService = studentService;
+            _curriculumService = curriculumService;
+            _courseService = courseService;
+            _lookupService = lookupService;
 
             InitializeComponent();
             WirePrinting();
+
+            if (!HasRuntimeServices())
+            {
+                SetupDesignerPreview();
+                ShowStep(1);
+                return;
+            }
+
             LoadLookups();
             LoadStudents();
             ShowStep(1);
@@ -355,6 +368,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private void LoadLookups()
         {
+            if (_courseService == null || _lookupService == null) return;
+
             try
             {
                 _cmbCourse.DisplayMember = "CourseName";
@@ -386,6 +401,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private void LoadStudents()
         {
+            if (_studentService == null) return;
+
             try
             {
                 var dt = _studentService.GetStudents(_txtStudentSearch.Text);
@@ -414,6 +431,7 @@ namespace School_Management_System.Presentation.UserControls
 
         private void StudentsGridCellContentClick(object sender, DataGridViewCellEventArgs e)
         {
+            if (_studentService == null) return;
             if (e.RowIndex < 0) return;
             var col = _gridStudents.Columns[e.ColumnIndex];
             if (col == null) return;
@@ -435,6 +453,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private void LoadCurriculumSubjects()
         {
+            if (_curriculumService == null) return;
+
             try
             {
                 var courseId = GetSelectedInt(_cmbCourse);
@@ -557,6 +577,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private void SaveEnrollment()
         {
+            if (!HasRuntimeServices()) return;
+
             try
             {
                 var courseId = GetSelectedInt(_cmbCourse);
@@ -634,6 +656,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private void ResetAll()
         {
+            if (!HasRuntimeServices()) return;
+
             _selectedStudentId = 0;
             _selectedStudentNumber = null;
             _selectedStudentName = null;
@@ -684,6 +708,43 @@ namespace School_Management_System.Presentation.UserControls
             {
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("EnrollmentControl.PrintSummary", ex);
                 ThemedMessageBox.ShowError(this, Messages.UnexpectedError);
+            }
+        }
+
+        private bool HasRuntimeServices()
+        {
+            return _enrollmentService != null &&
+                   _studentService != null &&
+                   _curriculumService != null &&
+                   _courseService != null &&
+                   _lookupService != null;
+        }
+
+        private void SetupDesignerPreview()
+        {
+            if (_lblSelectedStudent != null)
+            {
+                _lblSelectedStudent.Text = "Selected: STU-00001 - Designer, Sample";
+            }
+
+            if (_lblCurriculumStatus != null)
+            {
+                _lblCurriculumStatus.Text = "Designer preview mode";
+            }
+
+            if (_lvSubjects != null && _lvSubjects.Items.Count == 0)
+            {
+                var item = new ListViewItem("SUBJ-001");
+                item.SubItems.Add("Sample Subject");
+                item.SubItems.Add("3");
+                item.Checked = true;
+                _lvSubjects.Items.Add(item);
+                UpdateUnits();
+            }
+
+            if (_lblSummary != null)
+            {
+                _lblSummary.Text = "Enrollment Summary Preview";
             }
         }
     }

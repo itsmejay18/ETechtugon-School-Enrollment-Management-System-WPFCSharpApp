@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using School_Management_System.Presentation.Helpers;
 
@@ -14,6 +15,7 @@ namespace School_Management_System.Presentation.Theming
             form.Font = ThemeFonts.Label;
             form.BackColor = ThemeColors.Background;
             form.ForeColor = ThemeColors.Text;
+            UiHelper.EnableDoubleBuffering(form);
         }
 
         public static void StyleCardPanel(Panel panel)
@@ -30,12 +32,29 @@ namespace School_Management_System.Presentation.Theming
                 var rect = panel.ClientRectangle;
                 rect.Width -= 1;
                 rect.Height -= 1;
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+                using (var shadowPen = new Pen(Color.FromArgb(20, 44, 62, 80)))
+                {
+                    var shadowRect = rect;
+                    shadowRect.Offset(0, 1);
+                    e.Graphics.DrawRectangle(shadowPen, shadowRect);
+                }
+
                 using (var pen = new Pen(ThemeColors.Border))
                 {
-                    e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                     e.Graphics.DrawRectangle(pen, rect);
                 }
             };
+        }
+
+        public static void StyleGroupBox(GroupBox groupBox)
+        {
+            if (groupBox == null) return;
+
+            groupBox.Font = ThemeFonts.SubHeader;
+            groupBox.ForeColor = ThemeColors.Text;
+            groupBox.BackColor = ThemeColors.CardBackground;
         }
 
         public static void StyleInput(TextBox textBox)
@@ -43,6 +62,8 @@ namespace School_Management_System.Presentation.Theming
             if (textBox == null) return;
             textBox.Font = ThemeFonts.Input;
             textBox.BorderStyle = BorderStyle.FixedSingle;
+            textBox.BackColor = Color.White;
+            textBox.ForeColor = ThemeColors.Text;
         }
 
         public static void StyleComboBox(ComboBox comboBox)
@@ -50,6 +71,8 @@ namespace School_Management_System.Presentation.Theming
             if (comboBox == null) return;
             comboBox.Font = ThemeFonts.Input;
             comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox.BackColor = Color.White;
+            comboBox.ForeColor = ThemeColors.Text;
         }
 
         public static void StyleButtonPrimary(Button button)
@@ -64,9 +87,24 @@ namespace School_Management_System.Presentation.Theming
 
         public static void StyleButtonNeutral(Button button)
         {
-            StyleButton(button, Color.White, ColorTranslator.FromHtml("#F3F4F6"), ThemeColors.Text);
+            StyleButton(button, Color.White, ThemeColors.SurfaceAlt, ThemeColors.Text);
             button.FlatAppearance.BorderSize = 1;
             button.FlatAppearance.BorderColor = ThemeColors.Border;
+        }
+
+        public static void StyleButtonGhost(Button button)
+        {
+            if (button == null) return;
+
+            button.Font = ThemeFonts.Button;
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = 0;
+            button.FlatAppearance.MouseOverBackColor = ThemeColors.SurfaceAlt;
+            button.FlatAppearance.MouseDownBackColor = ThemeColors.SurfaceAlt;
+            button.BackColor = Color.Transparent;
+            button.ForeColor = ThemeColors.Secondary;
+            button.Height = 34;
+            button.Cursor = Cursors.Hand;
         }
 
         public static void StyleSidebarButton(Button button)
@@ -75,17 +113,23 @@ namespace School_Management_System.Presentation.Theming
 
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
+            button.FlatAppearance.MouseOverBackColor = ThemeColors.SidebarHover;
+            button.FlatAppearance.MouseDownBackColor = ThemeColors.SidebarActive;
             button.BackColor = ThemeColors.SidebarBackground;
             button.ForeColor = Color.White;
             button.Font = ThemeFonts.Sidebar;
             button.TextAlign = ContentAlignment.MiddleLeft;
             button.ImageAlign = ContentAlignment.MiddleLeft;
-            button.Padding = new Padding(12, 0, 12, 0);
-            button.Height = 42;
+            button.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button.Padding = new Padding(14, 0, 12, 0);
+            button.Height = 44;
             button.Cursor = Cursors.Hand;
+        }
 
-            button.MouseEnter += (s, e) => button.BackColor = ThemeColors.SidebarHover;
-            button.MouseLeave += (s, e) => button.BackColor = ThemeColors.SidebarBackground;
+        public static void SetSidebarButtonState(Button button, bool active)
+        {
+            if (button == null) return;
+            button.BackColor = active ? ThemeColors.SidebarActive : ThemeColors.SidebarBackground;
         }
 
         public static void StyleDataGrid(DataGridView grid)
@@ -93,12 +137,14 @@ namespace School_Management_System.Presentation.Theming
             if (grid == null) return;
 
             grid.BackgroundColor = Color.White;
-            grid.BorderStyle = BorderStyle.None;
+            grid.BorderStyle = BorderStyle.FixedSingle;
+            grid.GridColor = ThemeColors.Border;
             grid.EnableHeadersVisualStyles = false;
             grid.ColumnHeadersDefaultCellStyle.BackColor = ThemeColors.Primary;
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
             grid.ColumnHeadersDefaultCellStyle.Font = ThemeFonts.SubHeader;
             grid.ColumnHeadersHeight = 36;
+            grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
             grid.RowTemplate.Height = 32;
             grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             grid.MultiSelect = false;
@@ -111,6 +157,7 @@ namespace School_Management_System.Presentation.Theming
             grid.DefaultCellStyle.ForeColor = ThemeColors.Text;
             grid.DefaultCellStyle.SelectionBackColor = ColorTranslator.FromHtml("#D6EAF8");
             grid.DefaultCellStyle.SelectionForeColor = ThemeColors.Text;
+            grid.AlternatingRowsDefaultCellStyle.BackColor = ThemeColors.Surface;
         }
 
         private static void StyleButton(Button button, Color backColor, Color hoverBackColor, Color foreColor)
@@ -124,9 +171,9 @@ namespace School_Management_System.Presentation.Theming
             button.ForeColor = foreColor;
             button.Height = 34;
             button.Cursor = Cursors.Hand;
-
-            button.MouseEnter += (s, e) => button.BackColor = hoverBackColor;
-            button.MouseLeave += (s, e) => button.BackColor = backColor;
+            button.FlatAppearance.MouseOverBackColor = hoverBackColor;
+            button.FlatAppearance.MouseDownBackColor = Darken(backColor, 0.12f);
+            UiHelper.ApplyRoundedCorners(button, 4);
         }
 
         private static Color Darken(Color color, float amount)
@@ -139,4 +186,3 @@ namespace School_Management_System.Presentation.Theming
         }
     }
 }
-

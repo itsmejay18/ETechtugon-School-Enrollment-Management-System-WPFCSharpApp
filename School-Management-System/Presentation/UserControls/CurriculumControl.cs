@@ -32,13 +32,26 @@ namespace School_Management_System.Presentation.UserControls
         private int _curriculumId;
         private bool _loading;
 
+        public CurriculumControl()
+            : this(null, null, null)
+        {
+        }
+
         public CurriculumControl(CurriculumService curriculumService, CourseService courseService, LookupService lookupService)
         {
-            _curriculumService = curriculumService ?? throw new ArgumentNullException(nameof(curriculumService));
-            _courseService = courseService ?? throw new ArgumentNullException(nameof(courseService));
-            _lookupService = lookupService ?? throw new ArgumentNullException(nameof(lookupService));
+            _curriculumService = curriculumService;
+            _courseService = courseService;
+            _lookupService = lookupService;
 
             InitializeComponent();
+            if (_curriculumService == null || _courseService == null || _lookupService == null)
+            {
+                _lblCurriculumName.Text = "Curriculum: Designer Preview";
+                _lvSubjects.Items.Add(new ListViewItem(new[] { "SUBJ-001", "Sample Subject", "3" }));
+                UpdateTotalUnits();
+                return;
+            }
+
             LoadLookups();
         }
 
@@ -171,8 +184,12 @@ namespace School_Management_System.Presentation.UserControls
 
         private void LoadLookups()
         {
+            if (_courseService == null || _lookupService == null) return;
+
             try
             {
+                _loading = true;
+
                 _cmbCourse.DisplayMember = "CourseName";
                 _cmbCourse.ValueMember = "CourseId";
                 _cmbCourse.DataSource = _courseService.GetLookupCourses();
@@ -193,19 +210,24 @@ namespace School_Management_System.Presentation.UserControls
                 if (_cmbAcademicYear.Items.Count > 0) _cmbAcademicYear.SelectedIndex = 0;
                 if (_cmbYearLevel.Items.Count > 0) _cmbYearLevel.SelectedIndex = 0;
                 if (_cmbSemester.Items.Count > 0) _cmbSemester.SelectedIndex = 0;
-
-                Reload();
             }
             catch (Exception ex)
             {
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("CurriculumControl.LoadLookups", ex);
                 ThemedMessageBox.ShowError(this, Messages.UnexpectedError);
             }
+            finally
+            {
+                _loading = false;
+            }
+
+            Reload();
         }
 
         private void Reload()
         {
             if (_loading) return;
+            if (_curriculumService == null || _courseService == null || _lookupService == null) return;
 
             var beganUpdate = false;
             try
@@ -229,11 +251,12 @@ namespace School_Management_System.Presentation.UserControls
 
                 _curriculumId = _curriculumService.EnsureCurriculum(name, courseId, ylId, semId, ayId);
 
-                var allSubjects = _curriculumService.GetSubjectsForCourse(courseId);
-                var selected = _curriculumService.GetCurriculumSubjects(_curriculumId);
+                var allSubjects = _curriculumService.GetSubjectsForCourse(courseId) ?? new DataTable();
+                var selected = _curriculumService.GetCurriculumSubjects(_curriculumId) ?? new DataTable();
                 var selectedIds = new HashSet<int>();
                 foreach (DataRow r in selected.Rows)
                 {
+                    if (r == null || r["SubjectId"] == DBNull.Value) continue;
                     selectedIds.Add(Convert.ToInt32(r["SubjectId"]));
                 }
 
@@ -244,9 +267,13 @@ namespace School_Management_System.Presentation.UserControls
 
                 foreach (DataRow r in allSubjects.Rows)
                 {
+                    if (r == null) continue;
+                    if (!allSubjects.Columns.Contains("SubjectId")) continue;
+                    if (!allSubjects.Columns.Contains("Units")) continue;
+
                     var subjectId = Convert.ToInt32(r["SubjectId"]);
-                    var code = Convert.ToString(r["SubjectCode"]);
-                    var subject = Convert.ToString(r["SubjectName"]);
+                    var code = allSubjects.Columns.Contains("SubjectCode") ? Convert.ToString(r["SubjectCode"]) : string.Empty;
+                    var subject = allSubjects.Columns.Contains("SubjectName") ? Convert.ToString(r["SubjectName"]) : string.Empty;
                     var units = Convert.ToInt32(r["Units"]);
 
                     var item = new ListViewItem(code ?? string.Empty);
@@ -327,6 +354,7 @@ namespace School_Management_System.Presentation.UserControls
 
         private void SubjectsItemChecked(object sender, ItemCheckedEventArgs e)
         {
+            if (_curriculumService == null) return;
             if (_loading) return;
             if (_curriculumId <= 0) return;
             if (e.Item == null) return;
@@ -347,6 +375,7 @@ namespace School_Management_System.Presentation.UserControls
 
         private void SetAllChecks(bool check)
         {
+            if (_curriculumService == null) return;
             if (_curriculumId <= 0) return;
 
             _loading = true;
@@ -355,6 +384,8 @@ namespace School_Management_System.Presentation.UserControls
             {
                 foreach (ListViewItem item in _lvSubjects.Items)
                 {
+                    if (item == null) continue;
+                    if (item.Checked == check) continue;
                     item.Checked = check;
                 }
             }
@@ -367,15 +398,16 @@ namespace School_Management_System.Presentation.UserControls
             // Persist changes.
             foreach (ListViewItem item in _lvSubjects.Items)
             {
+                if (item == null) continue;
                 if (item.Tag == null) continue;
                 var subjectId = Convert.ToInt32(item.Tag);
                 try
                 {
                     _curriculumService.SetSubjectIncluded(_curriculumId, subjectId, item.Checked);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Best effort; per-row errors will be logged by service calls.
+                    School_Management_System.DataLayer.Logging.FileLogger.LogError("CurriculumControl.SetAllChecks", ex);
                 }
             }
 
@@ -384,13 +416,26 @@ namespace School_Management_System.Presentation.UserControls
 
         private void UpdateTotalUnits()
         {
-            var total = 0;
-            foreach (ListViewItem item in _lvSubjects.Items)
+            if (_lvSubjects == null || _lvSubjects.IsDisposed || _lblTotalUnits == null || _lblTotalUnits.IsDisposed)
             {
+                return;
+            }
+
+            var total = 0;
+            for (var i = 0; i < _lvSubjects.Items.Count; i++)
+            {
+                var item = _lvSubjects.Items[i];
+                if (item == null) continue;
                 if (!item.Checked) continue;
-                if (item.SubItems.Count < 3) continue;
+
+                var subItems = item.SubItems;
+                if (subItems == null || subItems.Count < 3) continue;
+
+                var unitsCell = subItems[2];
+                if (unitsCell == null) continue;
+
                 int units;
-                if (int.TryParse(item.SubItems[2].Text, out units))
+                if (int.TryParse(unitsCell.Text, out units))
                 {
                     total += units;
                 }

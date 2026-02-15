@@ -20,21 +20,31 @@ namespace School_Management_System.Presentation.UserControls
         private ComboBox _cmbRole;
         private CheckBox _chkActive;
         private TextBox _txtPassword;
+
+        private TextBox _txtSearch;
+        private DataGridView _grid;
+        private SplitContainer _split;
+
+        private Button _btnAdd;
+        private Button _btnEdit;
         private Button _btnDelete;
         private Button _btnSave;
         private Button _btnCancel;
-
-        private TextBox _txtSearch;
         private Button _btnRefresh;
-        private DataGridView _grid;
 
         private int _editingUserId;
+        private bool _isEditorActive;
+
+        public UsersControl()
+            : this(null)
+        {
+        }
 
         public UsersControl(UserManagementService userService)
         {
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _userService = userService;
             InitializeComponent();
-            NewRecord();
+            SetEditorState(false);
             LoadGrid();
         }
 
@@ -42,127 +52,148 @@ namespace School_Management_System.Presentation.UserControls
         {
             BackColor = ThemeColors.Background;
 
+            var toolbar = BuildToolbar();
+            _split = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Vertical,
+                SplitterWidth = 6,
+                SplitterDistance = 730,
+                BackColor = ThemeColors.Border
+            };
+
+            _grid = new DataGridView { Dock = DockStyle.Fill };
+            ThemeManager.StyleDataGrid(_grid);
+            _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            _grid.CellClick += (s, e) => PreviewSelected();
+
+            var left = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
+            left.Controls.Add(_grid);
+            _split.Panel1.Controls.Add(left);
+
             _gb = new GroupBox
             {
-                Text = "User Account",
-                Dock = DockStyle.Top,
-                Height = 240,
+                Text = "User Account Details",
+                Dock = DockStyle.Fill,
                 Font = ThemeFonts.SubHeader,
                 ForeColor = ThemeColors.Text,
                 Padding = new Padding(12, 18, 12, 12),
                 BackColor = ThemeColors.CardBackground
             };
+            ThemeManager.StyleGroupBox(_gb);
 
             var layout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 4,
-                RowCount = 4,
+                ColumnCount = 2,
+                RowCount = 8,
                 Padding = new Padding(8, 6, 8, 6)
             };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
 
-            var lblUsername = MakeLabel("Username *");
             _txtUsername = MakeTextBox();
-
-            var lblRole = MakeLabel("Role *");
+            _txtDisplayName = MakeTextBox();
             _cmbRole = new ComboBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input };
             ThemeManager.StyleComboBox(_cmbRole);
             _cmbRole.Items.AddRange(new object[] { AppConstants.Roles.Admin, AppConstants.Roles.Registrar, AppConstants.Roles.Faculty });
             if (_cmbRole.Items.Count > 0) _cmbRole.SelectedIndex = 0;
 
-            var lblDisplayName = MakeLabel("Display Name");
-            _txtDisplayName = MakeTextBox();
-
-            var lblActive = MakeLabel("Active");
             _chkActive = new CheckBox { Dock = DockStyle.Left, Text = "Enabled", AutoSize = true };
-
-            var lblPassword = MakeLabel("Password");
             _txtPassword = new TextBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input, UseSystemPasswordChar = true };
             ThemeManager.StyleInput(_txtPassword);
 
+            layout.Controls.Add(MakeLabel("Username *"), 0, 0);
+            layout.Controls.Add(_txtUsername, 1, 0);
+            layout.Controls.Add(MakeLabel("Display Name"), 0, 1);
+            layout.Controls.Add(_txtDisplayName, 1, 1);
+            layout.Controls.Add(MakeLabel("Role *"), 0, 2);
+            layout.Controls.Add(_cmbRole, 1, 2);
+            layout.Controls.Add(MakeLabel("Active"), 0, 3);
+            layout.Controls.Add(_chkActive, 1, 3);
+            layout.Controls.Add(MakeLabel("Password"), 0, 4);
+            layout.Controls.Add(_txtPassword, 1, 4);
+
             var hint = new Label
             {
-                Text = "Tip: For existing users, leave Password blank to keep current password.",
+                Text = "For existing users, leave password blank to keep current password.",
+                Dock = DockStyle.Fill,
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
-                Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft
             };
+            layout.Controls.Add(hint, 0, 6);
+            layout.SetColumnSpan(hint, 2);
 
-            // Row 0
-            layout.Controls.Add(lblUsername, 0, 0);
-            layout.Controls.Add(_txtUsername, 1, 0);
-            layout.Controls.Add(lblRole, 2, 0);
-            layout.Controls.Add(_cmbRole, 3, 0);
-
-            // Row 1
-            layout.Controls.Add(lblDisplayName, 0, 1);
-            layout.Controls.Add(_txtDisplayName, 1, 1);
-            layout.SetColumnSpan(_txtDisplayName, 3);
-
-            // Row 2
-            layout.Controls.Add(lblActive, 0, 2);
-            layout.Controls.Add(_chkActive, 1, 2);
-            layout.Controls.Add(lblPassword, 2, 2);
-            layout.Controls.Add(_txtPassword, 3, 2);
-
-            // Row 3
-            layout.Controls.Add(hint, 0, 3);
-            layout.SetColumnSpan(hint, 4);
-
-            var buttons = new Panel { Dock = DockStyle.Bottom, Height = 48, Padding = new Padding(8, 8, 8, 8), BackColor = ThemeColors.CardBackground };
-            _btnDelete = new Button { Text = "Disable", Width = 110, Dock = DockStyle.Left };
-            ThemeManager.StyleButtonDanger(_btnDelete);
-            _btnDelete.Click += (s, e) => DisableCurrent();
-
-            var right = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Width = 280 };
-            _btnSave = new Button { Text = "Save", Width = 110 };
-            ThemeManager.StyleButtonPrimary(_btnSave);
-            _btnSave.Click += (s, e) => Save();
-
-            _btnCancel = new Button { Text = "Cancel", Width = 110 };
-            ThemeManager.StyleButtonNeutral(_btnCancel);
-            _btnCancel.Click += (s, e) => NewRecord();
-
-            right.Controls.Add(_btnSave);
-            right.Controls.Add(_btnCancel);
-
-            buttons.Controls.Add(right);
-            buttons.Controls.Add(_btnDelete);
+            var note = new Label
+            {
+                Text = "Click a row to preview. Click Edit to modify.",
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.MutedText,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            layout.Controls.Add(note, 0, 7);
+            layout.SetColumnSpan(note, 2);
 
             _gb.Controls.Add(layout);
-            _gb.Controls.Add(buttons);
 
-            var searchRow = new Panel { Dock = DockStyle.Top, Height = 48, Padding = new Padding(0, 12, 0, 8), BackColor = ThemeColors.Background };
-            var lblSearch = new Label { Text = "Search:", AutoSize = true, Location = new Point(0, 16), Font = ThemeFonts.Label, ForeColor = ThemeColors.Text };
-            _txtSearch = new TextBox { Location = new Point(62, 12), Width = 280 };
+            var right = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
+            right.Controls.Add(_gb);
+            _split.Panel2.Controls.Add(right);
+
+            Controls.Add(_split);
+            Controls.Add(toolbar);
+        }
+
+        private Panel BuildToolbar()
+        {
+            var toolbar = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
+
+            _txtSearch = new TextBox { Width = 260, Location = new Point(0, 10) };
             ThemeManager.StyleInput(_txtSearch);
             _txtSearch.TextChanged += (s, e) => LoadGrid();
 
-            _btnRefresh = new Button { Text = "Refresh", Location = new Point(350, 10), Width = 110 };
+            _btnRefresh = new Button { Text = "Refresh", Width = 96, Location = new Point(270, 8) };
             ThemeManager.StyleButtonNeutral(_btnRefresh);
             _btnRefresh.Click += (s, e) => LoadGrid();
 
-            searchRow.Controls.Add(lblSearch);
-            searchRow.Controls.Add(_txtSearch);
-            searchRow.Controls.Add(_btnRefresh);
+            _btnAdd = new Button { Text = "Add", Width = 86, Location = new Point(384, 8) };
+            ThemeManager.StyleButtonPrimary(_btnAdd);
+            _btnAdd.Click += (s, e) => BeginAdd();
 
-            _grid = new DataGridView { Dock = DockStyle.Fill };
-            ThemeManager.StyleDataGrid(_grid);
-            _grid.CellContentClick += GridCellContentClick;
-            _grid.CellFormatting += GridCellFormatting;
+            _btnEdit = new Button { Text = "Edit", Width = 86, Location = new Point(478, 8) };
+            ThemeManager.StyleButtonNeutral(_btnEdit);
+            _btnEdit.Click += (s, e) => BeginEdit();
 
-            Controls.Add(_grid);
-            Controls.Add(searchRow);
-            Controls.Add(_gb);
+            _btnDelete = new Button { Text = "Delete", Width = 86, Location = new Point(572, 8) };
+            ThemeManager.StyleButtonDanger(_btnDelete);
+            _btnDelete.Click += (s, e) => DisableCurrent();
+
+            _btnSave = new Button { Text = "Save", Width = 86, Location = new Point(666, 8) };
+            ThemeManager.StyleButtonPrimary(_btnSave);
+            _btnSave.Click += (s, e) => Save();
+
+            _btnCancel = new Button { Text = "Cancel", Width = 86, Location = new Point(760, 8) };
+            ThemeManager.StyleButtonNeutral(_btnCancel);
+            _btnCancel.Click += (s, e) => CancelEdit();
+
+            toolbar.Controls.Add(_txtSearch);
+            toolbar.Controls.Add(_btnRefresh);
+            toolbar.Controls.Add(_btnAdd);
+            toolbar.Controls.Add(_btnEdit);
+            toolbar.Controls.Add(_btnDelete);
+            toolbar.Controls.Add(_btnSave);
+            toolbar.Controls.Add(_btnCancel);
+            return toolbar;
         }
 
         private static Label MakeLabel(string text)
@@ -184,17 +215,45 @@ namespace School_Management_System.Presentation.UserControls
             return tb;
         }
 
-        private void NewRecord()
+        private void SetEditorState(bool active)
+        {
+            _isEditorActive = active;
+            _txtUsername.ReadOnly = !active;
+            _txtDisplayName.ReadOnly = !active;
+            _cmbRole.Enabled = active;
+            _chkActive.Enabled = active;
+            _txtPassword.ReadOnly = !active;
+
+            _btnSave.Enabled = active;
+            _btnCancel.Enabled = active;
+            _btnAdd.Enabled = !active;
+            _btnEdit.Enabled = !active && _editingUserId > 0;
+            _btnDelete.Enabled = !active && _editingUserId > 0;
+        }
+
+        private void BeginAdd()
         {
             _editingUserId = 0;
             _txtUsername.Text = string.Empty;
             _txtDisplayName.Text = string.Empty;
-            if (_cmbRole.Items.Count > 0) _cmbRole.SelectedIndex = 0;
+            _cmbRole.SelectedIndex = _cmbRole.Items.Count > 0 ? 0 : -1;
             _chkActive.Checked = true;
             _txtPassword.Text = string.Empty;
+            SetEditorState(true);
+            _txtUsername.Focus();
+        }
 
-            _btnDelete.Enabled = false;
-            _btnSave.Text = "Save";
+        private void BeginEdit()
+        {
+            if (_editingUserId <= 0) return;
+            SetEditorState(true);
+            _txtUsername.Focus();
+        }
+
+        private void CancelEdit()
+        {
+            SetEditorState(false);
+            PreviewSelected();
         }
 
         private void LoadGrid()
@@ -202,7 +261,7 @@ namespace School_Management_System.Presentation.UserControls
             try
             {
                 UseWaitCursor = true;
-                var dt = _userService.GetUsers(_txtSearch.Text);
+                var dt = _userService == null ? new DataTable() : _userService.GetUsers(_txtSearch == null ? string.Empty : _txtSearch.Text);
                 BindGrid(dt);
             }
             catch (Exception ex)
@@ -218,106 +277,63 @@ namespace School_Management_System.Presentation.UserControls
 
         private void BindGrid(DataTable dt)
         {
-            _grid.Columns.Clear();
             _grid.DataSource = null;
+            _grid.Columns.Clear();
             _grid.DataSource = dt;
 
-            if (_grid.Columns["UserId"] != null) _grid.Columns["UserId"].Visible = false;
-
-            AddActionButtons();
-        }
-
-        private void AddActionButtons()
-        {
-            var editCol = new DataGridViewButtonColumn
+            if (_grid.Columns["UserId"] != null)
             {
-                Name = "EditAction",
-                HeaderText = "",
-                Text = "Edit",
-                UseColumnTextForButtonValue = true,
-                Width = 70
-            };
-
-            var toggleCol = new DataGridViewButtonColumn
-            {
-                Name = "ToggleActiveAction",
-                HeaderText = "",
-                Text = "",
-                UseColumnTextForButtonValue = false,
-                Width = 90
-            };
-
-            _grid.Columns.Insert(0, editCol);
-            _grid.Columns.Insert(1, toggleCol);
-        }
-
-        private void GridCellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
-
-            var col = _grid.Columns[e.ColumnIndex];
-            if (col == null) return;
-
-            if (!string.Equals(col.Name, "ToggleActiveAction", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
+                _grid.Columns["UserId"].Visible = false;
             }
 
-            var row = _grid.Rows[e.RowIndex];
-            var activeObj = row.Cells["IsActive"].Value;
-            var isActive = activeObj != null && activeObj != DBNull.Value && Convert.ToBoolean(activeObj);
-
-            e.Value = isActive ? "Disable" : "Enable";
-            e.FormattingApplied = true;
-        }
-
-        private void GridCellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
-
-            var col = _grid.Columns[e.ColumnIndex];
-            if (col == null) return;
-
-            var row = _grid.Rows[e.RowIndex];
-            var idObj = row.Cells["UserId"].Value;
-            if (idObj == null) return;
-            var userId = Convert.ToInt32(idObj);
-
-            if (string.Equals(col.Name, "EditAction", StringComparison.OrdinalIgnoreCase))
+            if (_grid.Rows.Count > 0)
             {
-                _editingUserId = userId;
-                _txtUsername.Text = Convert.ToString(row.Cells["Username"].Value);
-                _txtDisplayName.Text = Convert.ToString(row.Cells["DisplayName"].Value);
-                _cmbRole.SelectedItem = Convert.ToString(row.Cells["Role"].Value);
-                _chkActive.Checked = Convert.ToBoolean(row.Cells["IsActive"].Value);
+                _grid.ClearSelection();
+                _grid.Rows[0].Selected = true;
+                PreviewSelected();
+            }
+            else
+            {
+                _editingUserId = 0;
+                _txtUsername.Text = string.Empty;
+                _txtDisplayName.Text = string.Empty;
+                _cmbRole.SelectedIndex = _cmbRole.Items.Count > 0 ? 0 : -1;
+                _chkActive.Checked = true;
                 _txtPassword.Text = string.Empty;
-
-                _btnDelete.Enabled = true;
-                _btnSave.Text = "Update";
+                SetEditorState(false);
             }
-            else if (string.Equals(col.Name, "ToggleActiveAction", StringComparison.OrdinalIgnoreCase))
+        }
+
+        private void PreviewSelected()
+        {
+            if (_isEditorActive) return;
+            if (_grid.CurrentRow == null) return;
+
+            var row = _grid.CurrentRow;
+            if (row.Cells["UserId"] == null || row.Cells["UserId"].Value == null) return;
+
+            _editingUserId = Convert.ToInt32(row.Cells["UserId"].Value);
+            _txtUsername.Text = Convert.ToString(row.Cells["Username"].Value);
+            _txtDisplayName.Text = Convert.ToString(row.Cells["DisplayName"].Value);
+
+            var role = Convert.ToString(row.Cells["Role"].Value);
+            if (!string.IsNullOrWhiteSpace(role) && _cmbRole.Items.Contains(role))
             {
-                var activeObj = row.Cells["IsActive"].Value;
-                var isActive = activeObj != null && activeObj != DBNull.Value && Convert.ToBoolean(activeObj);
-                var newActive = !isActive;
-
-                var prompt = newActive ? "Enable this user?" : "Disable this user?";
-                if (ThemedMessageBox.ShowConfirm(this, prompt, "Confirm") != DialogResult.OK)
-                {
-                    return;
-                }
-
-                _userService.SetActive(userId, newActive);
-                LoadGrid();
-                if (_editingUserId == userId)
-                {
-                    NewRecord();
-                }
+                _cmbRole.SelectedItem = role;
             }
+
+            _chkActive.Checked = row.Cells["IsActive"] != null &&
+                                 row.Cells["IsActive"].Value != null &&
+                                 row.Cells["IsActive"].Value != DBNull.Value &&
+                                 Convert.ToBoolean(row.Cells["IsActive"].Value);
+            _txtPassword.Text = string.Empty;
+            SetEditorState(false);
         }
 
         private void Save()
         {
+            if (_userService == null) return;
+
             try
             {
                 var username = (_txtUsername.Text ?? string.Empty).Trim();
@@ -325,6 +341,9 @@ namespace School_Management_System.Presentation.UserControls
                 var role = Convert.ToString(_cmbRole.SelectedItem) ?? string.Empty;
                 var displayName = (_txtDisplayName.Text ?? string.Empty).Trim();
                 var isActive = _chkActive.Checked;
+
+                UseWaitCursor = true;
+                _btnSave.Enabled = false;
 
                 if (_editingUserId == 0)
                 {
@@ -335,8 +354,6 @@ namespace School_Management_System.Presentation.UserControls
                         return;
                     }
 
-                    UseWaitCursor = true;
-                    _btnSave.Enabled = false;
                     _userService.Create(username, password, role, displayName, isActive);
                     ThemedMessageBox.ShowInfo(this, "User created successfully.", "Saved");
                 }
@@ -349,20 +366,16 @@ namespace School_Management_System.Presentation.UserControls
                         return;
                     }
 
-                    UseWaitCursor = true;
-                    _btnSave.Enabled = false;
                     _userService.Update(_editingUserId, username, role, displayName, isActive);
-
                     if (!string.IsNullOrWhiteSpace(password))
                     {
                         _userService.ResetPassword(_editingUserId, password);
                     }
-
                     ThemedMessageBox.ShowInfo(this, "User updated successfully.", "Updated");
                 }
 
                 LoadGrid();
-                NewRecord();
+                SetEditorState(false);
             }
             catch (Exception ex)
             {
@@ -378,7 +391,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private void DisableCurrent()
         {
-            if (_editingUserId == 0) return;
+            if (_userService == null) return;
+            if (_editingUserId <= 0) return;
 
             if (ThemedMessageBox.ShowConfirm(this, "Disable this user?", "Confirm") != DialogResult.OK)
             {
@@ -389,7 +403,6 @@ namespace School_Management_System.Presentation.UserControls
             {
                 _userService.SetActive(_editingUserId, false);
                 LoadGrid();
-                NewRecord();
             }
             catch (Exception ex)
             {
@@ -399,4 +412,3 @@ namespace School_Management_System.Presentation.UserControls
         }
     }
 }
-

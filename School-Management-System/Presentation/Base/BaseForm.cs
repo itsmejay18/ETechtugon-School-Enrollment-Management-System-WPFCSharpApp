@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 using School_Management_System.Presentation.Forms;
 using School_Management_System.Presentation.Theming;
@@ -11,6 +12,16 @@ namespace School_Management_System.Presentation.Base
         {
             ThemeManager.ApplyBaseForm(this);
             StartPosition = FormStartPosition.CenterScreen;
+        }
+
+        protected bool IsInDesigner
+        {
+            get
+            {
+                return LicenseManager.UsageMode == LicenseUsageMode.Designtime ||
+                       DesignMode ||
+                       (Site != null && Site.DesignMode);
+            }
         }
 
         protected void ShowInfo(string message, string title = null)
@@ -29,4 +40,3 @@ namespace School_Management_System.Presentation.Base
         }
     }
 }
-

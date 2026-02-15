@@ -24,153 +24,86 @@ namespace School_Management_System.Presentation.UserControls
         private TextBox _txtPhone;
         private TextBox _txtAddress;
         private DateTimePicker _dtHireDate;
+
+        private TextBox _txtSearch;
+        private DataGridView _grid;
+        private SplitContainer _split;
+
+        private Button _btnAdd;
+        private Button _btnEdit;
         private Button _btnDelete;
         private Button _btnSave;
         private Button _btnCancel;
-
-        private TextBox _txtSearch;
         private Button _btnRefresh;
-        private DataGridView _grid;
 
         private int _editingFacultyId;
+        private bool _isEditorActive;
+
+        public FacultyControl()
+            : this(null)
+        {
+        }
 
         public FacultyControl(FacultyService facultyService)
         {
-            _facultyService = facultyService ?? throw new ArgumentNullException(nameof(facultyService));
+            _facultyService = facultyService;
             InitializeComponent();
-            NewRecord();
+            SetEditorState(false);
             LoadGrid();
         }
 
         private void InitializeComponent()
         {
-            BackColor = ThemeColors.Background;
+            this.SuspendLayout();
+            // 
+            // FacultyControl
+            // 
+            this.Name = "FacultyControl";
+            this.Size = new System.Drawing.Size(852, 496);
+            this.ResumeLayout(false);
 
-            _gb = new GroupBox
-            {
-                Text = "Faculty Information",
-                Dock = DockStyle.Top,
-                Height = 280,
-                Font = ThemeFonts.SubHeader,
-                ForeColor = ThemeColors.Text,
-                Padding = new Padding(12, 18, 12, 12),
-                BackColor = ThemeColors.CardBackground
-            };
+        }
 
-            var formLayout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 4,
-                RowCount = 5,
-                Padding = new Padding(8, 6, 8, 6)
-            };
-            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
-            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
-            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        private Panel BuildToolbar()
+        {
+            var toolbar = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
 
-            for (var i = 0; i < 5; i++)
-            {
-                formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            }
-
-            var lblCode = MakeLabel("Faculty Code");
-            _txtFacultyCode = MakeTextBox(readOnly: true);
-
-            var lblFirstName = MakeLabel("First Name *");
-            _txtFirstName = MakeTextBox();
-
-            var lblLastName = MakeLabel("Last Name *");
-            _txtLastName = MakeTextBox();
-
-            var lblMiddleName = MakeLabel("Middle Name");
-            _txtMiddleName = MakeTextBox();
-
-            var lblHireDate = MakeLabel("Hire Date");
-            _dtHireDate = new DateTimePicker { Font = ThemeFonts.Input, Dock = DockStyle.Fill, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
-
-            var lblEmail = MakeLabel("Email");
-            _txtEmail = MakeTextBox();
-
-            var lblPhone = MakeLabel("Phone");
-            _txtPhone = MakeTextBox();
-
-            var lblAddress = MakeLabel("Address");
-            _txtAddress = new TextBox { Font = ThemeFonts.Input, Dock = DockStyle.Fill, Multiline = true, Height = 60, ScrollBars = ScrollBars.Vertical };
-            ThemeManager.StyleInput(_txtAddress);
-
-            // Row 0
-            formLayout.Controls.Add(lblCode, 0, 0);
-            formLayout.Controls.Add(_txtFacultyCode, 1, 0);
-            formLayout.Controls.Add(lblHireDate, 2, 0);
-            formLayout.Controls.Add(_dtHireDate, 3, 0);
-
-            // Row 1
-            formLayout.Controls.Add(lblFirstName, 0, 1);
-            formLayout.Controls.Add(_txtFirstName, 1, 1);
-            formLayout.Controls.Add(lblLastName, 2, 1);
-            formLayout.Controls.Add(_txtLastName, 3, 1);
-
-            // Row 2
-            formLayout.Controls.Add(lblMiddleName, 0, 2);
-            formLayout.Controls.Add(_txtMiddleName, 1, 2);
-            formLayout.SetColumnSpan(_txtMiddleName, 3);
-
-            // Row 3
-            formLayout.Controls.Add(lblEmail, 0, 3);
-            formLayout.Controls.Add(_txtEmail, 1, 3);
-            formLayout.Controls.Add(lblPhone, 2, 3);
-            formLayout.Controls.Add(_txtPhone, 3, 3);
-
-            // Row 4 (address spans)
-            formLayout.Controls.Add(lblAddress, 0, 4);
-            formLayout.Controls.Add(_txtAddress, 1, 4);
-            formLayout.SetColumnSpan(_txtAddress, 3);
-
-            var buttons = new Panel { Dock = DockStyle.Bottom, Height = 48, Padding = new Padding(8, 8, 8, 8), BackColor = ThemeColors.CardBackground };
-            _btnDelete = new Button { Text = "Delete", Width = 110, Dock = DockStyle.Left };
-            ThemeManager.StyleButtonDanger(_btnDelete);
-            _btnDelete.Click += (s, e) => DeleteCurrent();
-
-            var right = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Width = 280 };
-            _btnSave = new Button { Text = "Save", Width = 110 };
-            ThemeManager.StyleButtonPrimary(_btnSave);
-            _btnSave.Click += (s, e) => Save();
-
-            _btnCancel = new Button { Text = "Cancel", Width = 110 };
-            ThemeManager.StyleButtonNeutral(_btnCancel);
-            _btnCancel.Click += (s, e) => NewRecord();
-
-            right.Controls.Add(_btnSave);
-            right.Controls.Add(_btnCancel);
-
-            buttons.Controls.Add(right);
-            buttons.Controls.Add(_btnDelete);
-
-            _gb.Controls.Add(formLayout);
-            _gb.Controls.Add(buttons);
-
-            var searchRow = new Panel { Dock = DockStyle.Top, Height = 48, Padding = new Padding(0, 12, 0, 8), BackColor = ThemeColors.Background };
-            var lblSearch = new Label { Text = "Search:", AutoSize = true, Location = new Point(0, 16), Font = ThemeFonts.Label, ForeColor = ThemeColors.Text };
-            _txtSearch = new TextBox { Location = new Point(62, 12), Width = 280 };
+            _txtSearch = new TextBox { Width = 260, Location = new Point(0, 10) };
             ThemeManager.StyleInput(_txtSearch);
             _txtSearch.TextChanged += (s, e) => LoadGrid();
 
-            _btnRefresh = new Button { Text = "Refresh", Location = new Point(350, 10), Width = 110 };
+            _btnRefresh = new Button { Text = "Refresh", Width = 96, Location = new Point(270, 8) };
             ThemeManager.StyleButtonNeutral(_btnRefresh);
             _btnRefresh.Click += (s, e) => LoadGrid();
 
-            searchRow.Controls.Add(lblSearch);
-            searchRow.Controls.Add(_txtSearch);
-            searchRow.Controls.Add(_btnRefresh);
+            _btnAdd = new Button { Text = "Add", Width = 86, Location = new Point(384, 8) };
+            ThemeManager.StyleButtonPrimary(_btnAdd);
+            _btnAdd.Click += (s, e) => BeginAdd();
 
-            _grid = new DataGridView { Dock = DockStyle.Fill };
-            ThemeManager.StyleDataGrid(_grid);
-            _grid.CellContentClick += GridCellContentClick;
+            _btnEdit = new Button { Text = "Edit", Width = 86, Location = new Point(478, 8) };
+            ThemeManager.StyleButtonNeutral(_btnEdit);
+            _btnEdit.Click += (s, e) => BeginEdit();
 
-            Controls.Add(_grid);
-            Controls.Add(searchRow);
-            Controls.Add(_gb);
+            _btnDelete = new Button { Text = "Delete", Width = 86, Location = new Point(572, 8) };
+            ThemeManager.StyleButtonDanger(_btnDelete);
+            _btnDelete.Click += (s, e) => DeleteCurrent();
+
+            _btnSave = new Button { Text = "Save", Width = 86, Location = new Point(666, 8) };
+            ThemeManager.StyleButtonPrimary(_btnSave);
+            _btnSave.Click += (s, e) => Save();
+
+            _btnCancel = new Button { Text = "Cancel", Width = 86, Location = new Point(760, 8) };
+            ThemeManager.StyleButtonNeutral(_btnCancel);
+            _btnCancel.Click += (s, e) => CancelEdit();
+
+            toolbar.Controls.Add(_txtSearch);
+            toolbar.Controls.Add(_btnRefresh);
+            toolbar.Controls.Add(_btnAdd);
+            toolbar.Controls.Add(_btnEdit);
+            toolbar.Controls.Add(_btnDelete);
+            toolbar.Controls.Add(_btnSave);
+            toolbar.Controls.Add(_btnCancel);
+            return toolbar;
         }
 
         private static Label MakeLabel(string text)
@@ -192,10 +125,28 @@ namespace School_Management_System.Presentation.UserControls
             return tb;
         }
 
-        private void NewRecord()
+        private void SetEditorState(bool active)
+        {
+            _isEditorActive = active;
+            _txtFirstName.ReadOnly = !active;
+            _txtLastName.ReadOnly = !active;
+            _txtMiddleName.ReadOnly = !active;
+            _txtEmail.ReadOnly = !active;
+            _txtPhone.ReadOnly = !active;
+            _txtAddress.ReadOnly = !active;
+            _dtHireDate.Enabled = active;
+
+            _btnSave.Enabled = active;
+            _btnCancel.Enabled = active;
+            _btnAdd.Enabled = !active;
+            _btnEdit.Enabled = !active && _editingFacultyId > 0;
+            _btnDelete.Enabled = !active && _editingFacultyId > 0;
+        }
+
+        private void BeginAdd()
         {
             _editingFacultyId = 0;
-            _txtFacultyCode.Text = _facultyService.GetNextFacultyCode();
+            _txtFacultyCode.Text = _facultyService == null ? "FAC-00001" : _facultyService.GetNextFacultyCode();
             _txtFirstName.Text = string.Empty;
             _txtLastName.Text = string.Empty;
             _txtMiddleName.Text = string.Empty;
@@ -203,9 +154,21 @@ namespace School_Management_System.Presentation.UserControls
             _txtPhone.Text = string.Empty;
             _txtAddress.Text = string.Empty;
             _dtHireDate.Checked = false;
+            SetEditorState(true);
+            _txtFirstName.Focus();
+        }
 
-            _btnDelete.Enabled = false;
-            _btnSave.Text = "Save";
+        private void BeginEdit()
+        {
+            if (_editingFacultyId <= 0) return;
+            SetEditorState(true);
+            _txtFirstName.Focus();
+        }
+
+        private void CancelEdit()
+        {
+            SetEditorState(false);
+            PreviewSelected();
         }
 
         private void LoadGrid()
@@ -213,7 +176,7 @@ namespace School_Management_System.Presentation.UserControls
             try
             {
                 UseWaitCursor = true;
-                var dt = _facultyService.GetFaculty(_txtSearch.Text);
+                var dt = _facultyService == null ? new DataTable() : _facultyService.GetFaculty(_txtSearch == null ? string.Empty : _txtSearch.Text);
                 BindGrid(dt);
             }
             catch (Exception ex)
@@ -229,8 +192,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private void BindGrid(DataTable dt)
         {
-            _grid.Columns.Clear();
             _grid.DataSource = null;
+            _grid.Columns.Clear();
             _grid.DataSource = dt;
 
             if (_grid.Columns["FacultyId"] != null)
@@ -238,84 +201,62 @@ namespace School_Management_System.Presentation.UserControls
                 _grid.Columns["FacultyId"].Visible = false;
             }
 
-            AddActionButtons();
+            if (_grid.Rows.Count > 0)
+            {
+                _grid.ClearSelection();
+                _grid.Rows[0].Selected = true;
+                PreviewSelected();
+            }
+            else
+            {
+                _editingFacultyId = 0;
+                _txtFacultyCode.Text = string.Empty;
+                _txtFirstName.Text = string.Empty;
+                _txtLastName.Text = string.Empty;
+                _txtMiddleName.Text = string.Empty;
+                _txtEmail.Text = string.Empty;
+                _txtPhone.Text = string.Empty;
+                _txtAddress.Text = string.Empty;
+                _dtHireDate.Checked = false;
+                SetEditorState(false);
+            }
         }
 
-        private void AddActionButtons()
+        private void PreviewSelected()
         {
-            var editCol = new DataGridViewButtonColumn
+            if (_isEditorActive) return;
+            if (_grid.CurrentRow == null) return;
+
+            var row = _grid.CurrentRow;
+            if (row.Cells["FacultyId"] == null || row.Cells["FacultyId"].Value == null) return;
+
+            _editingFacultyId = Convert.ToInt32(row.Cells["FacultyId"].Value);
+            _txtFacultyCode.Text = Convert.ToString(row.Cells["FacultyCode"].Value);
+            _txtFirstName.Text = Convert.ToString(row.Cells["FirstName"].Value);
+            _txtLastName.Text = Convert.ToString(row.Cells["LastName"].Value);
+            _txtMiddleName.Text = Convert.ToString(row.Cells["MiddleName"].Value);
+            _txtEmail.Text = Convert.ToString(row.Cells["Email"].Value);
+            _txtPhone.Text = Convert.ToString(row.Cells["Phone"].Value);
+            _txtAddress.Text = Convert.ToString(row.Cells["Address"].Value);
+
+            var hire = row.Cells["HireDate"].Value;
+            if (hire == null || hire == DBNull.Value)
             {
-                Name = "EditAction",
-                HeaderText = "",
-                Text = "Edit",
-                UseColumnTextForButtonValue = true,
-                Width = 70
-            };
-
-            var delCol = new DataGridViewButtonColumn
-            {
-                Name = "DeleteAction",
-                HeaderText = "",
-                Text = "Delete",
-                UseColumnTextForButtonValue = true,
-                Width = 70
-            };
-
-            _grid.Columns.Insert(0, editCol);
-            _grid.Columns.Insert(1, delCol);
-        }
-
-        private void GridCellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
-
-            var col = _grid.Columns[e.ColumnIndex];
-            if (col == null) return;
-
-            var row = _grid.Rows[e.RowIndex];
-            var idObj = row.Cells["FacultyId"].Value;
-            if (idObj == null) return;
-
-            var facultyId = Convert.ToInt32(idObj);
-
-            if (string.Equals(col.Name, "EditAction", StringComparison.OrdinalIgnoreCase))
-            {
-                _editingFacultyId = facultyId;
-                _txtFacultyCode.Text = Convert.ToString(row.Cells["FacultyCode"].Value);
-                _txtFirstName.Text = Convert.ToString(row.Cells["FirstName"].Value);
-                _txtLastName.Text = Convert.ToString(row.Cells["LastName"].Value);
-                _txtMiddleName.Text = Convert.ToString(row.Cells["MiddleName"].Value);
-                _txtEmail.Text = Convert.ToString(row.Cells["Email"].Value);
-                _txtPhone.Text = Convert.ToString(row.Cells["Phone"].Value);
-                _txtAddress.Text = Convert.ToString(row.Cells["Address"].Value);
-
-                var hire = row.Cells["HireDate"].Value;
-                if (hire == null || hire == DBNull.Value)
-                {
-                    _dtHireDate.Checked = false;
-                }
-                else
-                {
-                    _dtHireDate.Checked = true;
-                    _dtHireDate.Value = Convert.ToDateTime(hire);
-                }
-
-                _btnDelete.Enabled = true;
-                _btnSave.Text = "Update";
+                _dtHireDate.Checked = false;
             }
-            else if (string.Equals(col.Name, "DeleteAction", StringComparison.OrdinalIgnoreCase))
+            else
             {
-                if (ThemedMessageBox.ShowConfirm(this, Messages.ConfirmDelete, "Delete Faculty") == DialogResult.OK)
-                {
-                    _facultyService.Delete(facultyId);
-                    LoadGrid();
-                    NewRecord();
-                }
+                _dtHireDate.Checked = true;
+                _dtHireDate.Value = Convert.ToDateTime(hire);
             }
+
+            SetEditorState(false);
         }
 
         private void Save()
         {
+            if (_facultyService == null) return;
+
             try
             {
                 var faculty = new Faculty
@@ -353,7 +294,7 @@ namespace School_Management_System.Presentation.UserControls
                 }
 
                 LoadGrid();
-                NewRecord();
+                SetEditorState(false);
             }
             catch (Exception ex)
             {
@@ -369,7 +310,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private void DeleteCurrent()
         {
-            if (_editingFacultyId == 0) return;
+            if (_facultyService == null) return;
+            if (_editingFacultyId <= 0) return;
 
             if (ThemedMessageBox.ShowConfirm(this, Messages.ConfirmDelete, "Delete Faculty") != DialogResult.OK)
             {
@@ -380,7 +322,6 @@ namespace School_Management_System.Presentation.UserControls
             {
                 _facultyService.Delete(_editingFacultyId);
                 LoadGrid();
-                NewRecord();
             }
             catch (Exception ex)
             {
@@ -390,4 +331,3 @@ namespace School_Management_System.Presentation.UserControls
         }
     }
 }
-

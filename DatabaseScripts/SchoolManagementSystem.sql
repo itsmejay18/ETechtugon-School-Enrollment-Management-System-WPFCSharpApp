@@ -1,281 +1,452 @@
-Ôªø/*
-  School Management System Database Script
-  Target: MySQL 8.0+
+-- MySQL dump 10.13  Distrib 8.0.44, for Win64 (x86_64)
+--
+-- Host: localhost    Database: schoolmanagementsystem
+-- ------------------------------------------------------
+-- Server version	8.0.44
 
-  Default Login Accounts:
-    Username: admin      Password: admin123
-    Username: registrar  Password: registrar123
-    Username: faculty1   Password: faculty123
-*/
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-SET NAMES utf8mb4;
+--
+-- Table structure for table `academicyear`
+--
 
-CREATE DATABASE IF NOT EXISTS SchoolManagementSystem
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_0900_ai_ci;
+DROP TABLE IF EXISTS `academicyear`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `academicyear` (
+  `AcademicYearId` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(20) NOT NULL,
+  `StartDate` date DEFAULT NULL,
+  `EndDate` date DEFAULT NULL,
+  `IsCurrent` tinyint(1) NOT NULL DEFAULT '0',
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`AcademicYearId`),
+  UNIQUE KEY `UX_AcademicYear_Name` (`Name`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
-USE SchoolManagementSystem;
+--
+-- Dumping data for table `academicyear`
+--
 
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS EnrollmentDetails;
-DROP TABLE IF EXISTS Enrollment;
-DROP TABLE IF EXISTS CurriculumDetails;
-DROP TABLE IF EXISTS Curriculum;
-DROP TABLE IF EXISTS Subject;
-DROP TABLE IF EXISTS Course;
-DROP TABLE IF EXISTS Student;
-DROP TABLE IF EXISTS Faculty;
-DROP TABLE IF EXISTS ActivityLog;
-DROP TABLE IF EXISTS Users;
-DROP TABLE IF EXISTS AcademicYear;
-DROP TABLE IF EXISTS YearLevel;
-DROP TABLE IF EXISTS Semester;
-SET FOREIGN_KEY_CHECKS = 1;
+LOCK TABLES `academicyear` WRITE;
+/*!40000 ALTER TABLE `academicyear` DISABLE KEYS */;
+INSERT INTO `academicyear` VALUES (1,'2025-2026','2025-06-01','2026-05-31',1,1);
+/*!40000 ALTER TABLE `academicyear` ENABLE KEYS */;
+UNLOCK TABLES;
 
-CREATE TABLE AcademicYear
-(
-    AcademicYearId INT NOT NULL AUTO_INCREMENT,
-    Name VARCHAR(20) NOT NULL,
-    StartDate DATE NULL,
-    EndDate DATE NULL,
-    IsCurrent TINYINT(1) NOT NULL DEFAULT 0,
-    IsActive TINYINT(1) NOT NULL DEFAULT 1,
-    PRIMARY KEY (AcademicYearId),
-    UNIQUE KEY UX_AcademicYear_Name (Name)
-) ENGINE=InnoDB;
+--
+-- Table structure for table `activitylog`
+--
 
-CREATE TABLE YearLevel
-(
-    YearLevelId INT NOT NULL AUTO_INCREMENT,
-    Name VARCHAR(30) NOT NULL,
-    SortOrder INT NOT NULL DEFAULT 0,
-    IsActive TINYINT(1) NOT NULL DEFAULT 1,
-    PRIMARY KEY (YearLevelId),
-    UNIQUE KEY UX_YearLevel_Name (Name)
-) ENGINE=InnoDB;
+DROP TABLE IF EXISTS `activitylog`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `activitylog` (
+  `ActivityLogId` int NOT NULL AUTO_INCREMENT,
+  `UserId` int DEFAULT NULL,
+  `Action` varchar(50) NOT NULL,
+  `Entity` varchar(50) DEFAULT NULL,
+  `EntityId` int DEFAULT NULL,
+  `Details` varchar(4000) DEFAULT NULL,
+  `MachineName` varchar(100) DEFAULT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  PRIMARY KEY (`ActivityLogId`),
+  KEY `IX_ActivityLog_CreatedAt` (`CreatedAt`),
+  KEY `FK_ActivityLog_Users` (`UserId`),
+  CONSTRAINT `FK_ActivityLog_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
-CREATE TABLE Semester
-(
-    SemesterId INT NOT NULL AUTO_INCREMENT,
-    Name VARCHAR(30) NOT NULL,
-    SortOrder INT NOT NULL DEFAULT 0,
-    IsActive TINYINT(1) NOT NULL DEFAULT 1,
-    PRIMARY KEY (SemesterId),
-    UNIQUE KEY UX_Semester_Name (Name)
-) ENGINE=InnoDB;
+--
+-- Dumping data for table `activitylog`
+--
 
-CREATE TABLE Users
-(
-    UserId INT NOT NULL AUTO_INCREMENT,
-    Username VARCHAR(50) NOT NULL,
-    PasswordHash BINARY(32) NOT NULL,
-    PasswordSalt BINARY(16) NOT NULL,
-    `Role` VARCHAR(30) NOT NULL,
-    DisplayName VARCHAR(100) NULL,
-    IsActive TINYINT(1) NOT NULL DEFAULT 1,
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    UpdatedAt DATETIME NULL,
-    LastLoginAt DATETIME NULL,
-    PRIMARY KEY (UserId),
-    UNIQUE KEY UX_Users_Username (Username),
-    KEY IX_Users_Role (`Role`)
-) ENGINE=InnoDB;
+LOCK TABLES `activitylog` WRITE;
+/*!40000 ALTER TABLE `activitylog` DISABLE KEYS */;
+/*!40000 ALTER TABLE `activitylog` ENABLE KEYS */;
+UNLOCK TABLES;
 
-CREATE TABLE ActivityLog
-(
-    ActivityLogId INT NOT NULL AUTO_INCREMENT,
-    UserId INT NULL,
-    `Action` VARCHAR(50) NOT NULL,
-    Entity VARCHAR(50) NULL,
-    EntityId INT NULL,
-    Details VARCHAR(4000) NULL,
-    MachineName VARCHAR(100) NULL,
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    PRIMARY KEY (ActivityLogId),
-    KEY IX_ActivityLog_CreatedAt (CreatedAt),
-    CONSTRAINT FK_ActivityLog_Users FOREIGN KEY (UserId) REFERENCES Users (UserId) ON DELETE SET NULL
-) ENGINE=InnoDB;
+--
+-- Table structure for table `course`
+--
 
-CREATE TABLE Faculty
-(
-    FacultyId INT NOT NULL AUTO_INCREMENT,
-    FacultyCode VARCHAR(20) NOT NULL,
-    FirstName VARCHAR(50) NOT NULL,
-    LastName VARCHAR(50) NOT NULL,
-    MiddleName VARCHAR(50) NULL,
-    Email VARCHAR(100) NULL,
-    Phone VARCHAR(30) NULL,
-    Address VARCHAR(250) NULL,
-    HireDate DATE NULL,
-    IsActive TINYINT(1) NOT NULL DEFAULT 1,
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    UpdatedAt DATETIME NULL,
-    PRIMARY KEY (FacultyId),
-    UNIQUE KEY UX_Faculty_FacultyCode (FacultyCode)
-) ENGINE=InnoDB;
+DROP TABLE IF EXISTS `course`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `course` (
+  `CourseId` int NOT NULL AUTO_INCREMENT,
+  `CourseCode` varchar(20) NOT NULL,
+  `CourseName` varchar(100) NOT NULL,
+  `Description` varchar(250) DEFAULT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`CourseId`),
+  UNIQUE KEY `UX_Course_CourseCode` (`CourseCode`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
-CREATE TABLE Course
-(
-    CourseId INT NOT NULL AUTO_INCREMENT,
-    CourseCode VARCHAR(20) NOT NULL,
-    CourseName VARCHAR(100) NOT NULL,
-    Description VARCHAR(250) NULL,
-    IsActive TINYINT(1) NOT NULL DEFAULT 1,
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    UpdatedAt DATETIME NULL,
-    PRIMARY KEY (CourseId),
-    UNIQUE KEY UX_Course_CourseCode (CourseCode)
-) ENGINE=InnoDB;
+--
+-- Dumping data for table `course`
+--
 
-CREATE TABLE Subject
-(
-    SubjectId INT NOT NULL AUTO_INCREMENT,
-    SubjectCode VARCHAR(20) NOT NULL,
-    SubjectName VARCHAR(100) NOT NULL,
-    Units INT NOT NULL,
-    CourseId INT NULL,
-    IsActive TINYINT(1) NOT NULL DEFAULT 1,
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    UpdatedAt DATETIME NULL,
-    PRIMARY KEY (SubjectId),
-    UNIQUE KEY UX_Subject_SubjectCode (SubjectCode),
-    KEY IX_Subject_CourseId (CourseId),
-    CONSTRAINT FK_Subject_Course FOREIGN KEY (CourseId) REFERENCES Course (CourseId)
-) ENGINE=InnoDB;
+LOCK TABLES `course` WRITE;
+/*!40000 ALTER TABLE `course` DISABLE KEYS */;
+INSERT INTO `course` VALUES (1,'BSCS','BS Computer Science','Sample course',1,'2026-02-15 14:06:21',NULL),(2,'BSIT','BS Information Technology','Sample course',1,'2026-02-15 14:06:21',NULL);
+/*!40000 ALTER TABLE `course` ENABLE KEYS */;
+UNLOCK TABLES;
 
-CREATE TABLE Student
-(
-    StudentId INT NOT NULL AUTO_INCREMENT,
-    StudentNumber VARCHAR(30) NOT NULL,
-    FirstName VARCHAR(50) NOT NULL,
-    LastName VARCHAR(50) NOT NULL,
-    MiddleName VARCHAR(50) NULL,
-    Gender VARCHAR(20) NULL,
-    BirthDate DATE NULL,
-    Email VARCHAR(100) NULL,
-    Phone VARCHAR(30) NULL,
-    Address VARCHAR(250) NULL,
-    IsActive TINYINT(1) NOT NULL DEFAULT 1,
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    UpdatedAt DATETIME NULL,
-    PRIMARY KEY (StudentId),
-    UNIQUE KEY UX_Student_StudentNumber (StudentNumber),
-    KEY IX_Student_LastFirst (LastName, FirstName)
-) ENGINE=InnoDB;
+--
+-- Table structure for table `curriculum`
+--
 
-CREATE TABLE Curriculum
-(
-    CurriculumId INT NOT NULL AUTO_INCREMENT,
-    Name VARCHAR(100) NOT NULL,
-    CourseId INT NOT NULL,
-    YearLevelId INT NOT NULL,
-    SemesterId INT NOT NULL,
-    AcademicYearId INT NOT NULL,
-    IsActive TINYINT(1) NOT NULL DEFAULT 1,
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    UpdatedAt DATETIME NULL,
-    PRIMARY KEY (CurriculumId),
-    UNIQUE KEY UX_Curriculum_Unique (CourseId, YearLevelId, SemesterId, AcademicYearId),
-    CONSTRAINT FK_Curriculum_Course FOREIGN KEY (CourseId) REFERENCES Course (CourseId),
-    CONSTRAINT FK_Curriculum_YearLevel FOREIGN KEY (YearLevelId) REFERENCES YearLevel (YearLevelId),
-    CONSTRAINT FK_Curriculum_Semester FOREIGN KEY (SemesterId) REFERENCES Semester (SemesterId),
-    CONSTRAINT FK_Curriculum_AcademicYear FOREIGN KEY (AcademicYearId) REFERENCES AcademicYear (AcademicYearId)
-) ENGINE=InnoDB;
+DROP TABLE IF EXISTS `curriculum`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `curriculum` (
+  `CurriculumId` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(100) NOT NULL,
+  `CourseId` int NOT NULL,
+  `YearLevelId` int NOT NULL,
+  `SemesterId` int NOT NULL,
+  `AcademicYearId` int NOT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`CurriculumId`),
+  UNIQUE KEY `UX_Curriculum_Unique` (`CourseId`,`YearLevelId`,`SemesterId`,`AcademicYearId`),
+  KEY `FK_Curriculum_YearLevel` (`YearLevelId`),
+  KEY `FK_Curriculum_Semester` (`SemesterId`),
+  KEY `FK_Curriculum_AcademicYear` (`AcademicYearId`),
+  CONSTRAINT `FK_Curriculum_AcademicYear` FOREIGN KEY (`AcademicYearId`) REFERENCES `academicyear` (`AcademicYearId`),
+  CONSTRAINT `FK_Curriculum_Course` FOREIGN KEY (`CourseId`) REFERENCES `course` (`CourseId`),
+  CONSTRAINT `FK_Curriculum_Semester` FOREIGN KEY (`SemesterId`) REFERENCES `semester` (`SemesterId`),
+  CONSTRAINT `FK_Curriculum_YearLevel` FOREIGN KEY (`YearLevelId`) REFERENCES `yearlevel` (`YearLevelId`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
-CREATE TABLE CurriculumDetails
-(
-    CurriculumDetailId INT NOT NULL AUTO_INCREMENT,
-    CurriculumId INT NOT NULL,
-    SubjectId INT NOT NULL,
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    PRIMARY KEY (CurriculumDetailId),
-    UNIQUE KEY UX_CurriculumDetails_Unique (CurriculumId, SubjectId),
-    CONSTRAINT FK_CurriculumDetails_Curriculum FOREIGN KEY (CurriculumId) REFERENCES Curriculum (CurriculumId) ON DELETE CASCADE,
-    CONSTRAINT FK_CurriculumDetails_Subject FOREIGN KEY (SubjectId) REFERENCES Subject (SubjectId)
-) ENGINE=InnoDB;
+--
+-- Dumping data for table `curriculum`
+--
 
-CREATE TABLE Enrollment
-(
-    EnrollmentId INT NOT NULL AUTO_INCREMENT,
-    EnrollmentNumber VARCHAR(30) NOT NULL,
-    StudentId INT NOT NULL,
-    CourseId INT NOT NULL,
-    AcademicYearId INT NOT NULL,
-    YearLevelId INT NOT NULL,
-    SemesterId INT NOT NULL,
-    EnrollDate DATE NOT NULL,
-    TotalUnits INT NOT NULL DEFAULT 0,
-    `Status` VARCHAR(20) NOT NULL DEFAULT 'Draft',
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    UpdatedAt DATETIME NULL,
-    PRIMARY KEY (EnrollmentId),
-    UNIQUE KEY UX_Enrollment_EnrollmentNumber (EnrollmentNumber),
-    KEY IX_Enrollment_StudentId (StudentId),
-    CONSTRAINT FK_Enrollment_Student FOREIGN KEY (StudentId) REFERENCES Student (StudentId),
-    CONSTRAINT FK_Enrollment_Course FOREIGN KEY (CourseId) REFERENCES Course (CourseId),
-    CONSTRAINT FK_Enrollment_AcademicYear FOREIGN KEY (AcademicYearId) REFERENCES AcademicYear (AcademicYearId),
-    CONSTRAINT FK_Enrollment_YearLevel FOREIGN KEY (YearLevelId) REFERENCES YearLevel (YearLevelId),
-    CONSTRAINT FK_Enrollment_Semester FOREIGN KEY (SemesterId) REFERENCES Semester (SemesterId)
-) ENGINE=InnoDB;
+LOCK TABLES `curriculum` WRITE;
+/*!40000 ALTER TABLE `curriculum` DISABLE KEYS */;
+INSERT INTO `curriculum` VALUES (1,'BSCS - BS Computer Science - 1st Year - 1st Semester - 2025-2026',1,1,1,1,1,'2026-02-15 14:32:35',NULL);
+/*!40000 ALTER TABLE `curriculum` ENABLE KEYS */;
+UNLOCK TABLES;
 
-CREATE TABLE EnrollmentDetails
-(
-    EnrollmentDetailId INT NOT NULL AUTO_INCREMENT,
-    EnrollmentId INT NOT NULL,
-    SubjectId INT NOT NULL,
-    Units INT NOT NULL,
-    CreatedAt DATETIME NOT NULL DEFAULT (UTC_TIMESTAMP()),
-    PRIMARY KEY (EnrollmentDetailId),
-    UNIQUE KEY UX_EnrollmentDetails_Unique (EnrollmentId, SubjectId),
-    CONSTRAINT FK_EnrollmentDetails_Enrollment FOREIGN KEY (EnrollmentId) REFERENCES Enrollment (EnrollmentId) ON DELETE CASCADE,
-    CONSTRAINT FK_EnrollmentDetails_Subject FOREIGN KEY (SubjectId) REFERENCES Subject (SubjectId)
-) ENGINE=InnoDB;
+--
+-- Table structure for table `curriculumdetails`
+--
 
-INSERT INTO YearLevel (Name, SortOrder) VALUES
-('1st Year', 1),
-('2nd Year', 2),
-('3rd Year', 3),
-('4th Year', 4);
+DROP TABLE IF EXISTS `curriculumdetails`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `curriculumdetails` (
+  `CurriculumDetailId` int NOT NULL AUTO_INCREMENT,
+  `CurriculumId` int NOT NULL,
+  `SubjectId` int NOT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  PRIMARY KEY (`CurriculumDetailId`),
+  UNIQUE KEY `UX_CurriculumDetails_Unique` (`CurriculumId`,`SubjectId`),
+  KEY `FK_CurriculumDetails_Subject` (`SubjectId`),
+  CONSTRAINT `FK_CurriculumDetails_Curriculum` FOREIGN KEY (`CurriculumId`) REFERENCES `curriculum` (`CurriculumId`) ON DELETE CASCADE,
+  CONSTRAINT `FK_CurriculumDetails_Subject` FOREIGN KEY (`SubjectId`) REFERENCES `subject` (`SubjectId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO Semester (Name, SortOrder) VALUES
-('1st Semester', 1),
-('2nd Semester', 2);
+--
+-- Dumping data for table `curriculumdetails`
+--
 
-INSERT INTO AcademicYear (Name, StartDate, EndDate, IsCurrent) VALUES
-('2025-2026', '2025-06-01', '2026-05-31', 1);
+LOCK TABLES `curriculumdetails` WRITE;
+/*!40000 ALTER TABLE `curriculumdetails` DISABLE KEYS */;
+/*!40000 ALTER TABLE `curriculumdetails` ENABLE KEYS */;
+UNLOCK TABLES;
 
-INSERT INTO Course (CourseCode, CourseName, Description) VALUES
-('BSCS', 'BS Computer Science', 'Sample course'),
-('BSIT', 'BS Information Technology', 'Sample course');
+--
+-- Table structure for table `enrollment`
+--
 
-INSERT INTO Subject (SubjectCode, SubjectName, Units, CourseId) VALUES
-('CS101', 'Introduction to Computing', 3, (SELECT CourseId FROM Course WHERE CourseCode = 'BSCS' LIMIT 1)),
-('CS102', 'Programming Fundamentals', 3, (SELECT CourseId FROM Course WHERE CourseCode = 'BSCS' LIMIT 1)),
-('IT101', 'Computer Applications', 3, (SELECT CourseId FROM Course WHERE CourseCode = 'BSIT' LIMIT 1));
+DROP TABLE IF EXISTS `enrollment`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `enrollment` (
+  `EnrollmentId` int NOT NULL AUTO_INCREMENT,
+  `EnrollmentNumber` varchar(30) NOT NULL,
+  `StudentId` int NOT NULL,
+  `CourseId` int NOT NULL,
+  `AcademicYearId` int NOT NULL,
+  `YearLevelId` int NOT NULL,
+  `SemesterId` int NOT NULL,
+  `EnrollDate` date NOT NULL,
+  `TotalUnits` int NOT NULL DEFAULT '0',
+  `Status` varchar(20) NOT NULL DEFAULT 'Draft',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`EnrollmentId`),
+  UNIQUE KEY `UX_Enrollment_EnrollmentNumber` (`EnrollmentNumber`),
+  KEY `IX_Enrollment_StudentId` (`StudentId`),
+  KEY `FK_Enrollment_Course` (`CourseId`),
+  KEY `FK_Enrollment_AcademicYear` (`AcademicYearId`),
+  KEY `FK_Enrollment_YearLevel` (`YearLevelId`),
+  KEY `FK_Enrollment_Semester` (`SemesterId`),
+  CONSTRAINT `FK_Enrollment_AcademicYear` FOREIGN KEY (`AcademicYearId`) REFERENCES `academicyear` (`AcademicYearId`),
+  CONSTRAINT `FK_Enrollment_Course` FOREIGN KEY (`CourseId`) REFERENCES `course` (`CourseId`),
+  CONSTRAINT `FK_Enrollment_Semester` FOREIGN KEY (`SemesterId`) REFERENCES `semester` (`SemesterId`),
+  CONSTRAINT `FK_Enrollment_Student` FOREIGN KEY (`StudentId`) REFERENCES `student` (`StudentId`),
+  CONSTRAINT `FK_Enrollment_YearLevel` FOREIGN KEY (`YearLevelId`) REFERENCES `yearlevel` (`YearLevelId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
-INSERT INTO Users (Username, PasswordHash, PasswordSalt, `Role`, DisplayName, IsActive)
-VALUES
-(
-    'admin',
-    UNHEX('9676d3c1887fcb1a58fe406843d608cd508833ed1347bd19244e4648221af2eb'),
-    UNHEX('46e1fb86362afeb4b70816259c5c2096'),
-    'Admin',
-    'System Administrator',
-    1
-),
-(
-    'registrar',
-    UNHEX('020eae8d20d045b9f153b17a744715d4b2600c198a5e07b814adf902c88d383f'),
-    UNHEX('2d8f86f305beb5430b09f35d73ea75a2'),
-    'Registrar',
-    'Default Registrar',
-    1
-),
-(
-    'faculty1',
-    UNHEX('c77c7b0fbae3b2ff5241b9c00974eada8da1a578973f70b6221767bc135cc353'),
-    UNHEX('48a0e592ab28ebd356df4aa6e7886a5f'),
-    'Faculty',
-    'Default Faculty',
-    1
-);
+--
+-- Dumping data for table `enrollment`
+--
+
+LOCK TABLES `enrollment` WRITE;
+/*!40000 ALTER TABLE `enrollment` DISABLE KEYS */;
+/*!40000 ALTER TABLE `enrollment` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `enrollmentdetails`
+--
+
+DROP TABLE IF EXISTS `enrollmentdetails`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `enrollmentdetails` (
+  `EnrollmentDetailId` int NOT NULL AUTO_INCREMENT,
+  `EnrollmentId` int NOT NULL,
+  `SubjectId` int NOT NULL,
+  `Units` int NOT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  PRIMARY KEY (`EnrollmentDetailId`),
+  UNIQUE KEY `UX_EnrollmentDetails_Unique` (`EnrollmentId`,`SubjectId`),
+  KEY `FK_EnrollmentDetails_Subject` (`SubjectId`),
+  CONSTRAINT `FK_EnrollmentDetails_Enrollment` FOREIGN KEY (`EnrollmentId`) REFERENCES `enrollment` (`EnrollmentId`) ON DELETE CASCADE,
+  CONSTRAINT `FK_EnrollmentDetails_Subject` FOREIGN KEY (`SubjectId`) REFERENCES `subject` (`SubjectId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `enrollmentdetails`
+--
+
+LOCK TABLES `enrollmentdetails` WRITE;
+/*!40000 ALTER TABLE `enrollmentdetails` DISABLE KEYS */;
+/*!40000 ALTER TABLE `enrollmentdetails` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `faculty`
+--
+
+DROP TABLE IF EXISTS `faculty`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `faculty` (
+  `FacultyId` int NOT NULL AUTO_INCREMENT,
+  `FacultyCode` varchar(20) NOT NULL,
+  `FirstName` varchar(50) NOT NULL,
+  `LastName` varchar(50) NOT NULL,
+  `MiddleName` varchar(50) DEFAULT NULL,
+  `Email` varchar(100) DEFAULT NULL,
+  `Phone` varchar(30) DEFAULT NULL,
+  `Address` varchar(250) DEFAULT NULL,
+  `HireDate` date DEFAULT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`FacultyId`),
+  UNIQUE KEY `UX_Faculty_FacultyCode` (`FacultyCode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `faculty`
+--
+
+LOCK TABLES `faculty` WRITE;
+/*!40000 ALTER TABLE `faculty` DISABLE KEYS */;
+/*!40000 ALTER TABLE `faculty` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `semester`
+--
+
+DROP TABLE IF EXISTS `semester`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `semester` (
+  `SemesterId` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(30) NOT NULL,
+  `SortOrder` int NOT NULL DEFAULT '0',
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`SemesterId`),
+  UNIQUE KEY `UX_Semester_Name` (`Name`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `semester`
+--
+
+LOCK TABLES `semester` WRITE;
+/*!40000 ALTER TABLE `semester` DISABLE KEYS */;
+INSERT INTO `semester` VALUES (1,'1st Semester',1,1),(2,'2nd Semester',2,1);
+/*!40000 ALTER TABLE `semester` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `student`
+--
+
+DROP TABLE IF EXISTS `student`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `student` (
+  `StudentId` int NOT NULL AUTO_INCREMENT,
+  `StudentNumber` varchar(30) NOT NULL,
+  `FirstName` varchar(50) NOT NULL,
+  `LastName` varchar(50) NOT NULL,
+  `MiddleName` varchar(50) DEFAULT NULL,
+  `Gender` varchar(20) DEFAULT NULL,
+  `BirthDate` date DEFAULT NULL,
+  `Email` varchar(100) DEFAULT NULL,
+  `Phone` varchar(30) DEFAULT NULL,
+  `Address` varchar(250) DEFAULT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`StudentId`),
+  UNIQUE KEY `UX_Student_StudentNumber` (`StudentNumber`),
+  KEY `IX_Student_LastFirst` (`LastName`,`FirstName`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `student`
+--
+
+LOCK TABLES `student` WRITE;
+/*!40000 ALTER TABLE `student` DISABLE KEYS */;
+INSERT INTO `student` VALUES (1,'STU-2026-0001','Jay','Ababon','Jemino','Male','2004-06-18','jayjeminoababon@gmail.com','09912268122','Prk. 6, Lower Balutakay, Hagonoy, Davao Del Sur',1,'2026-02-15 15:37:01',NULL);
+/*!40000 ALTER TABLE `student` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `subject`
+--
+
+DROP TABLE IF EXISTS `subject`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subject` (
+  `SubjectId` int NOT NULL AUTO_INCREMENT,
+  `SubjectCode` varchar(20) NOT NULL,
+  `SubjectName` varchar(100) NOT NULL,
+  `Units` int NOT NULL,
+  `CourseId` int DEFAULT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`SubjectId`),
+  UNIQUE KEY `UX_Subject_SubjectCode` (`SubjectCode`),
+  KEY `IX_Subject_CourseId` (`CourseId`),
+  CONSTRAINT `FK_Subject_Course` FOREIGN KEY (`CourseId`) REFERENCES `course` (`CourseId`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `subject`
+--
+
+LOCK TABLES `subject` WRITE;
+/*!40000 ALTER TABLE `subject` DISABLE KEYS */;
+INSERT INTO `subject` VALUES (1,'CS101','Introduction to Computing',3,1,1,'2026-02-15 14:06:21',NULL),(2,'CS102','Programming Fundamentals',3,1,1,'2026-02-15 14:06:21',NULL),(3,'IT101','Computer Applications',3,2,1,'2026-02-15 14:06:21',NULL);
+/*!40000 ALTER TABLE `subject` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `users` (
+  `UserId` int NOT NULL AUTO_INCREMENT,
+  `Username` varchar(50) NOT NULL,
+  `PasswordHash` binary(32) NOT NULL,
+  `PasswordSalt` binary(16) NOT NULL,
+  `Role` varchar(30) NOT NULL,
+  `DisplayName` varchar(100) DEFAULT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  `LastLoginAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`UserId`),
+  UNIQUE KEY `UX_Users_Username` (`Username`),
+  KEY `IX_Users_Role` (`Role`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `users`
+--
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (1,'admin',_binary 'ñv\”¡à\À\ZX˛@hC\÷\ÕPà3\ÌGΩ$NFH\"\ZÚ\Î',_binary 'F\·˚Ü6*˛¥∑%ú\\ ñ','Admin','System Administrator',1,'2026-02-15 14:06:21',NULL,'2026-02-15 16:21:32'),(2,'registrar',_binary 'Æç \–EπÒS±ztG‘≤`ä^∏≠˘»ç8?',_binary '-èÜÛæµC	Û]s\Íu¢','Registrar','Default Registrar',1,'2026-02-15 14:06:21',NULL,NULL),(3,'faculty1',_binary '\«|{∫\„≤ˇRAπ¿	t\Í⁄ç°•xó?p∂\"gº\\\√S',_binary 'H†Âí´(\Î\”V\ﬂJ¶\Áàj_','Faculty','Default Faculty',1,'2026-02-15 14:06:21',NULL,NULL);
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `yearlevel`
+--
+
+DROP TABLE IF EXISTS `yearlevel`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `yearlevel` (
+  `YearLevelId` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(30) NOT NULL,
+  `SortOrder` int NOT NULL DEFAULT '0',
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`YearLevelId`),
+  UNIQUE KEY `UX_YearLevel_Name` (`Name`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `yearlevel`
+--
+
+LOCK TABLES `yearlevel` WRITE;
+/*!40000 ALTER TABLE `yearlevel` DISABLE KEYS */;
+INSERT INTO `yearlevel` VALUES (1,'1st Year',1,1),(2,'2nd Year',2,1),(3,'3rd Year',3,1),(4,'4th Year',4,1);
+/*!40000 ALTER TABLE `yearlevel` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-02-16  0:25:19

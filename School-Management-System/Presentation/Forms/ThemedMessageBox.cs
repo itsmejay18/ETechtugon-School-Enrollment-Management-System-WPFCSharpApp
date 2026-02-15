@@ -17,6 +17,11 @@ namespace School_Management_System.Presentation.Forms
         private readonly Button _btnOk;
         private readonly Button _btnCancel;
 
+        public ThemedMessageBox()
+            : this("Message", "Designer preview", MessageBoxIcon.Information, true)
+        {
+        }
+
         private ThemedMessageBox(string title, string message, MessageBoxIcon icon, bool showCancel)
         {
             ThemeManager.ApplyBaseForm(this);
@@ -104,4 +109,3 @@ namespace School_Management_System.Presentation.Forms
         }
     }
 }
-
