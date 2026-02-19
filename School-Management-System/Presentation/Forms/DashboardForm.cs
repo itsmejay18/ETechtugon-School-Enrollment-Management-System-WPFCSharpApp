@@ -127,34 +127,137 @@ namespace School_Management_System.Presentation.Forms
 
         private void InitializeRuntimeComponent()
         {
-            _sidebar = new Panel { Dock = DockStyle.Left, Width = 252, BackColor = ThemeColors.SidebarBackground };
-            _content = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background };
-            Controls.Add(_content);
-            Controls.Add(_sidebar);
+            // Create main layout structure: Sidebar (left) + Content (fill)
+            InitializeMainLayout();
+            
+            // Initialize sidebar components: brand + navigation + logout
+            InitializeSidebar();
+            
+            // Initialize content area: header + body
+            InitializeContentArea();
+            
+            // Add navigation buttons
+            InitializeNavigation();
 
-            var brand = new Panel { Dock = DockStyle.Top, Height = 84, Padding = new Padding(12, 12, 12, 12), BackColor = ThemeColors.SidebarBackground };
+            // Default page.
+            LoadModule("dashboard", () => new DashboardHomeControl(_studentService, _facultyService, _courseService, _subjectService));
+        }
+
+        /// <summary>
+        /// Initialize the main layout structure with sidebar and content panels.
+        /// </summary>
+        private void InitializeMainLayout()
+        {
+            _sidebar = new Panel 
+            { 
+                Dock = DockStyle.Left, 
+                Width = 252, 
+                BackColor = ThemeColors.SidebarBackground,
+                Name = "SidebarPanel"
+            };
+            
+            _content = new Panel 
+            { 
+                Dock = DockStyle.Fill, 
+                BackColor = ThemeColors.Background,
+                Name = "ContentPanel"
+            };
+            
+            // Add in order: sidebar first (left), then content (fill)
+            Controls.Add(_sidebar);
+            Controls.Add(_content);
+        }
+
+        /// <summary>
+        /// Initialize sidebar with brand, navigation, and logout sections.
+        /// </summary>
+        private void InitializeSidebar()
+        {
+            // Brand section (top)
+            var brand = BuildBrandPanel();
+            var brandDivider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = ThemeColors.SidebarDivider };
+
+            // Navigation header
+            var navHeader = BuildNavigationHeader();
+
+            // Logout section (bottom)
+            var logoutPanel = BuildLogoutPanel();
+
+            // Navigation items (fill)
+            _nav = BuildNavigationPanel();
+
+            // Add to sidebar in correct order: top to bottom
+            _sidebar.Controls.Add(brand);
+            _sidebar.Controls.Add(brandDivider);
+            _sidebar.Controls.Add(navHeader);
+            _sidebar.Controls.Add(logoutPanel);
+            _sidebar.Controls.Add(_nav);
+        }
+
+        /// <summary>
+        /// Build the brand/logo section of the sidebar.
+        /// </summary>
+        private Panel BuildBrandPanel()
+        {
+            var brand = new Panel 
+            { 
+                Dock = DockStyle.Top, 
+                Height = 84, 
+                BackColor = ThemeColors.SidebarBackground,
+                Name = "BrandPanel"
+            };
+
+            var brandLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(12, 12, 12, 12),
+                ColumnCount = 2,
+                RowCount = 1,
+                AutoSize = false
+            };
+            brandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 42));
+            brandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            brandLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
             var brandIcon = new PictureBox
             {
                 Size = new Size(42, 42),
                 SizeMode = PictureBoxSizeMode.CenterImage,
                 Image = IconFactory.CreateCircleIcon(ThemeColors.SidebarIcon, IconKind.School, 42),
-                Location = new Point(12, 15)
+                Dock = DockStyle.Fill
             };
+
             var brandText = new Label
             {
                 Text = "School\nManagement",
                 ForeColor = Color.White,
                 Font = ThemeFonts.Sidebar,
-                AutoSize = false,
-                Location = new Point(62, 16),
-                Size = new Size(172, 40)
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(10, 0, 0, 0)
             };
-            brand.Controls.Add(brandIcon);
-            brand.Controls.Add(brandText);
 
-            var brandDivider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = ThemeColors.SidebarDivider };
+            brandLayout.Controls.Add(brandIcon, 0, 0);
+            brandLayout.Controls.Add(brandText, 1, 0);
+            brand.Controls.Add(brandLayout);
 
-            var navHeader = new Panel { Dock = DockStyle.Top, Height = 34, Padding = new Padding(14, 8, 12, 4), BackColor = ThemeColors.SidebarBackground };
+            return brand;
+        }
+
+        /// <summary>
+        /// Build the navigation section header.
+        /// </summary>
+        private Panel BuildNavigationHeader()
+        {
+            var navHeader = new Panel 
+            { 
+                Dock = DockStyle.Top, 
+                Height = 34, 
+                Padding = new Padding(14, 8, 12, 4), 
+                BackColor = ThemeColors.SidebarBackground,
+                Name = "NavHeaderPanel"
+            };
+
             var navHeaderText = new Label
             {
                 Dock = DockStyle.Fill,
@@ -163,70 +266,174 @@ namespace School_Management_System.Presentation.Forms
                 ForeColor = ThemeColors.SidebarSectionText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            navHeader.Controls.Add(navHeaderText);
 
-            var logoutPanel = new Panel { Dock = DockStyle.Bottom, Height = 72, Padding = new Padding(10, 12, 10, 12), BackColor = ThemeColors.SidebarBackground };
+            navHeader.Controls.Add(navHeaderText);
+            return navHeader;
+        }
+
+        /// <summary>
+        /// Build the logout panel at the bottom of the sidebar.
+        /// </summary>
+        private Panel BuildLogoutPanel()
+        {
+            var logoutPanel = new Panel 
+            { 
+                Dock = DockStyle.Bottom, 
+                Height = 72, 
+                Padding = new Padding(10, 12, 10, 12), 
+                BackColor = ThemeColors.SidebarBackground,
+                Name = "LogoutPanel"
+            };
+
             var logoutDivider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = ThemeColors.SidebarDivider };
             var btnLogout = new Button { Text = "  Logout", Dock = DockStyle.Fill };
             btnLogout.Image = IconFactory.CreateCircleIcon(ThemeColors.SidebarIconDanger, IconKind.Logout, 22);
             ThemeManager.StyleSidebarButton(btnLogout);
             btnLogout.ForeColor = Color.White;
             btnLogout.Click += (s, e) => Close();
+
             logoutPanel.Controls.Add(btnLogout);
             logoutPanel.Controls.Add(logoutDivider);
 
-            _nav = new FlowLayoutPanel
+            return logoutPanel;
+        }
+
+        /// <summary>
+        /// Build the navigation panel that scrolls through menu items.
+        /// </summary>
+        private FlowLayoutPanel BuildNavigationPanel()
+        {
+            var nav = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
                 AutoScroll = true,
                 Padding = new Padding(10, 6, 10, 10),
-                BackColor = ThemeColors.SidebarBackground
+                BackColor = ThemeColors.SidebarBackground,
+                Name = "NavigationPanel"
             };
-            _nav.SizeChanged += (s, e) => UpdateNavButtonWidths();
+            
+            nav.SizeChanged += (s, e) => UpdateNavButtonWidths();
+            return nav;
+        }
 
-            // Add fill first, then bottom/top panels so docking reserves space correctly.
-            _sidebar.Controls.Add(_nav);
-            _sidebar.Controls.Add(navHeader);
-            _sidebar.Controls.Add(logoutPanel);
-            _sidebar.Controls.Add(brandDivider);
-            _sidebar.Controls.Add(brand);
+        /// <summary>
+        /// Initialize the header and body of the content area.
+        /// </summary>
+        private void InitializeContentArea()
+        {
+            // Header panel
+            _header = new Panel 
+            { 
+                Dock = DockStyle.Top, 
+                Height = 60, 
+                BackColor = ThemeColors.CardBackground, 
+                Padding = new Padding(18, 14, 18, 14),
+                Name = "HeaderPanel"
+            };
 
-            _header = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = ThemeColors.CardBackground, Padding = new Padding(18, 14, 18, 14) };
-            _lblHeader = new Label { Dock = DockStyle.Left, Width = 420, Font = ThemeFonts.SubHeader, ForeColor = ThemeColors.Text, Text = "Dashboard", TextAlign = ContentAlignment.MiddleLeft };
-            _lblUser = new Label { Dock = DockStyle.Right, Width = 320, Font = ThemeFonts.Label, ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.MiddleRight };
+            // Header labels using table layout for better spacing
+            var headerLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 3,
+                RowCount = 1,
+                AutoSize = false
+            };
+            headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 1));
+            headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            headerLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            _lblHeader = new Label 
+            { 
+                Dock = DockStyle.Fill, 
+                Font = ThemeFonts.SubHeader, 
+                ForeColor = ThemeColors.Text, 
+                Text = "Dashboard", 
+                TextAlign = ContentAlignment.MiddleLeft 
+            };
+
+            _lblUser = new Label 
+            { 
+                Dock = DockStyle.Fill, 
+                Font = ThemeFonts.Label, 
+                ForeColor = ThemeColors.MutedText, 
+                TextAlign = ContentAlignment.MiddleRight 
+            };
             _lblUser.Text = GetUserDisplay();
-            _header.Controls.Add(_lblUser);
-            _header.Controls.Add(_lblHeader);
 
-            _body = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background, Padding = new Padding(18) };
-            _content.Controls.Add(_body);
+            headerLayout.Controls.Add(_lblHeader, 0, 0);
+            headerLayout.Controls.Add(_lblUser, 2, 0);
+            _header.Controls.Add(headerLayout);
+
+            // Body panel for content
+            _body = new Panel 
+            { 
+                Dock = DockStyle.Fill, 
+                BackColor = ThemeColors.Background, 
+                Padding = new Padding(18),
+                Name = "BodyPanel"
+            };
+
+            // Add to content in order: header first, body fills remaining space
             _content.Controls.Add(_header);
+            _content.Controls.Add(_body);
+        }
 
+        /// <summary>
+        /// Initialize all navigation buttons and modules.
+        /// </summary>
+        private void InitializeNavigation()
+        {
             var role = (UserSession.CurrentUser != null ? (UserSession.CurrentUser.Role ?? string.Empty) : string.Empty).Trim();
             var isAdmin = string.Equals(role, AppConstants.Roles.Admin, StringComparison.OrdinalIgnoreCase);
 
-            AddNavButton("dashboard", "Dashboard", IconKind.Dashboard, ThemeColors.SidebarIcon, () => LoadModule("dashboard", () => new DashboardHomeControl(_studentService, _facultyService, _courseService, _subjectService)));
-            AddNavButton("students", "Students", IconKind.Students, ThemeColors.SidebarIcon, () => LoadModule("students", () => new StudentControl(_studentService, _systemSettingService)));
+            // Add navigation buttons
+            AddNavButton("dashboard", "Dashboard", IconKind.Dashboard, ThemeColors.SidebarIcon, 
+                () => LoadModule("dashboard", () => new DashboardHomeControl(_studentService, _facultyService, _courseService, _subjectService)));
+            
+            AddNavButton("students", "Students", IconKind.Students, ThemeColors.SidebarIcon, 
+                () => LoadModule("students", () => new StudentControl(_studentService, _systemSettingService)));
 
-            AddNavButton("faculty", "Faculty", IconKind.Faculty, ThemeColors.SidebarIcon, () => LoadModule("faculty", () => new FacultyControl(_facultyService)));
-            AddNavButton("departments", "Departments", IconKind.School, ThemeColors.SidebarIcon, () => LoadModule("departments", () => new DepartmentControl(_departmentService)));
-            AddNavButton("courses", "Courses", IconKind.Courses, ThemeColors.SidebarIcon, () => LoadModule("courses", () => new CourseControl(_courseService, _departmentService)));
-            AddNavButton("yearlevels", "Year Levels", IconKind.Curriculum, ThemeColors.SidebarIcon, () => LoadModule("yearlevels", () => new YearLevelControl(_yearLevelService)));
-            AddNavButton("sections", "Sections", IconKind.Subjects, ThemeColors.SidebarIcon, () => LoadModule("sections", () => new SectionControl(_sectionService, _courseService, _lookupService, _systemSettingService)));
-            AddNavButton("subjects", "Subjects", IconKind.Subjects, ThemeColors.SidebarIcon, () => LoadModule("subjects", () => new SubjectControl(_subjectService, _courseService)));
-            AddNavButton("curriculum", "Curriculum", IconKind.Curriculum, ThemeColors.SidebarIcon, () => LoadModule("curriculum", () => new CurriculumControl(_curriculumService, _courseService, _lookupService)));
-            AddNavButton("schedule", "Class Schedule", IconKind.Enrollment, ThemeColors.SidebarIcon, () => LoadModule("schedule", () => new ClassScheduleControl(_classScheduleService, _sectionService, _curriculumService, _systemSettingService)));
-            AddNavButton("enrollment", "Enrollment", IconKind.Enrollment, ThemeColors.SidebarIcon, () => LoadModule("enrollment", () => new EnrollmentControl(_enrollmentService, _studentService, _curriculumService, _courseService, _lookupService, _sectionService, _systemSettingService, _classScheduleService)));
-            AddNavButton("settings", "Settings", IconKind.Trend, ThemeColors.SidebarIcon, () => LoadModule("settings", () => new SettingsControl(_systemSettingService, _lookupService)));
+            AddNavButton("faculty", "Faculty", IconKind.Faculty, ThemeColors.SidebarIcon, 
+                () => LoadModule("faculty", () => new FacultyControl(_facultyService)));
+            
+            AddNavButton("departments", "Departments", IconKind.School, ThemeColors.SidebarIcon, 
+                () => LoadModule("departments", () => new DepartmentControl(_departmentService)));
+            
+            AddNavButton("courses", "Courses", IconKind.Courses, ThemeColors.SidebarIcon, 
+                () => LoadModule("courses", () => new CourseControl(_courseService, _departmentService)));
+            
+            AddNavButton("yearlevels", "Year Levels", IconKind.Curriculum, ThemeColors.SidebarIcon, 
+                () => LoadModule("yearlevels", () => new YearLevelControl(_yearLevelService)));
+            
+            AddNavButton("sections", "Sections", IconKind.Subjects, ThemeColors.SidebarIcon, 
+                () => LoadModule("sections", () => new SectionControl(_sectionService, _courseService, _lookupService, _systemSettingService)));
+            
+            AddNavButton("subjects", "Subjects", IconKind.Subjects, ThemeColors.SidebarIcon, 
+                () => LoadModule("subjects", () => new SubjectControl(_subjectService, _courseService)));
+            
+            AddNavButton("curriculum", "Curriculum", IconKind.Curriculum, ThemeColors.SidebarIcon, 
+                () => LoadModule("curriculum", () => new CurriculumControl(_curriculumService, _courseService, _lookupService)));
+            
+            AddNavButton("schedule", "Class Schedule", IconKind.Enrollment, ThemeColors.SidebarIcon, 
+                () => LoadModule("schedule", () => new ClassScheduleControl(_classScheduleService, _sectionService, _curriculumService, _systemSettingService)));
+            
+            AddNavButton("enrollment", "Enrollment", IconKind.Enrollment, ThemeColors.SidebarIcon, 
+                () => LoadModule("enrollment", () => new EnrollmentControl(_enrollmentService, _studentService, _curriculumService, _courseService, _lookupService, _sectionService, _systemSettingService, _classScheduleService)));
+            
+            AddNavButton("settings", "Settings", IconKind.Trend, ThemeColors.SidebarIcon, 
+                () => LoadModule("settings", () => new SettingsControl(_systemSettingService, _lookupService)));
 
             if (isAdmin)
             {
-                AddNavButton("users", "User Roles", IconKind.Users, ThemeColors.SidebarIcon, () => LoadModule("users", () => new UsersControl(_userManagementService)));
+                AddNavButton("users", "User Roles", IconKind.Users, ThemeColors.SidebarIcon, 
+                    () => LoadModule("users", () => new UsersControl(_userManagementService)));
             }
 
-            // Default page.
+            // Load default page
             LoadModule("dashboard", () => new DashboardHomeControl(_studentService, _facultyService, _courseService, _subjectService));
         }
 
@@ -251,36 +458,63 @@ namespace School_Management_System.Presentation.Forms
             }
         }
 
+        /// <summary>
+        /// Load a module (UserControl) into the main content area and update the header.
+        /// </summary>
         private void LoadModule(string key, Func<UserControl> factory)
         {
+            if (string.IsNullOrWhiteSpace(key) || factory == null)
+            {
+                return;
+            }
+
             _lblHeader.Text = GetHeaderForKey(key);
             SetActiveNavButton(key);
 
             _body.Controls.Clear();
             var ctrl = GetOrCreate(key, factory);
-            ctrl.Dock = DockStyle.Fill;
-            _body.Controls.Add(ctrl);
+            if (ctrl != null)
+            {
+                ctrl.Dock = DockStyle.Fill;
+                _body.Controls.Add(ctrl);
+            }
         }
 
+        /// <summary>
+        /// Add a navigation button to the sidebar.
+        /// </summary>
         private void AddNavButton(string key, string text, IconKind iconKind, Color iconColor, Action onClick)
         {
+            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(text))
+            {
+                return;
+            }
+
             var btn = new Button
             {
                 Text = "  " + text,
                 Height = 46,
-                Margin = new Padding(0, 2, 0, 2)
+                Margin = new Padding(0, 2, 0, 2),
+                Name = "NavBtn_" + key
             };
             btn.Image = IconFactory.CreateCircleIcon(iconColor, iconKind, 24);
             ThemeManager.StyleSidebarButton(btn);
-            btn.Click += (s, e) => onClick();
+            btn.Click += (s, e) => onClick?.Invoke();
+            
             _nav.Controls.Add(btn);
             _navButtons[key] = btn;
             UpdateNavButtonWidths();
         }
 
+        /// <summary>
+        /// Update the width of all navigation buttons to fill the available sidebar width.
+        /// </summary>
         private void UpdateNavButtonWidths()
         {
-            if (_nav == null) return;
+            if (_nav == null || _nav.Controls.Count == 0)
+            {
+                return;
+            }
 
             var width = _nav.ClientSize.Width
                         - _nav.Padding.Left
@@ -294,16 +528,33 @@ namespace School_Management_System.Presentation.Forms
             }
         }
 
+        /// <summary>
+        /// Set the active/inactive state of navigation buttons.
+        /// </summary>
         private void SetActiveNavButton(string key)
         {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return;
+            }
+
             foreach (var pair in _navButtons)
             {
-                ThemeManager.SetSidebarButtonState(pair.Value, string.Equals(pair.Key, key, StringComparison.OrdinalIgnoreCase));
+                var isActive = string.Equals(pair.Key, key, StringComparison.OrdinalIgnoreCase);
+                ThemeManager.SetSidebarButtonState(pair.Value, isActive);
             }
         }
 
+        /// <summary>
+        /// Get or create a cached UserControl for a module key.
+        /// </summary>
         private UserControl GetOrCreate(string key, Func<UserControl> factory)
         {
+            if (string.IsNullOrWhiteSpace(key) || factory == null)
+            {
+                return null;
+            }
+
             UserControl existing;
             if (_cache.TryGetValue(key, out existing))
             {
@@ -311,10 +562,16 @@ namespace School_Management_System.Presentation.Forms
             }
 
             var created = factory();
-            _cache[key] = created;
+            if (created != null)
+            {
+                _cache[key] = created;
+            }
             return created;
         }
 
+        /// <summary>
+        /// Get the header text for a given module key.
+        /// </summary>
         private static string GetHeaderForKey(string key)
         {
             if (string.Equals(key, "dashboard", StringComparison.OrdinalIgnoreCase)) return "Dashboard";
@@ -333,6 +590,9 @@ namespace School_Management_System.Presentation.Forms
             return "Module";
         }
 
+        /// <summary>
+        /// Get the current user display string with name and role.
+        /// </summary>
         private static string GetUserDisplay()
         {
             var u = UserSession.CurrentUser;

@@ -122,8 +122,7 @@ namespace School_Management_System.Presentation.Theming
             if (button == null) return;
 
             button.FlatStyle = FlatStyle.Flat;
-            button.FlatAppearance.BorderSize = 1;
-            button.FlatAppearance.BorderColor = Color.Transparent;
+            button.FlatAppearance.BorderSize = 0;
             button.FlatAppearance.MouseOverBackColor = ThemeColors.SidebarHover;
             button.FlatAppearance.MouseDownBackColor = ThemeColors.SidebarActive;
             button.BackColor = ThemeColors.SidebarBackground;
@@ -144,9 +143,11 @@ namespace School_Management_System.Presentation.Theming
             if (button == null) return;
             button.BackColor = active ? ThemeColors.SidebarActive : ThemeColors.SidebarBackground;
             button.ForeColor = active ? Color.White : ThemeColors.SidebarTextMuted;
-            button.FlatAppearance.BorderColor = active
-                ? Color.FromArgb(130, ThemeColors.Secondary)
-                : Color.Transparent;
+            button.FlatAppearance.BorderSize = active ? 1 : 0;
+            if (active)
+            {
+                button.FlatAppearance.BorderColor = Color.FromArgb(130, ThemeColors.Secondary);
+            }
         }
 
         public static void StyleDataGrid(DataGridView grid)
