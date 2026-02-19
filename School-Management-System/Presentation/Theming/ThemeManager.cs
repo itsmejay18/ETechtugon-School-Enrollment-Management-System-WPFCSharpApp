@@ -66,6 +66,16 @@ namespace School_Management_System.Presentation.Theming
             textBox.ForeColor = ThemeColors.Text;
         }
 
+        public static void StyleInput(NumericUpDown numericUpDown)
+        {
+            if (numericUpDown == null) return;
+            numericUpDown.Font = ThemeFonts.Input;
+            numericUpDown.BorderStyle = BorderStyle.FixedSingle;
+            numericUpDown.BackColor = Color.White;
+            numericUpDown.ForeColor = ThemeColors.Text;
+            numericUpDown.TextAlign = HorizontalAlignment.Right;
+        }
+
         public static void StyleComboBox(ComboBox comboBox)
         {
             if (comboBox == null) return;
@@ -112,24 +122,31 @@ namespace School_Management_System.Presentation.Theming
             if (button == null) return;
 
             button.FlatStyle = FlatStyle.Flat;
-            button.FlatAppearance.BorderSize = 0;
+            button.FlatAppearance.BorderSize = 1;
+            button.FlatAppearance.BorderColor = Color.Transparent;
             button.FlatAppearance.MouseOverBackColor = ThemeColors.SidebarHover;
             button.FlatAppearance.MouseDownBackColor = ThemeColors.SidebarActive;
             button.BackColor = ThemeColors.SidebarBackground;
-            button.ForeColor = Color.White;
+            button.ForeColor = ThemeColors.SidebarTextMuted;
             button.Font = ThemeFonts.Sidebar;
             button.TextAlign = ContentAlignment.MiddleLeft;
             button.ImageAlign = ContentAlignment.MiddleLeft;
             button.TextImageRelation = TextImageRelation.ImageBeforeText;
-            button.Padding = new Padding(14, 0, 12, 0);
-            button.Height = 44;
+            button.Padding = new Padding(12, 0, 12, 0);
+            button.Height = 46;
+            button.AutoEllipsis = true;
             button.Cursor = Cursors.Hand;
+            UiHelper.ApplyRoundedCorners(button, 6);
         }
 
         public static void SetSidebarButtonState(Button button, bool active)
         {
             if (button == null) return;
             button.BackColor = active ? ThemeColors.SidebarActive : ThemeColors.SidebarBackground;
+            button.ForeColor = active ? Color.White : ThemeColors.SidebarTextMuted;
+            button.FlatAppearance.BorderColor = active
+                ? Color.FromArgb(130, ThemeColors.Secondary)
+                : Color.Transparent;
         }
 
         public static void StyleDataGrid(DataGridView grid)

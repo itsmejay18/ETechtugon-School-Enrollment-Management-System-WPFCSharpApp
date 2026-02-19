@@ -30,6 +30,7 @@ SELECT
     Email,
     Phone,
     Address,
+    PhotoPath,
     CreatedAt
 FROM Student
 WHERE IsActive = 1
@@ -54,16 +55,11 @@ SELECT
     Email,
     Phone,
     Address,
+    PhotoPath,
     CreatedAt
 FROM Student
 WHERE IsActive = 1
-  AND (
-        StudentNumber LIKE @Q
-     OR FirstName LIKE @Q
-     OR LastName LIKE @Q
-     OR MiddleName LIKE @Q
-     OR Email LIKE @Q
-  )
+  AND (LastName LIKE @Q OR StudentNumber LIKE @Q)
 ORDER BY LastName, FirstName;";
 
             return _db.ExecuteDataTable(
@@ -108,6 +104,7 @@ INSERT INTO Student
     Email,
     Phone,
     Address,
+    PhotoPath,
     IsActive,
     CreatedAt
 )
@@ -122,6 +119,7 @@ VALUES
     @Email,
     @Phone,
     @Address,
+    @PhotoPath,
     1,
     UTC_TIMESTAMP()
 );";
@@ -139,7 +137,8 @@ VALUES
                     new MySqlParameter("@BirthDate", (object)student.BirthDate ?? DBNull.Value),
                     new MySqlParameter("@Email", (object)student.Email ?? DBNull.Value),
                     new MySqlParameter("@Phone", (object)student.Phone ?? DBNull.Value),
-                    new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value)
+                    new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)student.PhotoPath ?? DBNull.Value)
                 });
 
             return Convert.ToInt32(id);
@@ -161,6 +160,7 @@ SET
     Email = @Email,
     Phone = @Phone,
     Address = @Address,
+    PhotoPath = @PhotoPath,
     UpdatedAt = UTC_TIMESTAMP()
 WHERE StudentId = @StudentId;";
 
@@ -178,7 +178,8 @@ WHERE StudentId = @StudentId;";
                     new MySqlParameter("@BirthDate", (object)student.BirthDate ?? DBNull.Value),
                     new MySqlParameter("@Email", (object)student.Email ?? DBNull.Value),
                     new MySqlParameter("@Phone", (object)student.Phone ?? DBNull.Value),
-                    new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value)
+                    new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)student.PhotoPath ?? DBNull.Value)
                 });
         }
 
@@ -191,6 +192,49 @@ WHERE StudentId = @StudentId;";
                 new[]
                 {
                     new MySqlParameter("@StudentId", studentId)
+                });
+        }
+
+        public DataTable GetEnrolledSubjects(int studentId, int? academicYearId, int? semesterId)
+        {
+            const string sql = @"
+SELECT
+    e.EnrollmentNumber,
+    e.EnrollDate,
+    ay.Name AS AcademicYear,
+    sem.Name AS Semester,
+    yl.Name AS YearLevel,
+    sec.SectionName,
+    s.SubjectCode,
+    s.SubjectName,
+    ed.Units,
+    ed.Grade,
+    cs.DayOfWeek,
+    cs.StartTime,
+    cs.EndTime,
+    cs.Room
+FROM Enrollment e
+INNER JOIN EnrollmentDetails ed ON ed.EnrollmentId = e.EnrollmentId
+INNER JOIN Subject s ON s.SubjectId = ed.SubjectId
+LEFT JOIN Section sec ON sec.SectionId = e.SectionId
+LEFT JOIN YearLevel yl ON yl.YearLevelId = e.YearLevelId
+LEFT JOIN Semester sem ON sem.SemesterId = e.SemesterId
+LEFT JOIN AcademicYear ay ON ay.AcademicYearId = e.AcademicYearId
+LEFT JOIN ClassSchedule cs ON cs.ClassScheduleId = ed.ClassScheduleId
+WHERE e.StudentId = @StudentId
+  AND e.Status <> 'Cancelled'
+  AND (@AcademicYearId IS NULL OR e.AcademicYearId = @AcademicYearId)
+  AND (@SemesterId IS NULL OR e.SemesterId = @SemesterId)
+ORDER BY e.EnrollDate DESC, s.SubjectName;";
+
+            return _db.ExecuteDataTable(
+                sql,
+                CommandType.Text,
+                new[]
+                {
+                    new MySqlParameter("@StudentId", studentId),
+                    new MySqlParameter("@AcademicYearId", (object)academicYearId ?? DBNull.Value),
+                    new MySqlParameter("@SemesterId", (object)semesterId ?? DBNull.Value)
                 });
         }
 

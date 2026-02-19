@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using School_Management_System.BusinessLayer.Services;
@@ -21,6 +22,9 @@ namespace School_Management_System.Presentation.UserControls
         private readonly CurriculumService _curriculumService;
         private readonly CourseService _courseService;
         private readonly LookupService _lookupService;
+        private readonly SectionService _sectionService;
+        private readonly ClassScheduleService _classScheduleService;
+        private readonly SystemSettingService _systemSettingService;
 
         private Panel _stepBar;
         private Label _step1Lbl;
@@ -43,6 +47,9 @@ namespace School_Management_System.Presentation.UserControls
         private ComboBox _cmbAcademicYear;
         private ComboBox _cmbYearLevel;
         private ComboBox _cmbSemester;
+        private ComboBox _cmbSection;
+        private RadioButton _rbBySection;
+        private RadioButton _rbBySubject;
         private Label _lblCurriculumStatus;
         private ListView _lvSubjects;
         private Label _lblTotalUnits;
@@ -60,12 +67,23 @@ namespace School_Management_System.Presentation.UserControls
         private string _selectedStudentName;
         private int? _curriculumId;
         private string _enrollmentNumber;
+        private int? _activeAcademicYearId;
+        private int? _activeSemesterId;
+        private DataTable _sectionsTable;
+        private bool _loadingLookups;
 
         private readonly PrintDocument _printDocument = new PrintDocument();
         private string _printText;
 
+        private sealed class SubjectPick
+        {
+            public int SubjectId { get; set; }
+            public int Units { get; set; }
+            public int? ClassScheduleId { get; set; }
+        }
+
         public EnrollmentControl()
-            : this(null, null, null, null, null)
+            : this(null, null, null, null, null, null, null, null)
         {
         }
 
@@ -74,13 +92,23 @@ namespace School_Management_System.Presentation.UserControls
             StudentService studentService,
             CurriculumService curriculumService,
             CourseService courseService,
-            LookupService lookupService)
+            LookupService lookupService,
+            SectionService sectionService,
+            SystemSettingService systemSettingService,
+            ClassScheduleService classScheduleService)
         {
             _enrollmentService = enrollmentService;
             _studentService = studentService;
             _curriculumService = curriculumService;
             _courseService = courseService;
             _lookupService = lookupService;
+            _sectionService = sectionService;
+            _systemSettingService = systemSettingService;
+            _classScheduleService = classScheduleService;
+
+            var activeTerm = _systemSettingService == null ? (null, null) : _systemSettingService.GetActiveTerm();
+            _activeAcademicYearId = activeTerm.Item1;
+            _activeSemesterId = activeTerm.Item2;
 
             InitializeComponent();
             WirePrinting();
@@ -209,11 +237,18 @@ namespace School_Management_System.Presentation.UserControls
             _cmbAcademicYear = MakeCombo();
             _cmbYearLevel = MakeCombo();
             _cmbSemester = MakeCombo();
+            _cmbSection = MakeCombo();
+            _rbBySection = new RadioButton { Text = "By Section (Regular)", AutoSize = true, Font = ThemeFonts.Label, ForeColor = ThemeColors.Text };
+            _rbBySubject = new RadioButton { Text = "By Subject (Irregular)", AutoSize = true, Font = ThemeFonts.Label, ForeColor = ThemeColors.Text };
+            _rbBySection.Checked = true;
 
             _cmbCourse.SelectedIndexChanged += (s, e) => LoadCurriculumSubjects();
             _cmbAcademicYear.SelectedIndexChanged += (s, e) => LoadCurriculumSubjects();
             _cmbYearLevel.SelectedIndexChanged += (s, e) => LoadCurriculumSubjects();
             _cmbSemester.SelectedIndexChanged += (s, e) => LoadCurriculumSubjects();
+            _cmbSection.SelectedIndexChanged += (s, e) => LoadCurriculumSubjects();
+            _rbBySection.CheckedChanged += (s, e) => LoadCurriculumSubjects();
+            _rbBySubject.CheckedChanged += (s, e) => LoadCurriculumSubjects();
 
             selectors.Controls.Add(MakeLabel("Course"), 0, 0);
             selectors.Controls.Add(_cmbCourse, 1, 0);
@@ -223,6 +258,18 @@ namespace School_Management_System.Presentation.UserControls
             selectors.Controls.Add(_cmbYearLevel, 5, 0);
             selectors.Controls.Add(MakeLabel("Sem"), 6, 0);
             selectors.Controls.Add(_cmbSemester, 7, 0);
+
+            var sectionRow = new Panel { Dock = DockStyle.Top, Height = 38, Padding = new Padding(0, 2, 0, 2) };
+            var lblSection = new Label { Text = "Section:", AutoSize = true, Location = new Point(0, 10), Font = ThemeFonts.Label, ForeColor = ThemeColors.Text };
+            _cmbSection.Width = 240;
+            _cmbSection.Location = new Point(68, 6);
+            _rbBySection.Location = new Point(330, 6);
+            _rbBySubject.Location = new Point(520, 6);
+
+            sectionRow.Controls.Add(lblSection);
+            sectionRow.Controls.Add(_cmbSection);
+            sectionRow.Controls.Add(_rbBySection);
+            sectionRow.Controls.Add(_rbBySubject);
 
             _lblCurriculumStatus = new Label
             {
@@ -244,6 +291,7 @@ namespace School_Management_System.Presentation.UserControls
             _lvSubjects.Columns.Add("Code", 120);
             _lvSubjects.Columns.Add("Subject", 520);
             _lvSubjects.Columns.Add("Units", 70);
+            _lvSubjects.Columns.Add("Schedule", 220);
             _lvSubjects.ItemChecked += (s, e) => UpdateUnits();
 
             var footer = new Panel { Dock = DockStyle.Bottom, Height = 52, Padding = new Padding(0, 10, 0, 0) };
@@ -281,6 +329,7 @@ namespace School_Management_System.Presentation.UserControls
             card.Controls.Add(_lvSubjects);
             card.Controls.Add(footer);
             card.Controls.Add(_lblCurriculumStatus);
+            card.Controls.Add(sectionRow);
             card.Controls.Add(selectors);
 
             _pStep2.Controls.Add(card);
@@ -372,6 +421,8 @@ namespace School_Management_System.Presentation.UserControls
 
             try
             {
+                _loadingLookups = true;
+
                 _cmbCourse.DisplayMember = "CourseName";
                 _cmbCourse.ValueMember = "CourseId";
                 _cmbCourse.DataSource = _courseService.GetLookupCourses();
@@ -388,14 +439,99 @@ namespace School_Management_System.Presentation.UserControls
                 _cmbSemester.ValueMember = "SemesterId";
                 _cmbSemester.DataSource = _lookupService.GetSemesters();
 
-                if (_cmbAcademicYear.Items.Count > 0) _cmbAcademicYear.SelectedIndex = 0;
+                if (_activeAcademicYearId.HasValue)
+                {
+                    _cmbAcademicYear.SelectedValue = _activeAcademicYearId.Value;
+                }
+                else if (_cmbAcademicYear.Items.Count > 0) _cmbAcademicYear.SelectedIndex = 0;
+
                 if (_cmbYearLevel.Items.Count > 0) _cmbYearLevel.SelectedIndex = 0;
-                if (_cmbSemester.Items.Count > 0) _cmbSemester.SelectedIndex = 0;
+
+                if (_activeSemesterId.HasValue)
+                {
+                    _cmbSemester.SelectedValue = _activeSemesterId.Value;
+                }
+                else if (_cmbSemester.Items.Count > 0) _cmbSemester.SelectedIndex = 0;
+
+                LoadSectionsLookup(false);
             }
             catch (Exception ex)
             {
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("EnrollmentControl.LoadLookups", ex);
                 ThemedMessageBox.ShowError(this, Messages.UnexpectedError);
+            }
+            finally
+            {
+                _loadingLookups = false;
+                LoadSectionsLookup(false);
+                LoadCurriculumSubjects();
+            }
+        }
+
+        private void LoadSectionsLookup(bool preserveSelection = true)
+        {
+            if (_sectionService == null) return;
+            if (_loadingLookups) return;
+
+            var current = preserveSelection ? GetSelectedInt(_cmbSection) : 0;
+
+            try
+            {
+                _loadingLookups = true;
+
+                var courseId = GetSelectedInt(_cmbCourse);
+                var ayId = GetSelectedInt(_cmbAcademicYear);
+                var semId = GetSelectedInt(_cmbSemester);
+                var ylId = GetSelectedInt(_cmbYearLevel);
+
+                DataTable dt;
+                if (courseId > 0 && ayId > 0 && semId > 0)
+                {
+                    dt = _sectionService.GetSectionsForTerm(courseId, ayId, semId, ylId > 0 ? ylId : (int?)null);
+                }
+                else
+                {
+                    dt = _sectionService.GetSections(string.Empty);
+                }
+
+                _sectionsTable = dt;
+
+                _cmbSection.DisplayMember = "SectionName";
+                _cmbSection.ValueMember = "SectionId";
+                _cmbSection.DataSource = dt;
+
+                if (current > 0)
+                {
+                    _cmbSection.SelectedValue = current;
+                }
+                else if (_cmbSection.Items.Count > 0)
+                {
+                    _cmbSection.SelectedIndex = 0;
+                }
+            }
+            finally
+            {
+                _loadingLookups = false;
+            }
+        }
+
+        private void SyncCombosWithSection(int sectionId)
+        {
+            if (_sectionsTable == null) return;
+            var row = _sectionsTable.AsEnumerable().FirstOrDefault(r => Convert.ToInt32(r["SectionId"]) == sectionId);
+            if (row == null) return;
+
+            try
+            {
+                _loadingLookups = true;
+                _cmbCourse.SelectedValue = Convert.ToInt32(row["CourseId"]);
+                _cmbYearLevel.SelectedValue = Convert.ToInt32(row["YearLevelId"]);
+                _cmbAcademicYear.SelectedValue = Convert.ToInt32(row["AcademicYearId"]);
+                _cmbSemester.SelectedValue = Convert.ToInt32(row["SemesterId"]);
+            }
+            finally
+            {
+                _loadingLookups = false;
             }
         }
 
@@ -453,6 +589,7 @@ namespace School_Management_System.Presentation.UserControls
 
         private void LoadCurriculumSubjects()
         {
+            if (_loadingLookups) return;
             if (_curriculumService == null) return;
 
             try
@@ -461,9 +598,68 @@ namespace School_Management_System.Presentation.UserControls
                 var ayId = GetSelectedInt(_cmbAcademicYear);
                 var ylId = GetSelectedInt(_cmbYearLevel);
                 var semId = GetSelectedInt(_cmbSemester);
+                var sectionId = GetSelectedInt(_cmbSection);
 
                 _lvSubjects.Items.Clear();
                 _curriculumId = null;
+
+                var bySection = _rbBySection.Checked;
+
+                if (sectionId > 0)
+                {
+                    SyncCombosWithSection(sectionId);
+                }
+
+                if (!_loadingLookups)
+                {
+                    LoadSectionsLookup();
+                }
+
+                if (bySection)
+                {
+                    if (sectionId <= 0)
+                    {
+                        _lblCurriculumStatus.Text = "Select a Section to load scheduled subjects.";
+                        UpdateUnits();
+                        return;
+                    }
+
+                    var schedule = _classScheduleService.GetBySection(sectionId);
+                    if (schedule.Rows.Count == 0)
+                    {
+                        _lblCurriculumStatus.Text = "No class schedule found for this section.";
+                        UpdateUnits();
+                        return;
+                    }
+
+                    foreach (DataRow r in schedule.Rows)
+                    {
+                        var subjectId = Convert.ToInt32(r["SubjectId"]);
+                        var code = Convert.ToString(r["SubjectCode"]);
+                        var name = Convert.ToString(r["SubjectName"]);
+                        var units = r.Table.Columns.Contains("Units") ? Convert.ToInt32(r["Units"]) : 0;
+                        var csId = Convert.ToInt32(r["ClassScheduleId"]);
+
+                        var day = Convert.ToString(r["DayOfWeek"]);
+                        var start = r["StartTime"] is TimeSpan ? ((TimeSpan)r["StartTime"]).ToString(@"hh\\:mm") : string.Empty;
+                        var end = r["EndTime"] is TimeSpan ? ((TimeSpan)r["EndTime"]).ToString(@"hh\\:mm") : string.Empty;
+                        var time = string.IsNullOrWhiteSpace(start) || string.IsNullOrWhiteSpace(end) ? string.Empty : start + "-" + end;
+                        var room = Convert.ToString(r["Room"]);
+                        var schedText = string.Join(" | ", Array.FindAll(new[] { day, time, room }, p => !string.IsNullOrWhiteSpace(p)));
+
+                        var item = new ListViewItem(code ?? string.Empty);
+                        item.SubItems.Add(name ?? string.Empty);
+                        item.SubItems.Add(units.ToString());
+                        item.SubItems.Add(schedText);
+                        item.Tag = new SubjectPick { SubjectId = subjectId, Units = units, ClassScheduleId = csId };
+                        item.Checked = true;
+                        _lvSubjects.Items.Add(item);
+                    }
+
+                    _lblCurriculumStatus.Text = "Section schedule loaded. All subjects are checked by default.";
+                    UpdateUnits();
+                    return;
+                }
 
                 if (courseId <= 0 || ayId <= 0 || ylId <= 0 || semId <= 0)
                 {
@@ -493,7 +689,8 @@ namespace School_Management_System.Presentation.UserControls
                     var item = new ListViewItem(code ?? string.Empty);
                     item.SubItems.Add(name ?? string.Empty);
                     item.SubItems.Add(units.ToString());
-                    item.Tag = subjectId;
+                    item.SubItems.Add(string.Empty);
+                    item.Tag = new SubjectPick { SubjectId = subjectId, Units = units, ClassScheduleId = null };
                     item.Checked = true; // default: enroll all curriculum subjects; user can uncheck.
                     _lvSubjects.Items.Add(item);
                 }
@@ -513,11 +710,18 @@ namespace School_Management_System.Presentation.UserControls
             foreach (ListViewItem item in _lvSubjects.Items)
             {
                 if (!item.Checked) continue;
-                if (item.SubItems.Count < 3) continue;
-                int units;
-                if (int.TryParse(item.SubItems[2].Text, out units))
+                var pick = item.Tag as SubjectPick;
+                if (pick != null)
                 {
-                    total += units;
+                    total += pick.Units;
+                }
+                else if (item.SubItems.Count >= 3)
+                {
+                    int units;
+                    if (int.TryParse(item.SubItems[2].Text, out units))
+                    {
+                        total += units;
+                    }
                 }
             }
 
@@ -530,19 +734,14 @@ namespace School_Management_System.Presentation.UserControls
             foreach (ListViewItem item in _lvSubjects.Items)
             {
                 if (!item.Checked) continue;
-                if (item.Tag == null) continue;
-                if (item.SubItems.Count < 3) continue;
-
-                int units;
-                if (!int.TryParse(item.SubItems[2].Text, out units))
-                {
-                    units = 0;
-                }
+                var pick = item.Tag as SubjectPick;
+                if (pick == null) continue;
 
                 details.Add(new EnrollmentDetail
                 {
-                    SubjectId = Convert.ToInt32(item.Tag),
-                    Units = units
+                    SubjectId = pick.SubjectId,
+                    Units = pick.Units,
+                    ClassScheduleId = pick.ClassScheduleId
                 });
             }
 
@@ -560,13 +759,21 @@ namespace School_Management_System.Presentation.UserControls
             sb.AppendLine("Academic Year: " + (_cmbAcademicYear.Text ?? string.Empty));
             sb.AppendLine("Year Level: " + (_cmbYearLevel.Text ?? string.Empty));
             sb.AppendLine("Semester: " + (_cmbSemester.Text ?? string.Empty));
+            sb.AppendLine("Section: " + (_cmbSection.Text ?? string.Empty));
+            sb.AppendLine("Enrollment Type: " + (_rbBySection.Checked ? "By Section (Regular)" : "By Subject (Irregular)"));
             sb.AppendLine();
             sb.AppendLine("Subjects:");
 
             foreach (ListViewItem item in _lvSubjects.Items)
             {
                 if (!item.Checked) continue;
-                sb.AppendLine("- " + item.Text + " | " + item.SubItems[1].Text + " (" + item.SubItems[2].Text + " units)");
+                var sched = item.SubItems.Count > 3 ? item.SubItems[3].Text : string.Empty;
+                var line = "- " + item.Text + " | " + item.SubItems[1].Text + " (" + item.SubItems[2].Text + " units)";
+                if (!string.IsNullOrWhiteSpace(sched))
+                {
+                    line += " | " + sched;
+                }
+                sb.AppendLine(line);
             }
 
             sb.AppendLine();
@@ -585,6 +792,19 @@ namespace School_Management_System.Presentation.UserControls
                 var ayId = GetSelectedInt(_cmbAcademicYear);
                 var ylId = GetSelectedInt(_cmbYearLevel);
                 var semId = GetSelectedInt(_cmbSemester);
+                var sectionId = GetSelectedInt(_cmbSection);
+
+                if (_sectionsTable != null && sectionId > 0)
+                {
+                    var row = _sectionsTable.AsEnumerable().FirstOrDefault(r => Convert.ToInt32(r["SectionId"]) == sectionId);
+                    if (row != null)
+                    {
+                        courseId = Convert.ToInt32(row["CourseId"]);
+                        ayId = Convert.ToInt32(row["AcademicYearId"]);
+                        ylId = Convert.ToInt32(row["YearLevelId"]);
+                        semId = Convert.ToInt32(row["SemesterId"]);
+                    }
+                }
 
                 var details = BuildEnrollmentDetailsFromChecked();
 
@@ -596,6 +816,7 @@ namespace School_Management_System.Presentation.UserControls
                     AcademicYearId = ayId,
                     YearLevelId = ylId,
                     SemesterId = semId,
+                    SectionId = sectionId,
                     EnrollDate = DateTime.Now.Date,
                     Status = "Posted"
                 };
@@ -668,6 +889,8 @@ namespace School_Management_System.Presentation.UserControls
             _txtStudentSearch.Text = string.Empty;
             LoadStudents();
 
+            LoadSectionsLookup(false);
+            _rbBySection.Checked = true;
             _lvSubjects.Items.Clear();
             UpdateUnits();
             _lblCurriculumStatus.Text = "Select course/year/semester/academic year to load subjects.";
@@ -717,7 +940,10 @@ namespace School_Management_System.Presentation.UserControls
                    _studentService != null &&
                    _curriculumService != null &&
                    _courseService != null &&
-                   _lookupService != null;
+                   _lookupService != null &&
+                   _sectionService != null &&
+                   _classScheduleService != null &&
+                   _systemSettingService != null;
         }
 
         private void SetupDesignerPreview()

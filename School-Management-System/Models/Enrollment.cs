@@ -11,6 +11,7 @@ namespace School_Management_System.Models
         private int _academicYearId;
         private int _yearLevelId;
         private int _semesterId;
+        private int _sectionId;
         private DateTime _enrollDate;
         private int _totalUnits;
         private string _status;
@@ -23,6 +24,7 @@ namespace School_Management_System.Models
         public int AcademicYearId { get { return _academicYearId; } set { _academicYearId = value; } }
         public int YearLevelId { get { return _yearLevelId; } set { _yearLevelId = value; } }
         public int SemesterId { get { return _semesterId; } set { _semesterId = value; } }
+        public int SectionId { get { return _sectionId; } set { _sectionId = value; } }
         public DateTime EnrollDate { get { return _enrollDate; } set { _enrollDate = value; } }
         public int TotalUnits { get { return _totalUnits; } set { _totalUnits = value; } }
         public string Status { get { return _status; } set { _status = value; } }

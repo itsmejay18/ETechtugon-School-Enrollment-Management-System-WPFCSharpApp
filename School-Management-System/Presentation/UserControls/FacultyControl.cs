@@ -15,26 +15,26 @@ namespace School_Management_System.Presentation.UserControls
     {
         private readonly FacultyService _facultyService;
 
-        private GroupBox _gb;
-        private TextBox _txtFacultyCode;
-        private TextBox _txtFirstName;
-        private TextBox _txtLastName;
-        private TextBox _txtMiddleName;
-        private TextBox _txtEmail;
-        private TextBox _txtPhone;
-        private TextBox _txtAddress;
-        private DateTimePicker _dtHireDate;
+        private GroupBox _gb = new GroupBox();
+        private TextBox _txtFacultyCode = new TextBox();
+        private TextBox _txtFirstName = new TextBox();
+        private TextBox _txtLastName = new TextBox();
+        private TextBox _txtMiddleName = new TextBox();
+        private TextBox _txtEmail = new TextBox();
+        private TextBox _txtPhone = new TextBox();
+        private TextBox _txtAddress = new TextBox();
+        private DateTimePicker _dtHireDate = new DateTimePicker();
 
-        private TextBox _txtSearch;
-        private DataGridView _grid;
-        private SplitContainer _split;
+        private TextBox _txtSearch = new TextBox();
+        private DataGridView _grid = new DataGridView();
+        private SplitContainer _split = new SplitContainer();
 
-        private Button _btnAdd;
-        private Button _btnEdit;
-        private Button _btnDelete;
-        private Button _btnSave;
-        private Button _btnCancel;
-        private Button _btnRefresh;
+        private Button _btnAdd = new Button();
+        private Button _btnEdit = new Button();
+        private Button _btnDelete = new Button();
+        private Button _btnSave = new Button();
+        private Button _btnCancel = new Button();
+        private Button _btnRefresh = new Button();
 
         private int _editingFacultyId;
         private bool _isEditorActive;
@@ -54,14 +54,105 @@ namespace School_Management_System.Presentation.UserControls
 
         private void InitializeComponent()
         {
-            this.SuspendLayout();
-            // 
-            // FacultyControl
-            // 
-            this.Name = "FacultyControl";
-            this.Size = new System.Drawing.Size(852, 496);
-            this.ResumeLayout(false);
+            BackColor = ThemeColors.Background;
 
+            var toolbar = BuildToolbar();
+            _split = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Vertical,
+                SplitterWidth = 6,
+                SplitterDistance = 730,
+                BackColor = ThemeColors.Border
+            };
+
+            _grid = new DataGridView { Dock = DockStyle.Fill };
+            ThemeManager.StyleDataGrid(_grid);
+            _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            _grid.CellClick += (s, e) => PreviewSelected();
+
+            var left = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
+            left.Controls.Add(_grid);
+            _split.Panel1.Controls.Add(left);
+
+            _gb = new GroupBox
+            {
+                Text = "Faculty Details",
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.SubHeader,
+                ForeColor = ThemeColors.Text,
+                Padding = new Padding(12, 18, 12, 12),
+                BackColor = ThemeColors.CardBackground
+            };
+            ThemeManager.StyleGroupBox(_gb);
+
+            var formLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 10,
+                Padding = new Padding(8, 6, 8, 6)
+            };
+            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+
+            _txtFacultyCode = MakeTextBox(readOnly: true);
+            _txtFirstName = MakeTextBox();
+            _txtLastName = MakeTextBox();
+            _txtMiddleName = MakeTextBox();
+            _txtEmail = MakeTextBox();
+            _txtPhone = MakeTextBox();
+            _dtHireDate = new DateTimePicker { Font = ThemeFonts.Input, Dock = DockStyle.Fill, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
+            _txtAddress = new TextBox { Font = ThemeFonts.Input, Dock = DockStyle.Fill, Multiline = true, ScrollBars = ScrollBars.Vertical };
+            ThemeManager.StyleInput(_txtAddress);
+
+            formLayout.Controls.Add(MakeLabel("Faculty No."), 0, 0);
+            formLayout.Controls.Add(_txtFacultyCode, 1, 0);
+            formLayout.Controls.Add(MakeLabel("First Name *"), 0, 1);
+            formLayout.Controls.Add(_txtFirstName, 1, 1);
+            formLayout.Controls.Add(MakeLabel("Last Name *"), 0, 2);
+            formLayout.Controls.Add(_txtLastName, 1, 2);
+            formLayout.Controls.Add(MakeLabel("Middle Name"), 0, 3);
+            formLayout.Controls.Add(_txtMiddleName, 1, 3);
+            formLayout.Controls.Add(MakeLabel("Email"), 0, 4);
+            formLayout.Controls.Add(_txtEmail, 1, 4);
+            formLayout.Controls.Add(MakeLabel("Phone"), 0, 5);
+            formLayout.Controls.Add(_txtPhone, 1, 5);
+            formLayout.Controls.Add(MakeLabel("Hire Date"), 0, 6);
+            formLayout.Controls.Add(_dtHireDate, 1, 6);
+            formLayout.Controls.Add(MakeLabel("Address"), 0, 7);
+            formLayout.Controls.Add(_txtAddress, 1, 7);
+
+            var note = new Label
+            {
+                Text = "Click a row to preview. Click Edit to modify.",
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.MutedText,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            formLayout.Controls.Add(note, 0, 9);
+            formLayout.SetColumnSpan(note, 2);
+
+            _gb.Controls.Add(formLayout);
+
+            var right = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
+            right.Controls.Add(_gb);
+            _split.Panel2.Controls.Add(right);
+
+            Controls.Clear();
+            Controls.Add(_split);
+            Controls.Add(toolbar);
         }
 
         private Panel BuildToolbar()
@@ -128,6 +219,9 @@ namespace School_Management_System.Presentation.UserControls
         private void SetEditorState(bool active)
         {
             _isEditorActive = active;
+            // If controls aren’t initialized yet (designer/constructor), just exit safely.
+            if (_txtFirstName == null) return;
+
             _txtFirstName.ReadOnly = !active;
             _txtLastName.ReadOnly = !active;
             _txtMiddleName.ReadOnly = !active;

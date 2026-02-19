@@ -14,6 +14,7 @@ namespace School_Management_System.Models
         private string _email;
         private string _phone;
         private string _address;
+        private string _photoPath;
         private bool _isActive;
         private DateTime _createdAt;
         private DateTime? _updatedAt;
@@ -28,6 +29,7 @@ namespace School_Management_System.Models
         public string Email { get { return _email; } set { _email = value; } }
         public string Phone { get { return _phone; } set { _phone = value; } }
         public string Address { get { return _address; } set { _address = value; } }
+        public string PhotoPath { get { return _photoPath; } set { _photoPath = value; } }
         public bool IsActive { get { return _isActive; } set { _isActive = value; } }
         public DateTime CreatedAt { get { return _createdAt; } set { _createdAt = value; } }
         public DateTime? UpdatedAt { get { return _updatedAt; } set { _updatedAt = value; } }

@@ -35,6 +35,7 @@ namespace School_Management_System.BusinessLayer.Services
             if (enrollment.AcademicYearId <= 0) vr.Add("Academic Year is required.");
             if (enrollment.YearLevelId <= 0) vr.Add("Year Level is required.");
             if (enrollment.SemesterId <= 0) vr.Add("Semester is required.");
+            if (enrollment.SectionId <= 0) vr.Add("Section is required.");
 
             if (details == null || details.Count == 0)
             {

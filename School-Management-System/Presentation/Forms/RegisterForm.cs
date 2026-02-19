@@ -82,21 +82,22 @@ namespace School_Management_System.Presentation.Forms
                     _db = DatabaseHelper.FromConfig();
                 }
 
-                IUserManagementData userData = new UserManagementData(_db);
-                _userManagementService = new UserManagementService(userData);
-
                 string error;
                 if (!_db.TestConnection(out error))
                 {
+                    _userManagementService = null;
                     SetConnectionState(false, string.IsNullOrWhiteSpace(error) ? Messages.NoDatabaseConnection : error);
                 }
                 else
                 {
+                    IUserManagementData userData = new UserManagementData(_db);
+                    _userManagementService = new UserManagementService(userData);
                     SetConnectionState(true, null);
                 }
             }
             catch (Exception ex)
             {
+                _userManagementService = null;
                 SetConnectionState(false, Messages.NoDatabaseConnection);
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("RegisterForm.TryInitServices", ex);
             }

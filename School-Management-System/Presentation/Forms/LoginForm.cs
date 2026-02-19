@@ -75,21 +75,22 @@ namespace School_Management_System.Presentation.Forms
             try
             {
                 _db = DatabaseHelper.FromConfig();
-                IUserData userData = new UserData(_db);
-                _authService = new AuthService(userData);
-
                 string error;
                 if (!_db.TestConnection(out error))
                 {
+                    _authService = null;
                     SetConnectionState(false, string.IsNullOrWhiteSpace(error) ? Messages.NoDatabaseConnection : error);
                 }
                 else
                 {
+                    IUserData userData = new UserData(_db);
+                    _authService = new AuthService(userData);
                     SetConnectionState(true, null);
                 }
             }
             catch (Exception ex)
             {
+                _authService = null;
                 SetConnectionState(false, Messages.NoDatabaseConnection);
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("LoginForm.TryInitServices", ex);
             }

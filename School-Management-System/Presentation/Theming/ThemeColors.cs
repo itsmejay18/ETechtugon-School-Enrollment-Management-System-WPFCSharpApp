@@ -15,6 +15,11 @@ namespace School_Management_System.Presentation.Theming
         public static readonly Color SidebarBackground = Primary;
         public static readonly Color SidebarHover = ColorTranslator.FromHtml("#34495E");
         public static readonly Color SidebarActive = ColorTranslator.FromHtml("#3E5873");
+        public static readonly Color SidebarTextMuted = ColorTranslator.FromHtml("#D7E3EE");
+        public static readonly Color SidebarSectionText = ColorTranslator.FromHtml("#9FB4C8");
+        public static readonly Color SidebarIcon = ColorTranslator.FromHtml("#3F98D7");
+        public static readonly Color SidebarIconDanger = ColorTranslator.FromHtml("#E85D4A");
+        public static readonly Color SidebarDivider = Color.FromArgb(62, 255, 255, 255);
 
         public static readonly Color CardBackground = Color.White;
         public static readonly Color Surface = ColorTranslator.FromHtml("#F6F8FB");

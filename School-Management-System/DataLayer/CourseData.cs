@@ -24,6 +24,7 @@ SELECT
     CourseCode,
     CourseName,
     Description,
+    DepartmentId,
     CreatedAt
 FROM Course
 WHERE IsActive = 1
@@ -53,6 +54,7 @@ SELECT
     CourseCode,
     CourseName,
     Description,
+    DepartmentId,
     CreatedAt
 FROM Course
 WHERE IsActive = 1
@@ -73,8 +75,8 @@ ORDER BY CourseName;";
             Guard.NotNull(course, nameof(course));
 
             const string sql = @"
-INSERT INTO Course (CourseCode, CourseName, Description, IsActive, CreatedAt)
-VALUES (@CourseCode, @CourseName, @Description, 1, UTC_TIMESTAMP());";
+INSERT INTO Course (CourseCode, CourseName, Description, DepartmentId, IsActive, CreatedAt)
+VALUES (@CourseCode, @CourseName, @Description, @DepartmentId, 1, UTC_TIMESTAMP());";
 
             var id = _db.ExecuteInsert(
                 sql,
@@ -83,7 +85,8 @@ VALUES (@CourseCode, @CourseName, @Description, 1, UTC_TIMESTAMP());";
                 {
                     new MySqlParameter("@CourseCode", (object)course.CourseCode ?? DBNull.Value),
                     new MySqlParameter("@CourseName", (object)course.CourseName ?? DBNull.Value),
-                    new MySqlParameter("@Description", (object)course.Description ?? DBNull.Value)
+                    new MySqlParameter("@Description", (object)course.Description ?? DBNull.Value),
+                    new MySqlParameter("@DepartmentId", (object)course.DepartmentId ?? DBNull.Value)
                 });
 
             return Convert.ToInt32(id);
@@ -99,6 +102,7 @@ SET
     CourseCode = @CourseCode,
     CourseName = @CourseName,
     Description = @Description,
+    DepartmentId = @DepartmentId,
     UpdatedAt = UTC_TIMESTAMP()
 WHERE CourseId = @CourseId;";
 
@@ -110,7 +114,8 @@ WHERE CourseId = @CourseId;";
                     new MySqlParameter("@CourseId", course.CourseId),
                     new MySqlParameter("@CourseCode", (object)course.CourseCode ?? DBNull.Value),
                     new MySqlParameter("@CourseName", (object)course.CourseName ?? DBNull.Value),
-                    new MySqlParameter("@Description", (object)course.Description ?? DBNull.Value)
+                    new MySqlParameter("@Description", (object)course.Description ?? DBNull.Value),
+                    new MySqlParameter("@DepartmentId", (object)course.DepartmentId ?? DBNull.Value)
                 });
         }
 

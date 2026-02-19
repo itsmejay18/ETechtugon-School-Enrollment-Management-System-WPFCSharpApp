@@ -11,16 +11,13 @@ using School_Management_System.Presentation.Theming;
 
 namespace School_Management_System.Presentation.UserControls
 {
-    public sealed class CourseControl : BaseUserControl
+    public sealed class YearLevelControl : BaseUserControl
     {
-        private readonly CourseService _courseService;
-        private readonly DepartmentService _departmentService;
+        private readonly YearLevelService _yearLevelService;
 
         private GroupBox _gb;
-        private TextBox _txtCode;
         private TextBox _txtName;
-        private TextBox _txtDescription;
-        private ComboBox _cmbDepartment;
+        private NumericUpDown _numSort;
 
         private TextBox _txtSearch;
         private DataGridView _grid;
@@ -33,21 +30,18 @@ namespace School_Management_System.Presentation.UserControls
         private Button _btnCancel;
         private Button _btnRefresh;
 
-        private int _editingCourseId;
+        private int _editingYearLevelId;
         private bool _isEditorActive;
-        private DataTable _departments;
 
-        public CourseControl()
-            : this(null, null)
+        public YearLevelControl()
+            : this(null)
         {
         }
 
-        public CourseControl(CourseService courseService, DepartmentService departmentService)
+        public YearLevelControl(YearLevelService yearLevelService)
         {
-            _courseService = courseService;
-            _departmentService = departmentService;
+            _yearLevelService = yearLevelService;
             InitializeComponent();
-            LoadDepartments();
             SetEditorState(false);
             LoadGrid();
         }
@@ -77,7 +71,7 @@ namespace School_Management_System.Presentation.UserControls
 
             _gb = new GroupBox
             {
-                Text = "Course Details",
+                Text = "Year Level Details",
                 Dock = DockStyle.Fill,
                 Font = ThemeFonts.SubHeader,
                 ForeColor = ThemeColors.Text,
@@ -90,34 +84,25 @@ namespace School_Management_System.Presentation.UserControls
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 7,
+                RowCount = 5,
                 Padding = new Padding(8, 6, 8, 6)
             };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 120));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
 
-            _txtCode = MakeTextBox();
             _txtName = MakeTextBox();
-            _txtDescription = new TextBox { Font = ThemeFonts.Input, Dock = DockStyle.Fill, Multiline = true, ScrollBars = ScrollBars.Vertical };
-            ThemeManager.StyleInput(_txtDescription);
-            _cmbDepartment = new ComboBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input };
-            ThemeManager.StyleComboBox(_cmbDepartment);
+            _numSort = new NumericUpDown { Dock = DockStyle.Fill, Font = ThemeFonts.Input, Minimum = 0, Maximum = 20, Value = 1 };
+            ThemeManager.StyleInput(_numSort);
 
-            layout.Controls.Add(MakeLabel("Course Code *"), 0, 0);
-            layout.Controls.Add(_txtCode, 1, 0);
-            layout.Controls.Add(MakeLabel("Course Name *"), 0, 1);
-            layout.Controls.Add(_txtName, 1, 1);
-            layout.Controls.Add(MakeLabel("Department"), 0, 2);
-            layout.Controls.Add(_cmbDepartment, 1, 2);
-            layout.Controls.Add(MakeLabel("Description"), 0, 3);
-            layout.Controls.Add(_txtDescription, 1, 3);
+            layout.Controls.Add(MakeLabel("Year Level *"), 0, 0);
+            layout.Controls.Add(_txtName, 1, 0);
+            layout.Controls.Add(MakeLabel("Display Order"), 0, 1);
+            layout.Controls.Add(_numSort, 1, 1);
 
             var note = new Label
             {
@@ -127,7 +112,7 @@ namespace School_Management_System.Presentation.UserControls
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            layout.Controls.Add(note, 0, 5);
+            layout.Controls.Add(note, 0, 3);
             layout.SetColumnSpan(note, 2);
 
             _gb.Controls.Add(layout);
@@ -136,7 +121,6 @@ namespace School_Management_System.Presentation.UserControls
             right.Controls.Add(_gb);
             _split.Panel2.Controls.Add(right);
 
-            Controls.Clear();
             Controls.Add(_split);
             Controls.Add(toolbar);
         }
@@ -202,59 +186,33 @@ namespace School_Management_System.Presentation.UserControls
             return tb;
         }
 
-        private void LoadDepartments()
-        {
-            _departments = new DataTable();
-            _departments.Columns.Add("DepartmentId", typeof(int));
-            _departments.Columns.Add("DepartmentCode", typeof(string));
-            _departments.Columns.Add("DepartmentName", typeof(string));
-            _departments.Rows.Add(0, string.Empty, "(None)");
-
-            if (_departmentService != null)
-            {
-                var dt = _departmentService.GetLookupDepartments();
-                foreach (DataRow r in dt.Rows)
-                {
-                    _departments.ImportRow(r);
-                }
-            }
-
-            _cmbDepartment.DisplayMember = "DepartmentName";
-            _cmbDepartment.ValueMember = "DepartmentId";
-            _cmbDepartment.DataSource = _departments;
-        }
-
         private void SetEditorState(bool active)
         {
             _isEditorActive = active;
-            _txtCode.ReadOnly = !active;
             _txtName.ReadOnly = !active;
-            _txtDescription.ReadOnly = !active;
-            if (_cmbDepartment != null) _cmbDepartment.Enabled = active;
+            _numSort.Enabled = active;
 
             _btnSave.Enabled = active;
             _btnCancel.Enabled = active;
             _btnAdd.Enabled = !active;
-            _btnEdit.Enabled = !active && _editingCourseId > 0;
-            _btnDelete.Enabled = !active && _editingCourseId > 0;
+            _btnEdit.Enabled = !active && _editingYearLevelId > 0;
+            _btnDelete.Enabled = !active && _editingYearLevelId > 0;
         }
 
         private void BeginAdd()
         {
-            _editingCourseId = 0;
-            _txtCode.Text = string.Empty;
+            _editingYearLevelId = 0;
             _txtName.Text = string.Empty;
-            _txtDescription.Text = string.Empty;
-            if (_cmbDepartment != null) _cmbDepartment.SelectedValue = 0;
+            _numSort.Value = 1;
             SetEditorState(true);
-            _txtCode.Focus();
+            _txtName.Focus();
         }
 
         private void BeginEdit()
         {
-            if (_editingCourseId <= 0) return;
+            if (_editingYearLevelId <= 0) return;
             SetEditorState(true);
-            _txtCode.Focus();
+            _txtName.Focus();
         }
 
         private void CancelEdit()
@@ -268,12 +226,12 @@ namespace School_Management_System.Presentation.UserControls
             try
             {
                 UseWaitCursor = true;
-                var dt = _courseService == null ? new DataTable() : _courseService.GetCourses(_txtSearch == null ? string.Empty : _txtSearch.Text);
+                var dt = _yearLevelService == null ? new DataTable() : _yearLevelService.GetYearLevels(_txtSearch == null ? string.Empty : _txtSearch.Text);
                 BindGrid(dt);
             }
             catch (Exception ex)
             {
-                School_Management_System.DataLayer.Logging.FileLogger.LogError("CourseControl.LoadGrid", ex);
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("YearLevelControl.LoadGrid", ex);
                 ThemedMessageBox.ShowError(this, Messages.UnexpectedError);
             }
             finally
@@ -286,16 +244,9 @@ namespace School_Management_System.Presentation.UserControls
         {
             _grid.DataSource = null;
             _grid.Columns.Clear();
-
             _grid.DataSource = dt;
-            if (_grid.Columns["CourseId"] != null)
-            {
-                _grid.Columns["CourseId"].Visible = false;
-            }
-            if (_grid.Columns["DepartmentId"] != null)
-            {
-                _grid.Columns["DepartmentId"].Visible = false;
-            }
+
+            if (_grid.Columns["YearLevelId"] != null) _grid.Columns["YearLevelId"].Visible = false;
 
             if (_grid.Rows.Count > 0)
             {
@@ -305,10 +256,9 @@ namespace School_Management_System.Presentation.UserControls
             }
             else
             {
-                _editingCourseId = 0;
-                _txtCode.Text = string.Empty;
+                _editingYearLevelId = 0;
                 _txtName.Text = string.Empty;
-                _txtDescription.Text = string.Empty;
+                _numSort.Value = 1;
                 SetEditorState(false);
             }
         }
@@ -319,38 +269,33 @@ namespace School_Management_System.Presentation.UserControls
             if (_grid.CurrentRow == null) return;
 
             var row = _grid.CurrentRow;
-            if (row.Cells["CourseId"] == null || row.Cells["CourseId"].Value == null) return;
+            if (row.Cells["YearLevelId"] == null || row.Cells["YearLevelId"].Value == null) return;
 
-            _editingCourseId = Convert.ToInt32(row.Cells["CourseId"].Value);
-            _txtCode.Text = Convert.ToString(row.Cells["CourseCode"].Value);
-            _txtName.Text = Convert.ToString(row.Cells["CourseName"].Value);
-            _txtDescription.Text = Convert.ToString(row.Cells["Description"].Value);
-            if (_cmbDepartment != null && row.Cells["DepartmentId"] != null)
+            _editingYearLevelId = Convert.ToInt32(row.Cells["YearLevelId"].Value);
+            _txtName.Text = Convert.ToString(row.Cells["Name"].Value);
+
+            decimal sortOrder;
+            if (decimal.TryParse(Convert.ToString(row.Cells["SortOrder"].Value), out sortOrder))
             {
-                var deptVal = row.Cells["DepartmentId"].Value;
-                var deptId = deptVal == null || deptVal == DBNull.Value ? 0 : Convert.ToInt32(deptVal);
-                _cmbDepartment.SelectedValue = deptId;
+                _numSort.Value = sortOrder;
             }
             SetEditorState(false);
         }
 
         private void Save()
         {
-            if (_courseService == null) return;
+            if (_yearLevelService == null) return;
 
             try
             {
-                var deptId = _cmbDepartment == null || _cmbDepartment.SelectedValue == null ? 0 : Convert.ToInt32(_cmbDepartment.SelectedValue);
-                var course = new Course
+                var yearLevel = new YearLevel
                 {
-                    CourseId = _editingCourseId,
-                    CourseCode = (_txtCode.Text ?? string.Empty).Trim(),
-                    CourseName = (_txtName.Text ?? string.Empty).Trim(),
-                    Description = (_txtDescription.Text ?? string.Empty).Trim(),
-                    DepartmentId = deptId <= 0 ? (int?)null : deptId
+                    YearLevelId = _editingYearLevelId,
+                    Name = (_txtName.Text ?? string.Empty).Trim(),
+                    SortOrder = Convert.ToInt32(_numSort.Value)
                 };
 
-                var vr = _courseService.Validate(course);
+                var vr = _yearLevelService.Validate(yearLevel);
                 if (!vr.IsValid)
                 {
                     ThemedMessageBox.ShowError(this, vr.ToString(), "Validation");
@@ -360,15 +305,15 @@ namespace School_Management_System.Presentation.UserControls
                 UseWaitCursor = true;
                 _btnSave.Enabled = false;
 
-                if (_editingCourseId == 0)
+                if (_editingYearLevelId == 0)
                 {
-                    _courseService.Create(course);
-                    ThemedMessageBox.ShowInfo(this, "Course saved successfully.", "Saved");
+                    _yearLevelService.Create(yearLevel);
+                    ThemedMessageBox.ShowInfo(this, "Year Level saved successfully.", "Saved");
                 }
                 else
                 {
-                    _courseService.Update(course);
-                    ThemedMessageBox.ShowInfo(this, "Course updated successfully.", "Updated");
+                    _yearLevelService.Update(yearLevel);
+                    ThemedMessageBox.ShowInfo(this, "Year Level updated successfully.", "Updated");
                 }
 
                 LoadGrid();
@@ -376,7 +321,7 @@ namespace School_Management_System.Presentation.UserControls
             }
             catch (Exception ex)
             {
-                School_Management_System.DataLayer.Logging.FileLogger.LogError("CourseControl.Save", ex);
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("YearLevelControl.Save", ex);
                 ThemedMessageBox.ShowError(this, Messages.UnexpectedError);
             }
             finally
@@ -388,22 +333,22 @@ namespace School_Management_System.Presentation.UserControls
 
         private void DeleteCurrent()
         {
-            if (_courseService == null) return;
-            if (_editingCourseId <= 0) return;
+            if (_yearLevelService == null) return;
+            if (_editingYearLevelId <= 0) return;
 
-            if (ThemedMessageBox.ShowConfirm(this, Messages.ConfirmDelete, "Delete Course") != DialogResult.OK)
+            if (ThemedMessageBox.ShowConfirm(this, Messages.ConfirmDelete, "Delete Year Level") != DialogResult.OK)
             {
                 return;
             }
 
             try
             {
-                _courseService.Delete(_editingCourseId);
+                _yearLevelService.Delete(_editingYearLevelId);
                 LoadGrid();
             }
             catch (Exception ex)
             {
-                School_Management_System.DataLayer.Logging.FileLogger.LogError("CourseControl.DeleteCurrent", ex);
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("YearLevelControl.DeleteCurrent", ex);
                 ThemedMessageBox.ShowError(this, Messages.UnexpectedError);
             }
         }

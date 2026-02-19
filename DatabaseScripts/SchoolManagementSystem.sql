@@ -77,6 +77,36 @@ LOCK TABLES `activitylog` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `department`
+--
+
+DROP TABLE IF EXISTS `department`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `department` (
+  `DepartmentId` int NOT NULL AUTO_INCREMENT,
+  `DepartmentCode` varchar(20) NOT NULL,
+  `DepartmentName` varchar(100) NOT NULL,
+  `Description` varchar(250) DEFAULT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`DepartmentId`),
+  UNIQUE KEY `UX_Department_Code` (`DepartmentCode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `department`
+--
+
+LOCK TABLES `department` WRITE;
+/*!40000 ALTER TABLE `department` DISABLE KEYS */;
+INSERT INTO `department` VALUES (1,'CIT','College of Information Technology','Default department',1,'2026-02-15 14:06:21',NULL);
+/*!40000 ALTER TABLE `department` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `course`
 --
 
@@ -88,11 +118,14 @@ CREATE TABLE `course` (
   `CourseCode` varchar(20) NOT NULL,
   `CourseName` varchar(100) NOT NULL,
   `Description` varchar(250) DEFAULT NULL,
+  `DepartmentId` int DEFAULT NULL,
   `IsActive` tinyint(1) NOT NULL DEFAULT '1',
   `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
   `UpdatedAt` datetime DEFAULT NULL,
   PRIMARY KEY (`CourseId`),
-  UNIQUE KEY `UX_Course_CourseCode` (`CourseCode`)
+  UNIQUE KEY `UX_Course_CourseCode` (`CourseCode`),
+  KEY `FK_Course_Department` (`DepartmentId`),
+  CONSTRAINT `FK_Course_Department` FOREIGN KEY (`DepartmentId`) REFERENCES `department` (`DepartmentId`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -102,7 +135,7 @@ CREATE TABLE `course` (
 
 LOCK TABLES `course` WRITE;
 /*!40000 ALTER TABLE `course` DISABLE KEYS */;
-INSERT INTO `course` VALUES (1,'BSCS','BS Computer Science','Sample course',1,'2026-02-15 14:06:21',NULL),(2,'BSIT','BS Information Technology','Sample course',1,'2026-02-15 14:06:21',NULL);
+INSERT INTO `course` VALUES (1,'BSCS','BS Computer Science','Sample course',1,1,'2026-02-15 14:06:21',NULL),(2,'BSIT','BS Information Technology','Sample course',1,1,'2026-02-15 14:06:21',NULL);
 /*!40000 ALTER TABLE `course` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -175,6 +208,97 @@ LOCK TABLES `curriculumdetails` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `section`
+--
+
+DROP TABLE IF EXISTS `section`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `section` (
+  `SectionId` int NOT NULL AUTO_INCREMENT,
+  `SectionName` varchar(50) NOT NULL,
+  `CourseId` int NOT NULL,
+  `YearLevelId` int NOT NULL,
+  `AcademicYearId` int NOT NULL,
+  `SemesterId` int NOT NULL,
+  `Capacity` int DEFAULT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`SectionId`),
+  UNIQUE KEY `UX_Section_Unique` (`SectionName`,`CourseId`,`AcademicYearId`,`SemesterId`),
+  KEY `FK_Section_Course` (`CourseId`),
+  KEY `FK_Section_YearLevel` (`YearLevelId`),
+  KEY `FK_Section_AcademicYear` (`AcademicYearId`),
+  KEY `FK_Section_Semester` (`SemesterId`),
+  CONSTRAINT `FK_Section_AcademicYear` FOREIGN KEY (`AcademicYearId`) REFERENCES `academicyear` (`AcademicYearId`),
+  CONSTRAINT `FK_Section_Course` FOREIGN KEY (`CourseId`) REFERENCES `course` (`CourseId`),
+  CONSTRAINT `FK_Section_Semester` FOREIGN KEY (`SemesterId`) REFERENCES `semester` (`SemesterId`),
+  CONSTRAINT `FK_Section_YearLevel` FOREIGN KEY (`YearLevelId`) REFERENCES `yearlevel` (`YearLevelId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `section`
+--
+
+LOCK TABLES `section` WRITE;
+/*!40000 ALTER TABLE `section` DISABLE KEYS */;
+INSERT INTO `section` VALUES
+  (1,'Section A',1,1,1,1,40,1,'2026-02-15 14:40:00',NULL),
+  (2,'Section B',2,1,1,1,40,1,'2026-02-15 14:40:00',NULL);
+/*!40000 ALTER TABLE `section` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `classschedule`
+--
+
+DROP TABLE IF EXISTS `classschedule`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `classschedule` (
+  `ClassScheduleId` int NOT NULL AUTO_INCREMENT,
+  `SectionId` int NOT NULL,
+  `SubjectId` int NOT NULL,
+  `FacultyId` int DEFAULT NULL,
+  `DayOfWeek` varchar(40) DEFAULT NULL,
+  `StartTime` time DEFAULT NULL,
+  `EndTime` time DEFAULT NULL,
+  `Room` varchar(50) DEFAULT NULL,
+  `Remarks` varchar(250) DEFAULT NULL,
+  `AcademicYearId` int NOT NULL,
+  `SemesterId` int NOT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`ClassScheduleId`),
+  UNIQUE KEY `UX_ClassSchedule_SectionSubject` (`SectionId`,`SubjectId`,`AcademicYearId`,`SemesterId`),
+  KEY `FK_ClassSchedule_Subject` (`SubjectId`),
+  KEY `FK_ClassSchedule_Faculty` (`FacultyId`),
+  KEY `FK_ClassSchedule_AcademicYear` (`AcademicYearId`),
+  KEY `FK_ClassSchedule_Semester` (`SemesterId`),
+  CONSTRAINT `FK_ClassSchedule_AcademicYear` FOREIGN KEY (`AcademicYearId`) REFERENCES `academicyear` (`AcademicYearId`),
+  CONSTRAINT `FK_ClassSchedule_Faculty` FOREIGN KEY (`FacultyId`) REFERENCES `faculty` (`FacultyId`) ON DELETE SET NULL,
+  CONSTRAINT `FK_ClassSchedule_Semester` FOREIGN KEY (`SemesterId`) REFERENCES `semester` (`SemesterId`),
+  CONSTRAINT `FK_ClassSchedule_Section` FOREIGN KEY (`SectionId`) REFERENCES `section` (`SectionId`),
+  CONSTRAINT `FK_ClassSchedule_Subject` FOREIGN KEY (`SubjectId`) REFERENCES `subject` (`SubjectId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `classschedule`
+--
+
+LOCK TABLES `classschedule` WRITE;
+/*!40000 ALTER TABLE `classschedule` DISABLE KEYS */;
+INSERT INTO `classschedule` VALUES
+  (1,1,1,NULL,'Mon/Wed','08:00:00','09:30:00','Lab 1','',1,1,1,'2026-02-15 14:45:00',NULL),
+  (2,1,2,NULL,'Tue/Thu','10:00:00','11:30:00','Room 101','',1,1,1,'2026-02-15 14:45:00',NULL);
+/*!40000 ALTER TABLE `classschedule` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `enrollment`
 --
 
@@ -189,6 +313,7 @@ CREATE TABLE `enrollment` (
   `AcademicYearId` int NOT NULL,
   `YearLevelId` int NOT NULL,
   `SemesterId` int NOT NULL,
+  `SectionId` int NOT NULL,
   `EnrollDate` date NOT NULL,
   `TotalUnits` int NOT NULL DEFAULT '0',
   `Status` varchar(20) NOT NULL DEFAULT 'Draft',
@@ -201,9 +326,11 @@ CREATE TABLE `enrollment` (
   KEY `FK_Enrollment_AcademicYear` (`AcademicYearId`),
   KEY `FK_Enrollment_YearLevel` (`YearLevelId`),
   KEY `FK_Enrollment_Semester` (`SemesterId`),
+  KEY `FK_Enrollment_Section` (`SectionId`),
   CONSTRAINT `FK_Enrollment_AcademicYear` FOREIGN KEY (`AcademicYearId`) REFERENCES `academicyear` (`AcademicYearId`),
   CONSTRAINT `FK_Enrollment_Course` FOREIGN KEY (`CourseId`) REFERENCES `course` (`CourseId`),
   CONSTRAINT `FK_Enrollment_Semester` FOREIGN KEY (`SemesterId`) REFERENCES `semester` (`SemesterId`),
+  CONSTRAINT `FK_Enrollment_Section` FOREIGN KEY (`SectionId`) REFERENCES `section` (`SectionId`),
   CONSTRAINT `FK_Enrollment_Student` FOREIGN KEY (`StudentId`) REFERENCES `student` (`StudentId`),
   CONSTRAINT `FK_Enrollment_YearLevel` FOREIGN KEY (`YearLevelId`) REFERENCES `yearlevel` (`YearLevelId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -230,12 +357,16 @@ CREATE TABLE `enrollmentdetails` (
   `EnrollmentId` int NOT NULL,
   `SubjectId` int NOT NULL,
   `Units` int NOT NULL,
+  `ClassScheduleId` int DEFAULT NULL,
+  `Grade` decimal(5,2) DEFAULT NULL,
   `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
   PRIMARY KEY (`EnrollmentDetailId`),
   UNIQUE KEY `UX_EnrollmentDetails_Unique` (`EnrollmentId`,`SubjectId`),
   KEY `FK_EnrollmentDetails_Subject` (`SubjectId`),
+  KEY `FK_EnrollmentDetails_ClassSchedule` (`ClassScheduleId`),
   CONSTRAINT `FK_EnrollmentDetails_Enrollment` FOREIGN KEY (`EnrollmentId`) REFERENCES `enrollment` (`EnrollmentId`) ON DELETE CASCADE,
-  CONSTRAINT `FK_EnrollmentDetails_Subject` FOREIGN KEY (`SubjectId`) REFERENCES `subject` (`SubjectId`)
+  CONSTRAINT `FK_EnrollmentDetails_Subject` FOREIGN KEY (`SubjectId`) REFERENCES `subject` (`SubjectId`),
+  CONSTRAINT `FK_EnrollmentDetails_ClassSchedule` FOREIGN KEY (`ClassScheduleId`) REFERENCES `classschedule` (`ClassScheduleId`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -327,6 +458,7 @@ CREATE TABLE `student` (
   `Email` varchar(100) DEFAULT NULL,
   `Phone` varchar(30) DEFAULT NULL,
   `Address` varchar(250) DEFAULT NULL,
+  `PhotoPath` varchar(260) DEFAULT NULL,
   `IsActive` tinyint(1) NOT NULL DEFAULT '1',
   `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
   `UpdatedAt` datetime DEFAULT NULL,
@@ -342,7 +474,7 @@ CREATE TABLE `student` (
 
 LOCK TABLES `student` WRITE;
 /*!40000 ALTER TABLE `student` DISABLE KEYS */;
-INSERT INTO `student` VALUES (1,'STU-2026-0001','Jay','Ababon','Jemino','Male','2004-06-18','jayjeminoababon@gmail.com','09912268122','Prk. 6, Lower Balutakay, Hagonoy, Davao Del Sur',1,'2026-02-15 15:37:01',NULL);
+INSERT INTO `student` VALUES (1,'STU-2026-0001','Jay','Ababon','Jemino','Male','2004-06-18','jayjeminoababon@gmail.com','09912268122','Prk. 6, Lower Balutakay, Hagonoy, Davao Del Sur',NULL,1,'2026-02-15 15:37:01',NULL);
 /*!40000 ALTER TABLE `student` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -409,8 +541,35 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'admin',_binary 'ñv\”¡à\À\ZX˛@hC\÷\ÕPà3\ÌGΩ$NFH\"\ZÚ\Î',_binary 'F\·˚Ü6*˛¥∑%ú\\ ñ','Admin','System Administrator',1,'2026-02-15 14:06:21',NULL,'2026-02-15 16:21:32'),(2,'registrar',_binary 'Æç \–EπÒS±ztG‘≤`ä^∏≠˘»ç8?',_binary '-èÜÛæµC	Û]s\Íu¢','Registrar','Default Registrar',1,'2026-02-15 14:06:21',NULL,NULL),(3,'faculty1',_binary '\«|{∫\„≤ˇRAπ¿	t\Í⁄ç°•xó?p∂\"gº\\\√S',_binary 'H†Âí´(\Î\”V\ﬂJ¶\Áàj_','Faculty','Default Faculty',1,'2026-02-15 14:06:21',NULL,NULL);
+INSERT INTO `users` VALUES
+  (1,'admin',UNHEX('491B306728DB9AB65DC7504B3EF8DA1293693F2E55A958405C4BB7BB6672A934'),UNHEX('2C8FA907A42255A3FB0F3C02B49C7473'),'Admin','System Administrator',1,'2026-02-15 14:06:21',NULL,'2026-02-15 16:21:32'),
+  (2,'registrar',UNHEX('828F4E3EE279C5D766D8C58C257E87C0CB44F4843EDC051D1A41219B72738523'),UNHEX('474715AC6A02F482A85FA09479BE5C30'),'Registrar','Default Registrar',1,'2026-02-15 14:06:21',NULL,NULL),
+  (3,'faculty1',UNHEX('DD9B92F18FDBD92BE8126B29ECF7362CA8DD9ACAFEFDCA7803CC62EB46B945AF'),UNHEX('42E2DBAFA5230A27DA3A31C49A8203F0'),'Faculty','Default Faculty',1,'2026-02-15 14:06:21',NULL,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `systemsetting`
+--
+
+DROP TABLE IF EXISTS `systemsetting`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `systemsetting` (
+  `SettingKey` varchar(50) NOT NULL,
+  `SettingValue` varchar(200) NOT NULL,
+  PRIMARY KEY (`SettingKey`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `systemsetting`
+--
+
+LOCK TABLES `systemsetting` WRITE;
+/*!40000 ALTER TABLE `systemsetting` DISABLE KEYS */;
+INSERT INTO `systemsetting` VALUES ('CurrentAcademicYearId','1'),('CurrentSemesterId','1');
+/*!40000 ALTER TABLE `systemsetting` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --

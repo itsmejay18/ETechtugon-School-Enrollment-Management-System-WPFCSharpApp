@@ -2,25 +2,22 @@ using System;
 
 namespace School_Management_System.Models
 {
-    public sealed class Course
+    public sealed class Department
     {
-        private int _courseId;
-        private string _courseCode;
-        private string _courseName;
+        private int _departmentId;
+        private string _departmentCode;
+        private string _departmentName;
         private string _description;
-        private int? _departmentId;
         private bool _isActive;
         private DateTime _createdAt;
         private DateTime? _updatedAt;
 
-        public int CourseId { get { return _courseId; } set { _courseId = value; } }
-        public string CourseCode { get { return _courseCode; } set { _courseCode = value; } }
-        public string CourseName { get { return _courseName; } set { _courseName = value; } }
+        public int DepartmentId { get { return _departmentId; } set { _departmentId = value; } }
+        public string DepartmentCode { get { return _departmentCode; } set { _departmentCode = value; } }
+        public string DepartmentName { get { return _departmentName; } set { _departmentName = value; } }
         public string Description { get { return _description; } set { _description = value; } }
-        public int? DepartmentId { get { return _departmentId; } set { _departmentId = value; } }
         public bool IsActive { get { return _isActive; } set { _isActive = value; } }
         public DateTime CreatedAt { get { return _createdAt; } set { _createdAt = value; } }
         public DateTime? UpdatedAt { get { return _updatedAt; } set { _updatedAt = value; } }
     }
 }
-

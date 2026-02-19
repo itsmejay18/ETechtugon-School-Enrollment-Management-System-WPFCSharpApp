@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using School_Management_System.BusinessLayer.Services;
 using School_Management_System.Common;
@@ -14,8 +15,10 @@ namespace School_Management_System.Presentation.UserControls
     public sealed class StudentControl : BaseUserControl
     {
         private readonly StudentService _studentService;
+        private readonly SystemSettingService _systemSettingService;
 
         private GroupBox _gb;
+        private GroupBox _gbEnrollment;
         private TextBox _txtStudentNumber;
         private TextBox _txtFirstName;
         private TextBox _txtLastName;
@@ -25,6 +28,9 @@ namespace School_Management_System.Presentation.UserControls
         private TextBox _txtEmail;
         private TextBox _txtPhone;
         private TextBox _txtAddress;
+        private PictureBox _picPhoto;
+        private Button _btnUploadPhoto;
+        private Button _btnRemovePhoto;
 
         private TextBox _txtSearch;
         private DataGridView _grid;
@@ -39,15 +45,26 @@ namespace School_Management_System.Presentation.UserControls
 
         private int _editingStudentId;
         private bool _isEditorActive;
+        private string _currentPhotoPath;
+        private string _selectedPhotoPath;
+        private ListView _lvEnrollments;
+        private int? _activeAcademicYearId;
+        private int? _activeSemesterId;
 
         public StudentControl()
-            : this(null)
+            : this(null, null)
         {
         }
 
-        public StudentControl(StudentService studentService)
+        public StudentControl(StudentService studentService, SystemSettingService systemSettingService)
         {
             _studentService = studentService;
+            _systemSettingService = systemSettingService;
+
+            var activeTerm = _systemSettingService == null ? (null, null) : _systemSettingService.GetActiveTerm();
+            _activeAcademicYearId = activeTerm.Item1;
+            _activeSemesterId = activeTerm.Item2;
+
             InitializeComponent();
             SetEditorState(false);
             LoadGrid();
@@ -150,48 +167,130 @@ namespace School_Management_System.Presentation.UserControls
             formLayout.Controls.Add(note, 0, 9);
             formLayout.SetColumnSpan(note, 2);
 
-            _gb.Controls.Add(formLayout);
+            var photoPanel = BuildPhotoPanel();
+
+            var detailsLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1
+            };
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+            detailsLayout.Controls.Add(formLayout, 0, 0);
+            detailsLayout.Controls.Add(photoPanel, 1, 0);
+
+            _gb.Controls.Add(detailsLayout);
+
+            _gbEnrollment = new GroupBox
+            {
+                Text = "Enrolled Subjects & Grades",
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.SubHeader,
+                ForeColor = ThemeColors.Text,
+                Padding = new Padding(12, 18, 12, 12),
+                BackColor = ThemeColors.CardBackground
+            };
+            ThemeManager.StyleGroupBox(_gbEnrollment);
+
+            _lvEnrollments = new ListView
+            {
+                Dock = DockStyle.Fill,
+                View = View.Details,
+                FullRowSelect = true,
+                GridLines = true
+            };
+            _lvEnrollments.Columns.Add("Enrollment #", 120);
+            _lvEnrollments.Columns.Add("Subject", 240);
+            _lvEnrollments.Columns.Add("Units", 60);
+            _lvEnrollments.Columns.Add("Grade", 70);
+            _lvEnrollments.Columns.Add("Section", 100);
+            _lvEnrollments.Columns.Add("Term", 120);
+            _lvEnrollments.Columns.Add("Schedule", 140);
+            _gbEnrollment.Controls.Add(_lvEnrollments);
+
+            var rightLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 2
+            };
+            rightLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 60));
+            rightLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
+            rightLayout.Controls.Add(_gb, 0, 0);
+            rightLayout.Controls.Add(_gbEnrollment, 0, 1);
 
             var right = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
-            right.Controls.Add(_gb);
+            right.Controls.Add(rightLayout);
             _split.Panel2.Controls.Add(right);
 
             Controls.Add(_split);
             Controls.Add(toolbar);
         }
 
+        private Panel BuildPhotoPanel()
+        {
+            var panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(6, 0, 0, 0), BackColor = ThemeColors.CardBackground };
+
+            _picPhoto = new PictureBox
+            {
+                Dock = DockStyle.Top,
+                Height = 180,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = ThemeColors.Background
+            };
+
+            _btnUploadPhoto = new Button { Text = "Upload Photo", Dock = DockStyle.Top, Height = 36 };
+            ThemeManager.StyleButtonNeutral(_btnUploadPhoto);
+            _btnUploadPhoto.Click += (s, e) => UploadPhoto();
+
+            _btnRemovePhoto = new Button { Text = "Remove Photo", Dock = DockStyle.Top, Height = 32 };
+            ThemeManager.StyleButtonDanger(_btnRemovePhoto);
+            _btnRemovePhoto.Click += (s, e) => ClearPhoto();
+
+            panel.Controls.Add(_btnRemovePhoto);
+            panel.Controls.Add(_btnUploadPhoto);
+            panel.Controls.Add(_picPhoto);
+
+            return panel;
+        }
+
         private Panel BuildToolbar()
         {
             var toolbar = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
 
-            _txtSearch = new TextBox { Width = 260, Location = new Point(0, 10) };
+            var lblSearch = new Label { Text = "Last Name:", AutoSize = true, Location = new Point(0, 14), ForeColor = ThemeColors.MutedText, Font = ThemeFonts.Label };
+
+            _txtSearch = new TextBox { Width = 220, Location = new Point(80, 10) };
             ThemeManager.StyleInput(_txtSearch);
             _txtSearch.TextChanged += (s, e) => LoadGrid();
 
-            _btnRefresh = new Button { Text = "Refresh", Width = 96, Location = new Point(270, 8) };
+            _btnRefresh = new Button { Text = "Refresh", Width = 86, Location = new Point(310, 8) };
             ThemeManager.StyleButtonNeutral(_btnRefresh);
             _btnRefresh.Click += (s, e) => LoadGrid();
 
-            _btnAdd = new Button { Text = "Add", Width = 86, Location = new Point(384, 8) };
+            _btnAdd = new Button { Text = "New Student", Width = 110, Location = new Point(406, 8) };
             ThemeManager.StyleButtonPrimary(_btnAdd);
             _btnAdd.Click += (s, e) => BeginAdd();
 
-            _btnEdit = new Button { Text = "Edit", Width = 86, Location = new Point(478, 8) };
+            _btnEdit = new Button { Text = "Edit", Width = 86, Location = new Point(528, 8) };
             ThemeManager.StyleButtonNeutral(_btnEdit);
             _btnEdit.Click += (s, e) => BeginEdit();
 
-            _btnDelete = new Button { Text = "Delete", Width = 86, Location = new Point(572, 8) };
+            _btnDelete = new Button { Text = "Delete", Width = 86, Location = new Point(622, 8) };
             ThemeManager.StyleButtonDanger(_btnDelete);
             _btnDelete.Click += (s, e) => DeleteCurrent();
 
-            _btnSave = new Button { Text = "Save", Width = 86, Location = new Point(666, 8) };
+            _btnSave = new Button { Text = "Save", Width = 86, Location = new Point(716, 8) };
             ThemeManager.StyleButtonPrimary(_btnSave);
             _btnSave.Click += (s, e) => Save();
 
-            _btnCancel = new Button { Text = "Cancel", Width = 86, Location = new Point(760, 8) };
+            _btnCancel = new Button { Text = "Cancel", Width = 86, Location = new Point(810, 8) };
             ThemeManager.StyleButtonNeutral(_btnCancel);
             _btnCancel.Click += (s, e) => CancelEdit();
 
+            toolbar.Controls.Add(lblSearch);
             toolbar.Controls.Add(_txtSearch);
             toolbar.Controls.Add(_btnRefresh);
             toolbar.Controls.Add(_btnAdd);
@@ -232,6 +331,8 @@ namespace School_Management_System.Presentation.UserControls
             _txtAddress.ReadOnly = !active;
             _cmbGender.Enabled = active;
             _dtBirthDate.Enabled = active;
+            if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = active;
+            if (_btnRemovePhoto != null) _btnRemovePhoto.Enabled = active && !string.IsNullOrWhiteSpace(_currentPhotoPath);
 
             _btnSave.Enabled = active;
             _btnCancel.Enabled = active;
@@ -252,6 +353,13 @@ namespace School_Management_System.Presentation.UserControls
             _txtEmail.Text = string.Empty;
             _txtPhone.Text = string.Empty;
             _txtAddress.Text = string.Empty;
+            _currentPhotoPath = null;
+            _selectedPhotoPath = null;
+            ShowPhoto(null);
+            if (_lvEnrollments != null)
+            {
+                _lvEnrollments.Items.Clear();
+            }
             SetEditorState(true);
             _txtFirstName.Focus();
         }
@@ -298,6 +406,10 @@ namespace School_Management_System.Presentation.UserControls
             {
                 _grid.Columns["StudentId"].Visible = false;
             }
+            if (_grid.Columns["PhotoPath"] != null)
+            {
+                _grid.Columns["PhotoPath"].Visible = false;
+            }
 
             if (_grid.Rows.Count > 0)
             {
@@ -317,6 +429,7 @@ namespace School_Management_System.Presentation.UserControls
                 _txtEmail.Text = string.Empty;
                 _txtPhone.Text = string.Empty;
                 _txtAddress.Text = string.Empty;
+                if (_lvEnrollments != null) _lvEnrollments.Items.Clear();
                 SetEditorState(false);
             }
         }
@@ -334,6 +447,9 @@ namespace School_Management_System.Presentation.UserControls
             _txtFirstName.Text = Convert.ToString(row.Cells["FirstName"].Value);
             _txtLastName.Text = Convert.ToString(row.Cells["LastName"].Value);
             _txtMiddleName.Text = Convert.ToString(row.Cells["MiddleName"].Value);
+            _currentPhotoPath = row.Cells["PhotoPath"] == null ? null : Convert.ToString(row.Cells["PhotoPath"].Value);
+            _selectedPhotoPath = null;
+            ShowPhoto(_currentPhotoPath);
 
             var gender = Convert.ToString(row.Cells["Gender"].Value);
             if (!string.IsNullOrWhiteSpace(gender) && _cmbGender.Items.Contains(gender))
@@ -359,6 +475,7 @@ namespace School_Management_System.Presentation.UserControls
             _txtEmail.Text = Convert.ToString(row.Cells["Email"].Value);
             _txtPhone.Text = Convert.ToString(row.Cells["Phone"].Value);
             _txtAddress.Text = Convert.ToString(row.Cells["Address"].Value);
+            LoadEnrollmentList();
             SetEditorState(false);
         }
 
@@ -382,6 +499,13 @@ namespace School_Management_System.Presentation.UserControls
                     Address = (_txtAddress.Text ?? string.Empty).Trim()
                 };
 
+                var photoPathToSave = _currentPhotoPath;
+                if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
+                {
+                    photoPathToSave = PersistPhoto(_selectedPhotoPath, student.StudentNumber);
+                }
+                student.PhotoPath = photoPathToSave;
+
                 var vr = _studentService.Validate(student);
                 if (!vr.IsValid)
                 {
@@ -404,6 +528,9 @@ namespace School_Management_System.Presentation.UserControls
                 }
 
                 LoadGrid();
+                _currentPhotoPath = photoPathToSave;
+                _selectedPhotoPath = null;
+                ShowPhoto(_currentPhotoPath);
                 SetEditorState(false);
             }
             catch (Exception ex)
@@ -415,6 +542,205 @@ namespace School_Management_System.Presentation.UserControls
             {
                 UseWaitCursor = false;
                 _btnSave.Enabled = true;
+            }
+        }
+
+        private void LoadEnrollmentList()
+        {
+            if (_lvEnrollments == null) return;
+            if (_studentService == null || _editingStudentId <= 0)
+            {
+                _lvEnrollments.Items.Clear();
+                return;
+            }
+
+            var began = false;
+            try
+            {
+                var dt = _studentService.GetProfileSubjects(_editingStudentId, _activeAcademicYearId, _activeSemesterId);
+                _lvEnrollments.BeginUpdate();
+                began = true;
+                _lvEnrollments.Items.Clear();
+
+                foreach (DataRow r in dt.Rows)
+                {
+                    var enrollmentNo = Convert.ToString(r["EnrollmentNumber"]);
+                    var subjectLabel = ((Convert.ToString(r["SubjectCode"]) ?? string.Empty) + " - " + (Convert.ToString(r["SubjectName"]) ?? string.Empty)).Trim(new[] { ' ', '-' });
+                    var units = Convert.ToString(r["Units"]);
+                    var grade = r["Grade"] == DBNull.Value ? string.Empty : Convert.ToDecimal(r["Grade"]).ToString("0.00");
+                    var section = Convert.ToString(r["SectionName"]);
+                    var termParts = new[]
+                    {
+                        Convert.ToString(r["YearLevel"]),
+                        Convert.ToString(r["Semester"]),
+                        Convert.ToString(r["AcademicYear"])
+                    };
+                    var term = string.Join(" | ", Array.FindAll(termParts, p => !string.IsNullOrWhiteSpace(p)));
+                    var schedule = BuildScheduleText(r);
+
+                    var item = new ListViewItem(enrollmentNo ?? string.Empty);
+                    item.SubItems.Add(subjectLabel);
+                    item.SubItems.Add(units ?? string.Empty);
+                    item.SubItems.Add(grade);
+                    item.SubItems.Add(section ?? string.Empty);
+                    item.SubItems.Add(term);
+                    item.SubItems.Add(schedule);
+                    _lvEnrollments.Items.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("StudentControl.LoadEnrollmentList", ex);
+            }
+            finally
+            {
+                if (began)
+                {
+                    _lvEnrollments.EndUpdate();
+                }
+            }
+        }
+
+        private static string BuildScheduleText(DataRow r)
+        {
+            if (r == null) return string.Empty;
+            var day = Convert.ToString(r["DayOfWeek"]);
+
+            string start = null;
+            string end = null;
+            try
+            {
+                var startTime = r["StartTime"] as TimeSpan?;
+                if (startTime.HasValue)
+                {
+                    start = startTime.Value.ToString(@"hh\\:mm");
+                }
+                var endTime = r["EndTime"] as TimeSpan?;
+                if (endTime.HasValue)
+                {
+                    end = endTime.Value.ToString(@"hh\\:mm");
+                }
+            }
+            catch
+            {
+                // ignore parse issues
+            }
+
+            var time = string.Empty;
+            if (!string.IsNullOrWhiteSpace(start) && !string.IsNullOrWhiteSpace(end))
+            {
+                time = start + "-" + end;
+            }
+
+            var room = Convert.ToString(r["Room"]);
+
+            var parts = new[] { day, time, room };
+            return string.Join(" | ", Array.FindAll(parts, p => !string.IsNullOrWhiteSpace(p)));
+        }
+
+        private void UploadPhoto()
+        {
+            if (!_isEditorActive) return;
+
+            using (var ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
+                ofd.Title = "Select student photo";
+                if (ofd.ShowDialog() != DialogResult.OK) return;
+
+                _selectedPhotoPath = ofd.FileName;
+                ShowPhoto(_selectedPhotoPath);
+                if (_btnRemovePhoto != null)
+                {
+                    _btnRemovePhoto.Enabled = true;
+                }
+            }
+        }
+
+        private void ClearPhoto()
+        {
+            if (!_isEditorActive) return;
+            _selectedPhotoPath = null;
+            _currentPhotoPath = null;
+            ShowPhoto(null);
+            if (_btnRemovePhoto != null)
+            {
+                _btnRemovePhoto.Enabled = false;
+            }
+        }
+
+        private void ShowPhoto(string path)
+        {
+            if (_picPhoto == null) return;
+            try
+            {
+                _picPhoto.Image = null;
+                var fullPath = ResolvePhotoPath(path);
+                if (string.IsNullOrWhiteSpace(fullPath) || !File.Exists(fullPath))
+                {
+                    return;
+                }
+
+                using (var img = Image.FromFile(fullPath))
+                {
+                    _picPhoto.Image = new Bitmap(img);
+                }
+            }
+            catch
+            {
+                _picPhoto.Image = null;
+            }
+        }
+
+        private string ResolvePhotoPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return null;
+            }
+
+            if (Path.IsPathRooted(path))
+            {
+                return path;
+            }
+
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
+        }
+
+        private string PersistPhoto(string sourcePath, string studentNumber)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+                {
+                    return _currentPhotoPath;
+                }
+
+                var photosDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Photos");
+                if (!Directory.Exists(photosDir))
+                {
+                    Directory.CreateDirectory(photosDir);
+                }
+
+                var ext = Path.GetExtension(sourcePath);
+                if (string.IsNullOrWhiteSpace(ext))
+                {
+                    ext = ".jpg";
+                }
+
+                var safeName = string.IsNullOrWhiteSpace(studentNumber) ? "student" : studentNumber.Replace(" ", "_");
+                var destFile = Path.Combine(photosDir, safeName + ext);
+                File.Copy(sourcePath, destFile, true);
+
+                // store relative path so it survives folder moves
+                var relative = Path.Combine("Photos", safeName + ext);
+                return relative;
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("StudentControl.PersistPhoto", ex);
+                ThemedMessageBox.ShowError(this, "Unable to save photo. Please choose a different image.", "Photo");
+                return _currentPhotoPath;
             }
         }
 

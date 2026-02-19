@@ -50,6 +50,7 @@ INSERT INTO Enrollment
     AcademicYearId,
     YearLevelId,
     SemesterId,
+    SectionId,
     EnrollDate,
     TotalUnits,
     `Status`,
@@ -63,6 +64,7 @@ VALUES
     @AcademicYearId,
     @YearLevelId,
     @SemesterId,
+    @SectionId,
     @EnrollDate,
     @TotalUnits,
     @Status,
@@ -78,6 +80,7 @@ VALUES
                     cmd.Parameters.Add(new MySqlParameter("@AcademicYearId", enrollment.AcademicYearId));
                     cmd.Parameters.Add(new MySqlParameter("@YearLevelId", enrollment.YearLevelId));
                     cmd.Parameters.Add(new MySqlParameter("@SemesterId", enrollment.SemesterId));
+                    cmd.Parameters.Add(new MySqlParameter("@SectionId", enrollment.SectionId));
                     cmd.Parameters.Add(new MySqlParameter("@EnrollDate", enrollment.EnrollDate.Date));
                     cmd.Parameters.Add(new MySqlParameter("@TotalUnits", enrollment.TotalUnits));
                     cmd.Parameters.Add(new MySqlParameter("@Status", (object)enrollment.Status ?? "Posted"));
@@ -87,8 +90,8 @@ VALUES
                 }
 
                 const string sqlDetails = @"
-INSERT INTO EnrollmentDetails (EnrollmentId, SubjectId, Units, CreatedAt)
-VALUES (@EnrollmentId, @SubjectId, @Units, UTC_TIMESTAMP());";
+INSERT INTO EnrollmentDetails (EnrollmentId, SubjectId, Units, ClassScheduleId, Grade, CreatedAt)
+VALUES (@EnrollmentId, @SubjectId, @Units, @ClassScheduleId, @Grade, UTC_TIMESTAMP());";
 
                 foreach (var d in details)
                 {
@@ -98,6 +101,8 @@ VALUES (@EnrollmentId, @SubjectId, @Units, UTC_TIMESTAMP());";
                         cmd.Parameters.Add(new MySqlParameter("@EnrollmentId", enrollmentId));
                         cmd.Parameters.Add(new MySqlParameter("@SubjectId", d.SubjectId));
                         cmd.Parameters.Add(new MySqlParameter("@Units", d.Units));
+                        cmd.Parameters.Add(new MySqlParameter("@ClassScheduleId", (object)d.ClassScheduleId ?? DBNull.Value));
+                        cmd.Parameters.Add(new MySqlParameter("@Grade", (object)d.Grade ?? DBNull.Value));
                         cmd.ExecuteNonQuery();
                     }
                 }

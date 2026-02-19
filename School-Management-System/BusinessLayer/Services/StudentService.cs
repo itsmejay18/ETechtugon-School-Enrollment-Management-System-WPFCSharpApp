@@ -36,6 +36,11 @@ namespace School_Management_System.BusinessLayer.Services
             return _studentData.GetActiveCount();
         }
 
+        public DataTable GetProfileSubjects(int studentId, int? academicYearId, int? semesterId)
+        {
+            return _studentData.GetEnrolledSubjects(studentId, academicYearId, semesterId);
+        }
+
         public ValidationResult Validate(Student student)
         {
             var vr = new ValidationResult();
