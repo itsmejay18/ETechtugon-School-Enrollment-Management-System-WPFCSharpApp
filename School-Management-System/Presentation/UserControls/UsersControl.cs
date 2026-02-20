@@ -61,6 +61,7 @@ namespace School_Management_System.Presentation.UserControls
                 SplitterDistance = 730,
                 BackColor = ThemeColors.Border
             };
+            LockSplitEditorPanel(_split, 420);
 
             _grid = new DataGridView { Dock = DockStyle.Fill };
             ThemeManager.StyleDataGrid(_grid);

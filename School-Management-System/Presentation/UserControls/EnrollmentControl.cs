@@ -641,8 +641,8 @@ namespace School_Management_System.Presentation.UserControls
                         var csId = Convert.ToInt32(r["ClassScheduleId"]);
 
                         var day = Convert.ToString(r["DayOfWeek"]);
-                        var start = r["StartTime"] is TimeSpan ? ((TimeSpan)r["StartTime"]).ToString(@"hh\\:mm") : string.Empty;
-                        var end = r["EndTime"] is TimeSpan ? ((TimeSpan)r["EndTime"]).ToString(@"hh\\:mm") : string.Empty;
+                        var start = r["StartTime"] is TimeSpan ? ((TimeSpan)r["StartTime"]).ToString(@"hh\:mm") : string.Empty;
+                        var end = r["EndTime"] is TimeSpan ? ((TimeSpan)r["EndTime"]).ToString(@"hh\:mm") : string.Empty;
                         var time = string.IsNullOrWhiteSpace(start) || string.IsNullOrWhiteSpace(end) ? string.Empty : start + "-" + end;
                         var room = Convert.ToString(r["Room"]);
                         var schedText = string.Join(" | ", Array.FindAll(new[] { day, time, room }, p => !string.IsNullOrWhiteSpace(p)));

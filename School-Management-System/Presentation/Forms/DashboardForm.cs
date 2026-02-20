@@ -151,7 +151,7 @@ namespace School_Management_System.Presentation.Forms
             _sidebar = new Panel 
             { 
                 Dock = DockStyle.Left, 
-                Width = 252, 
+                Width = 272, 
                 BackColor = ThemeColors.SidebarBackground,
                 Name = "SidebarPanel"
             };
@@ -163,9 +163,9 @@ namespace School_Management_System.Presentation.Forms
                 Name = "ContentPanel"
             };
             
-            // Add in order: sidebar first (left), then content (fill)
-            Controls.Add(_sidebar);
+            // For Dock layout, add Fill first then Left to avoid overlap.
             Controls.Add(_content);
+            Controls.Add(_sidebar);
         }
 
         /// <summary>
@@ -186,12 +186,12 @@ namespace School_Management_System.Presentation.Forms
             // Navigation items (fill)
             _nav = BuildNavigationPanel();
 
-            // Add to sidebar in correct order: top to bottom
-            _sidebar.Controls.Add(brand);
-            _sidebar.Controls.Add(brandDivider);
-            _sidebar.Controls.Add(navHeader);
-            _sidebar.Controls.Add(logoutPanel);
+            // For Dock layout, add Fill first then Bottom/Top panels.
             _sidebar.Controls.Add(_nav);
+            _sidebar.Controls.Add(logoutPanel);
+            _sidebar.Controls.Add(navHeader);
+            _sidebar.Controls.Add(brandDivider);
+            _sidebar.Controls.Add(brand);
         }
 
         /// <summary>
@@ -308,7 +308,7 @@ namespace School_Management_System.Presentation.Forms
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
-                AutoScroll = true,
+                AutoScroll = false,
                 Padding = new Padding(10, 6, 10, 10),
                 BackColor = ThemeColors.SidebarBackground,
                 Name = "NavigationPanel"
@@ -374,12 +374,13 @@ namespace School_Management_System.Presentation.Forms
                 Dock = DockStyle.Fill, 
                 BackColor = ThemeColors.Background, 
                 Padding = new Padding(18),
-                Name = "BodyPanel"
+                Name = "BodyPanel",
+                AutoScroll = true
             };
 
-            // Add to content in order: header first, body fills remaining space
-            _content.Controls.Add(_header);
+            // For Dock layout, add Fill first then Top.
             _content.Controls.Add(_body);
+            _content.Controls.Add(_header);
         }
 
         /// <summary>
@@ -468,15 +469,23 @@ namespace School_Management_System.Presentation.Forms
                 return;
             }
 
-            _lblHeader.Text = GetHeaderForKey(key);
-            SetActiveNavButton(key);
-
-            _body.Controls.Clear();
-            var ctrl = GetOrCreate(key, factory);
-            if (ctrl != null)
+            try
             {
-                ctrl.Dock = DockStyle.Fill;
-                _body.Controls.Add(ctrl);
+                _lblHeader.Text = GetHeaderForKey(key);
+                SetActiveNavButton(key);
+
+                _body.Controls.Clear();
+                var ctrl = GetOrCreate(key, factory);
+                if (ctrl != null)
+                {
+                    ctrl.Dock = DockStyle.Fill;
+                    _body.Controls.Add(ctrl);
+                }
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("DashboardForm.LoadModule." + key, ex);
+                ThemedMessageBox.ShowError(this, "Unable to open " + GetHeaderForKey(key) + ". Check database setup and try again.", "Module Error");
             }
         }
 
@@ -522,9 +531,18 @@ namespace School_Management_System.Presentation.Forms
                         - (_nav.VerticalScroll.Visible ? SystemInformation.VerticalScrollBarWidth : 0);
             if (width < 120) width = 120;
 
-            foreach (var button in _nav.Controls.OfType<Button>())
+            var buttons = _nav.Controls.OfType<Button>().ToList();
+            var availableHeight = _nav.ClientSize.Height - _nav.Padding.Top - _nav.Padding.Bottom;
+            var totalMarginHeight = buttons.Count * 4; // top+bottom margin (2 + 2)
+            var computedHeight = buttons.Count == 0 ? 46 : (availableHeight - totalMarginHeight) / buttons.Count;
+            if (computedHeight > 46) computedHeight = 46;
+            if (computedHeight < 28) computedHeight = 28;
+
+            foreach (var button in buttons)
             {
                 button.Width = width;
+                button.Height = computedHeight;
+                button.Margin = new Padding(0, 2, 0, 2);
             }
         }
 

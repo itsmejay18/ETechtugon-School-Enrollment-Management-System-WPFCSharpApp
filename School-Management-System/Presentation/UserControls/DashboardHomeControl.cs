@@ -22,6 +22,12 @@ namespace School_Management_System.Presentation.UserControls
         private Label _lblFacultyValue;
         private Label _lblCoursesValue;
         private Label _lblSubjectsValue;
+        private TableLayoutPanel _rootLayout;
+        private TableLayoutPanel _cardsLayout;
+        private TableLayoutPanel _analyticsLayout;
+        private readonly List<Control> _statCards = new List<Control>();
+        private Control _lineChartCard;
+        private Control _pieChartCard;
 
         private Panel _lineChartPanel;
         private Panel _pieChartPanel;
@@ -56,16 +62,16 @@ namespace School_Management_System.Presentation.UserControls
         {
             BackColor = ThemeColors.Background;
 
-            var root = new TableLayoutPanel
+            _rootLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
                 RowCount = 3,
                 BackColor = ThemeColors.Background
             };
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 148));
-            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 148));
+            _rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             var header = new Label
             {
@@ -77,7 +83,7 @@ namespace School_Management_System.Presentation.UserControls
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
-            var cards = new TableLayoutPanel
+            _cardsLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 4,
@@ -85,18 +91,7 @@ namespace School_Management_System.Presentation.UserControls
                 BackColor = ThemeColors.Background,
                 Padding = new Padding(0, 0, 0, 10)
             };
-            cards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-            cards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-            cards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-            cards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
-            cards.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-            cards.Controls.Add(CreateStatCard("Students", "Active records", IconKind.Students, ThemeColors.Success, out _lblStudentsValue), 0, 0);
-            cards.Controls.Add(CreateStatCard("Faculty", "Teaching staff", IconKind.Faculty, ThemeColors.Secondary, out _lblFacultyValue), 1, 0);
-            cards.Controls.Add(CreateStatCard("Courses", "Available programs", IconKind.Courses, ThemeColors.ChartOrange, out _lblCoursesValue), 2, 0);
-            cards.Controls.Add(CreateStatCard("Subjects", "Course subjects", IconKind.Subjects, ThemeColors.ChartRed, out _lblSubjectsValue), 3, 0);
-
-            var analytics = new TableLayoutPanel
+            _analyticsLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
@@ -104,19 +99,28 @@ namespace School_Management_System.Presentation.UserControls
                 BackColor = ThemeColors.Background,
                 Padding = new Padding(0, 4, 0, 0)
             };
-            analytics.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
-            analytics.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
-            analytics.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            _analyticsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
+            _analyticsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
+            _analyticsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            analytics.Controls.Add(CreateLineChartCard(), 0, 0);
-            analytics.Controls.Add(CreatePieChartCard(), 1, 0);
+            _statCards.Clear();
+            _statCards.Add(CreateStatCard("Students", "Active records", IconKind.Students, ThemeColors.Success, out _lblStudentsValue));
+            _statCards.Add(CreateStatCard("Faculty", "Teaching staff", IconKind.Faculty, ThemeColors.Secondary, out _lblFacultyValue));
+            _statCards.Add(CreateStatCard("Courses", "Available programs", IconKind.Courses, ThemeColors.ChartOrange, out _lblCoursesValue));
+            _statCards.Add(CreateStatCard("Subjects", "Course subjects", IconKind.Subjects, ThemeColors.ChartRed, out _lblSubjectsValue));
+            ConfigureCardsLayout(4);
 
-            root.Controls.Add(header, 0, 0);
-            root.Controls.Add(cards, 0, 1);
-            root.Controls.Add(analytics, 0, 2);
+            _lineChartCard = CreateLineChartCard();
+            _pieChartCard = CreatePieChartCard();
+            ConfigureAnalyticsLayout(false);
+
+            _rootLayout.Controls.Add(header, 0, 0);
+            _rootLayout.Controls.Add(_cardsLayout, 0, 1);
+            _rootLayout.Controls.Add(_analyticsLayout, 0, 2);
 
             Controls.Clear();
-            Controls.Add(root);
+            Controls.Add(_rootLayout);
+            ApplyResponsiveLayout();
         }
 
         private Control CreateStatCard(string title, string subtitle, IconKind iconKind, Color iconColor, out Label valueLabel)
@@ -166,6 +170,92 @@ namespace School_Management_System.Presentation.UserControls
             card.Controls.Add(lblSubtitle);
             host.Controls.Add(card);
             return host;
+        }
+
+        private void ApplyResponsiveLayout()
+        {
+            if (_cardsLayout == null || _analyticsLayout == null || _rootLayout == null)
+            {
+                return;
+            }
+            ConfigureCardsLayout(4);
+            ConfigureAnalyticsLayout(false);
+        }
+
+        private void ConfigureCardsLayout(int columns)
+        {
+            if (_cardsLayout == null || _rootLayout == null || _statCards.Count == 0)
+            {
+                return;
+            }
+
+            if (columns < 1) columns = 1;
+
+            _cardsLayout.SuspendLayout();
+            _cardsLayout.Controls.Clear();
+            _cardsLayout.ColumnStyles.Clear();
+            _cardsLayout.RowStyles.Clear();
+
+            _cardsLayout.ColumnCount = columns;
+            for (var i = 0; i < columns; i++)
+            {
+                _cardsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / columns));
+            }
+
+            var rows = (int)Math.Ceiling(_statCards.Count / (double)columns);
+            _cardsLayout.RowCount = rows;
+            for (var i = 0; i < rows; i++)
+            {
+                _cardsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / rows));
+            }
+
+            for (var i = 0; i < _statCards.Count; i++)
+            {
+                var col = i % columns;
+                var row = i / columns;
+                _cardsLayout.Controls.Add(_statCards[i], col, row);
+            }
+
+            var cardBandHeight = rows == 1 ? 148 : (rows * 144);
+            _rootLayout.RowStyles[1].SizeType = SizeType.Absolute;
+            _rootLayout.RowStyles[1].Height = cardBandHeight;
+            _cardsLayout.ResumeLayout();
+        }
+
+        private void ConfigureAnalyticsLayout(bool stacked)
+        {
+            if (_analyticsLayout == null || _lineChartCard == null || _pieChartCard == null)
+            {
+                return;
+            }
+
+            _analyticsLayout.SuspendLayout();
+            _analyticsLayout.Controls.Clear();
+            _analyticsLayout.ColumnStyles.Clear();
+            _analyticsLayout.RowStyles.Clear();
+
+            if (stacked)
+            {
+                _analyticsLayout.ColumnCount = 1;
+                _analyticsLayout.RowCount = 2;
+                _analyticsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                _analyticsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 62));
+                _analyticsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 38));
+                _analyticsLayout.Controls.Add(_lineChartCard, 0, 0);
+                _analyticsLayout.Controls.Add(_pieChartCard, 0, 1);
+            }
+            else
+            {
+                _analyticsLayout.ColumnCount = 2;
+                _analyticsLayout.RowCount = 1;
+                _analyticsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62));
+                _analyticsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38));
+                _analyticsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+                _analyticsLayout.Controls.Add(_lineChartCard, 0, 0);
+                _analyticsLayout.Controls.Add(_pieChartCard, 1, 0);
+            }
+
+            _analyticsLayout.ResumeLayout();
         }
 
         private Control CreateLineChartCard()
