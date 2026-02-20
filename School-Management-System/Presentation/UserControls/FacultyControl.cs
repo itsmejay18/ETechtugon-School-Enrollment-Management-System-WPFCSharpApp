@@ -54,8 +54,15 @@ namespace School_Management_System.Presentation.UserControls
 
         private void InitializeComponent()
         {
-            BackColor = ThemeColors.Background;
+            this.SuspendLayout();
+            // 
+            // FacultyControl
+            // 
+            this.Name = "FacultyControl";
+            this.Size = new System.Drawing.Size(852, 179);
+            this.ResumeLayout(false);
 
+<<<<<<< Updated upstream
             var toolbar = BuildToolbar();
             _split = new SplitContainer
             {
@@ -154,6 +161,8 @@ namespace School_Management_System.Presentation.UserControls
             Controls.Clear();
             Controls.Add(_split);
             Controls.Add(toolbar);
+=======
+>>>>>>> Stashed changes
         }
 
         private Panel BuildToolbar()

@@ -206,6 +206,9 @@
     <EmbeddedResource Include="Presentation\UserControls\DashboardHomeControl.resx">
       <DependentUpon>DashboardHomeControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Presentation\UserControls\FacultyControl.resx">
+      <DependentUpon>FacultyControl.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Presentation\UserControls\PlaceholderControl.resx">
       <DependentUpon>PlaceholderControl.cs</DependentUpon>
     </EmbeddedResource>
