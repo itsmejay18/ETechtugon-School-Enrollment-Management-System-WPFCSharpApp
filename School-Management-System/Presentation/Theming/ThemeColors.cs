@@ -12,14 +12,14 @@ namespace School_Management_System.Presentation.Theming
         public static readonly Color Text = ColorTranslator.FromHtml("#2C3E50");
         public static readonly Color MutedText = ColorTranslator.FromHtml("#6B7280");
 
-        public static readonly Color SidebarBackground = Primary;
-        public static readonly Color SidebarHover = ColorTranslator.FromHtml("#34495E");
-        public static readonly Color SidebarActive = ColorTranslator.FromHtml("#3E5873");
-        public static readonly Color SidebarTextMuted = ColorTranslator.FromHtml("#D7E3EE");
-        public static readonly Color SidebarSectionText = ColorTranslator.FromHtml("#9FB4C8");
-        public static readonly Color SidebarIcon = ColorTranslator.FromHtml("#3F98D7");
+        public static readonly Color SidebarBackground = Color.White;
+        public static readonly Color SidebarHover = ColorTranslator.FromHtml("#F3F7FB");
+        public static readonly Color SidebarActive = Secondary;
+        public static readonly Color SidebarTextMuted = ColorTranslator.FromHtml("#334155");
+        public static readonly Color SidebarSectionText = ColorTranslator.FromHtml("#64748B");
+        public static readonly Color SidebarIcon = ColorTranslator.FromHtml("#3498DB");
         public static readonly Color SidebarIconDanger = ColorTranslator.FromHtml("#E85D4A");
-        public static readonly Color SidebarDivider = Color.FromArgb(62, 255, 255, 255);
+        public static readonly Color SidebarDivider = ColorTranslator.FromHtml("#D8E0E8");
 
         public static readonly Color CardBackground = Color.White;
         public static readonly Color Surface = ColorTranslator.FromHtml("#F6F8FB");

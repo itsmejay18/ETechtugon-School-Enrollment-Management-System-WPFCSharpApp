@@ -28,7 +28,6 @@ namespace School_Management_System.Presentation.Forms
         private CheckBox _chkRememberMe;
         private Button _btnLogin;
         private Button _btnRegister;
-        private Button _btnExit;
 
         private DatabaseHelper _db;
         private AuthService _authService;
@@ -61,10 +60,21 @@ namespace School_Management_System.Presentation.Forms
             TryInitServices();
 
             _chkRememberMe.Checked = UserPreferences.RememberMe;
-            if (_chkRememberMe.Checked)
+            var rememberedUsername = UserPreferences.RememberedUsername ?? string.Empty;
+            if (_chkRememberMe.Checked &&
+                !string.IsNullOrWhiteSpace(rememberedUsername) &&
+                !string.Equals(rememberedUsername.Trim(), "admin", StringComparison.OrdinalIgnoreCase))
             {
-                _txtUsername.Text = UserPreferences.RememberedUsername ?? string.Empty;
+                _txtUsername.Text = rememberedUsername;
                 _txtUsername.SelectionStart = _txtUsername.TextLength;
+            }
+            else if (string.Equals(rememberedUsername.Trim(), "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                // Do not auto-fill built-in admin account on startup.
+                UserPreferences.RememberMe = false;
+                UserPreferences.RememberedUsername = null;
+                _chkRememberMe.Checked = false;
+                _txtUsername.Text = string.Empty;
             }
 
             _txtUsername.Focus();
@@ -79,7 +89,7 @@ namespace School_Management_System.Presentation.Forms
                 if (!_db.TestConnection(out error))
                 {
                     _authService = null;
-                    SetConnectionState(false, string.IsNullOrWhiteSpace(error) ? Messages.NoDatabaseConnection : error);
+                    SetConnectionState(false, BuildConnectionStateMessage(error));
                 }
                 else
                 {
@@ -91,30 +101,30 @@ namespace School_Management_System.Presentation.Forms
             catch (Exception ex)
             {
                 _authService = null;
-                SetConnectionState(false, Messages.NoDatabaseConnection);
+                SetConnectionState(false, BuildConnectionStateMessage(ex.Message));
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("LoginForm.TryInitServices", ex);
             }
         }
 
         private void InitializeRuntimeComponent()
         {
-            _root = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background };
+            _root = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface };
             _root.Paint += DrawRootBackground;
             Controls.Add(_root);
 
             _hero = BuildHeroPanel();
-            _authHost = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Padding = new Padding(56, 36, 56, 36) };
+            var divider = new Panel { Dock = DockStyle.Left, Width = 1, BackColor = ThemeColors.Border };
+            _authHost = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface, Padding = new Padding(46, 34, 46, 34) };
 
-            _card = new Panel { Size = new Size(560, 450), BackColor = ThemeColors.CardBackground };
-            ThemeManager.StyleCardPanel(_card);
+            _card = new Panel { Size = new Size(560, 520), BackColor = ThemeColors.Surface };
             _authHost.Controls.Add(_card);
             _authHost.Resize += (s, e) => CenterCard();
 
             BuildLoginCardContent();
 
             _root.Controls.Add(_authHost);
+            _root.Controls.Add(divider);
             _root.Controls.Add(_hero);
-
             CenterCard();
         }
 
@@ -141,103 +151,83 @@ namespace School_Management_System.Presentation.Forms
 
         private Panel BuildHeroPanel()
         {
-            var panel = new Panel { Dock = DockStyle.Left, Width = 430, BackColor = ThemeColors.Primary, Padding = new Padding(34, 36, 34, 36) };
-            panel.Paint += (s, e) =>
-            {
-                using (var brush = new LinearGradientBrush(panel.ClientRectangle, ColorTranslator.FromHtml("#243447"), ThemeColors.Primary, 130f))
-                {
-                    e.Graphics.FillRectangle(brush, panel.ClientRectangle);
-                }
-            };
+            var panel = new Panel { Dock = DockStyle.Left, Width = 640, BackColor = ThemeColors.Surface, Padding = new Padding(44, 34, 44, 34) };
 
-            var logo = new PictureBox
-            {
-                Size = new Size(74, 74),
-                Location = new Point(34, 42),
-                Image = IconFactory.CreateCircleIcon(ThemeColors.Secondary, IconKind.School, 74),
-                SizeMode = PictureBoxSizeMode.CenterImage
-            };
-
-            var title = new Label
-            {
-                Text = "School Management\nSystem",
-                Location = new Point(34, 132),
-                Size = new Size(280, 72),
-                Font = ThemeFonts.Header,
-                ForeColor = Color.White
-            };
-
-            var subtitle = new Label
-            {
-                Text = "Centralize enrollment, curriculum, users, and daily operations in one streamlined workspace.",
-                Location = new Point(34, 218),
-                Size = new Size(332, 74),
-                Font = ThemeFonts.Label,
-                ForeColor = ColorTranslator.FromHtml("#D6E4F0")
-            };
-
-            var badge = new Panel { Location = new Point(34, 318), Size = new Size(316, 80), BackColor = Color.FromArgb(44, 82, 120), Padding = new Padding(12, 10, 12, 10) };
-            UiHelper.ApplyRoundedCorners(badge, 6);
-
-            var badgeIcon = new PictureBox
-            {
-                Dock = DockStyle.Left,
-                Width = 44,
-                Image = IconFactory.CreateGlyphIcon(IconKind.Trend, 22, Color.White),
-                SizeMode = PictureBoxSizeMode.CenterImage
-            };
-            var badgeText = new Label
+            var visualHost = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface };
+            var cardLogo = BrandAssets.CreateLogoImage();
+            var logoCanvas = new Panel
             {
                 Dock = DockStyle.Fill,
-                Text = "Live academic insights\nwith role-based control",
-                ForeColor = Color.White,
-                Font = ThemeFonts.Label,
-                TextAlign = ContentAlignment.MiddleLeft
+                Padding = new Padding(16, 8, 16, 8),
+                BackColor = Color.Transparent
             };
+            var logoFrame = new Panel
+            {
+                Size = new Size(440, 420),
+                BackColor = Color.Transparent
+            };
+            var heroLogo = new PictureBox
+            {
+                Dock = DockStyle.Fill,
+                Image = cardLogo ?? IconFactory.CreateCircleIcon(ThemeColors.SidebarIcon, IconKind.School, 260),
+                SizeMode = cardLogo != null ? PictureBoxSizeMode.Zoom : PictureBoxSizeMode.CenterImage
+            };
+            logoFrame.Controls.Add(heroLogo);
+            logoCanvas.Controls.Add(logoFrame);
+            logoCanvas.Resize += (s, e) =>
+            {
+                logoFrame.Left = (logoCanvas.ClientSize.Width - logoFrame.Width) / 2;
+                logoFrame.Top = (logoCanvas.ClientSize.Height - logoFrame.Height) / 2;
+            };
+            visualHost.Controls.Add(logoCanvas);
 
-            badge.Controls.Add(badgeText);
-            badge.Controls.Add(badgeIcon);
-
-            panel.Controls.Add(badge);
-            panel.Controls.Add(subtitle);
-            panel.Controls.Add(title);
-            panel.Controls.Add(logo);
+            panel.Controls.Add(visualHost);
             return panel;
         }
 
         private void BuildLoginCardContent()
         {
-            var cardTop = new Panel { Dock = DockStyle.Top, Height = 84, BackColor = ThemeColors.CardBackground, Padding = new Padding(20, 16, 20, 12) };
-            var tabs = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 34, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
+            _card.Controls.Clear();
+            var shell = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface, Padding = new Padding(10) };
+            _card.Controls.Add(shell);
 
-            var btnLoginTab = new Button { Text = "Login", Width = 130, Height = 34, Enabled = false };
-            ThemeManager.StyleButtonPrimary(btnLoginTab);
+            var stack = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 13
+            };
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+            stack.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            _btnRegister = new Button { Text = "Register", Width = 130, Height = 34, Margin = new Padding(10, 0, 0, 0) };
-            ThemeManager.StyleButtonNeutral(_btnRegister);
-            _btnRegister.Click += (s, e) => OpenRegisterForm();
-
-            tabs.Controls.Add(btnLoginTab);
-            tabs.Controls.Add(_btnRegister);
-
+            var title = new Label
+            {
+                Text = "Log in to School Management",
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI Semibold", 16f, FontStyle.Bold),
+                ForeColor = ThemeColors.Text,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
             var subtitle = new Label
             {
-                Dock = DockStyle.Bottom,
-                Height = 22,
-                Text = "Sign in to continue to your dashboard",
+                Text = "Sign in using your existing account credentials.",
+                Dock = DockStyle.Fill,
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
-            cardTop.Controls.Add(subtitle);
-            cardTop.Controls.Add(tabs);
-            _card.Controls.Add(cardTop);
-
-            var body = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(20, 2, 20, 20) };
-            _card.Controls.Add(body);
-
-            var statusHost = new Panel { Dock = DockStyle.Top, Height = 40, BackColor = ThemeColors.CardBackground, Padding = new Padding(2, 4, 2, 0) };
             _lblDbStatus = new Label
             {
                 Text = Messages.NoDatabaseConnection,
@@ -245,90 +235,71 @@ namespace School_Management_System.Presentation.Forms
                 ForeColor = ThemeColors.AccentDanger,
                 Dock = DockStyle.Fill,
                 Visible = false,
-                TextAlign = ContentAlignment.MiddleLeft
+                TextAlign = ContentAlignment.TopLeft
             };
-            var gb = new GroupBox
-            {
-                Text = "Account Credentials",
-                Dock = DockStyle.Fill,
-                Padding = new Padding(14, 18, 14, 12)
-            };
-            ThemeManager.StyleGroupBox(gb);
-            body.Controls.Add(gb);
-            statusHost.Controls.Add(_lblDbStatus);
-            body.Controls.Add(statusHost);
 
-            var layout = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 5,
-                Padding = new Padding(4, 12, 4, 4)
-            };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            var lblUser = MakeLabel("Username");
+            var lblPass = MakeLabel("Password");
 
             _txtUsername = MakeTextBox();
             _txtPassword = MakeTextBox();
             _txtPassword.UseSystemPasswordChar = true;
 
-            layout.Controls.Add(MakeLabel("Username"), 0, 0);
-            layout.Controls.Add(_txtUsername, 1, 0);
-            layout.Controls.Add(MakeLabel("Password"), 0, 1);
-            layout.Controls.Add(_txtPassword, 1, 1);
-
-            var options = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                AutoSize = false,
-                Margin = new Padding(0)
-            };
-            _chkShowPassword = new CheckBox { Text = "Show password", AutoSize = true, Margin = new Padding(0, 6, 18, 0) };
+            _chkShowPassword = new CheckBox { Text = "Show password", AutoSize = true, Dock = DockStyle.Left, Margin = new Padding(0, 6, 0, 0) };
             _chkShowPassword.CheckedChanged += (s, e) => _txtPassword.UseSystemPasswordChar = !_chkShowPassword.Checked;
-            _chkRememberMe = new CheckBox { Text = "Remember me", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
+
+            _chkRememberMe = new CheckBox { Text = "Remember me", AutoSize = true, Dock = DockStyle.Right, Margin = new Padding(0, 6, 0, 0) };
+
+            var options = new Panel { Dock = DockStyle.Fill };
             options.Controls.Add(_chkShowPassword);
             options.Controls.Add(_chkRememberMe);
-            layout.Controls.Add(options, 0, 2);
-            layout.SetColumnSpan(options, 2);
 
-            var row1 = new Panel { Dock = DockStyle.Fill };
-            var right1 = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Width = 290 };
-
-            _btnLogin = new Button { Text = "Login", Width = 140, Height = 34, Margin = new Padding(10, 0, 0, 0) };
-            _btnLogin.Image = IconFactory.CreateGlyphIcon(IconKind.Login, 16, Color.White);
-            _btnLogin.TextImageRelation = TextImageRelation.ImageBeforeText;
+            _btnLogin = new Button { Text = "Log in", Dock = DockStyle.Fill };
             ThemeManager.StyleButtonPrimary(_btnLogin);
+            _btnLogin.Margin = new Padding(0);
             _btnLogin.Click += (s, e) => DoLogin();
 
-            _btnExit = new Button { Text = "Exit", Width = 140, Height = 34 };
-            _btnExit.Image = IconFactory.CreateGlyphIcon(IconKind.Logout, 16, Color.White);
-            _btnExit.TextImageRelation = TextImageRelation.ImageBeforeText;
-            ThemeManager.StyleButtonDanger(_btnExit);
-            _btnExit.Click += (s, e) => Close();
-
-            right1.Controls.Add(_btnLogin);
-            right1.Controls.Add(_btnExit);
-            row1.Controls.Add(right1);
-            layout.Controls.Add(row1, 0, 3);
-            layout.SetColumnSpan(row1, 2);
-
-            var note = new Label
+            var forgotLink = new LinkLabel
             {
-                Text = "Switch to Register to create a new account.",
+                Text = "Forgot password?",
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                LinkColor = ThemeColors.Secondary,
+                ActiveLinkColor = ThemeColors.Secondary,
+                VisitedLinkColor = ThemeColors.Secondary,
+                Font = ThemeFonts.Label
+            };
+            forgotLink.Click += (s, e) => ShowInfo("Please contact your administrator to reset your password.", "Password Recovery");
+
+            _btnRegister = new Button { Text = "Create new account", Dock = DockStyle.Fill };
+            ThemeManager.StyleButtonNeutral(_btnRegister);
+            _btnRegister.Margin = new Padding(0);
+            _btnRegister.Click += (s, e) => OpenRegisterForm();
+            var footerNote = new Label
+            {
+                Text = "Use Register to create an account, then sign in here.",
                 Dock = DockStyle.Fill,
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
-                TextAlign = ContentAlignment.TopLeft
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(0)
             };
-            layout.Controls.Add(note, 0, 4);
-            layout.SetColumnSpan(note, 2);
+
+            stack.Controls.Add(title, 0, 0);
+            stack.Controls.Add(subtitle, 0, 1);
+            stack.Controls.Add(_lblDbStatus, 0, 2);
+            stack.Controls.Add(lblUser, 0, 3);
+            stack.Controls.Add(_txtUsername, 0, 4);
+            stack.Controls.Add(lblPass, 0, 5);
+            stack.Controls.Add(_txtPassword, 0, 6);
+            stack.Controls.Add(options, 0, 7);
+            stack.Controls.Add(_btnLogin, 0, 8);
+            stack.Controls.Add(forgotLink, 0, 9);
+            stack.Controls.Add(_btnRegister, 0, 10);
+            stack.Controls.Add(footerNote, 0, 11);
+            stack.Controls.Add(new Panel { Dock = DockStyle.Fill }, 0, 12);
+
+            shell.Controls.Add(stack);
 
             _txtUsername.KeyDown += (s, e) =>
             {
@@ -347,17 +318,39 @@ namespace School_Management_System.Presentation.Forms
                     e.Handled = true;
                 }
             };
-
-            gb.Controls.Add(layout);
         }
 
         private void SetConnectionState(bool isConnected, string errorMessage)
         {
             _lblDbStatus.Text = isConnected ? string.Empty : (string.IsNullOrWhiteSpace(errorMessage) ? Messages.NoDatabaseConnection : errorMessage);
             _lblDbStatus.Visible = !isConnected;
+            // Keep actions clickable so users can retry after starting DB without restarting the app.
+            if (_btnLogin != null) _btnLogin.Enabled = true;
+            if (_btnRegister != null) _btnRegister.Enabled = true;
+        }
 
-            if (_btnLogin != null) _btnLogin.Enabled = isConnected;
-            if (_btnRegister != null) _btnRegister.Enabled = isConnected;
+        private string BuildConnectionStateMessage(string rawError)
+        {
+            if (string.IsNullOrWhiteSpace(rawError))
+            {
+                return Messages.NoDatabaseConnection;
+            }
+
+            var message = rawError.Trim();
+            var lower = message.ToLowerInvariant();
+
+            if (lower.Contains("access denied for user") || (lower.Contains("host") && lower.Contains("not allowed to connect")))
+            {
+                return "Database access denied. Run DatabaseScripts\\Allow-RemoteRoot.ps1 on the MySQL server, then allow host '" +
+                    Environment.MachineName + "' (or '%') and retry.";
+            }
+
+            if (message.Length > 220)
+            {
+                return message.Substring(0, 220) + "...";
+            }
+
+            return message;
         }
 
         private void OpenRegisterForm()
@@ -369,7 +362,7 @@ namespace School_Management_System.Presentation.Forms
                     TryInitServices();
                     if (_db == null)
                     {
-                        ShowError(Messages.NoDatabaseConnection);
+                        ShowError(string.IsNullOrWhiteSpace(_lblDbStatus.Text) ? Messages.NoDatabaseConnection : _lblDbStatus.Text);
                         return;
                     }
                 }
@@ -427,7 +420,15 @@ namespace School_Management_System.Presentation.Forms
 
         private static TextBox MakeTextBox()
         {
-            var tb = new TextBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input };
+            var tb = new TextBox
+            {
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.Input,
+                Margin = new Padding(0),
+                AutoSize = false,
+                Height = 38,
+                MinimumSize = new Size(0, 38)
+            };
             ThemeManager.StyleInput(tb);
             return tb;
         }
@@ -439,7 +440,7 @@ namespace School_Management_System.Presentation.Forms
                 TryInitServices();
                 if (_authService == null)
                 {
-                    ShowError(Messages.NoDatabaseConnection);
+                    ShowError(string.IsNullOrWhiteSpace(_lblDbStatus.Text) ? Messages.NoDatabaseConnection : _lblDbStatus.Text);
                     return;
                 }
             }
@@ -460,8 +461,10 @@ namespace School_Management_System.Presentation.Forms
                     return;
                 }
 
-                UserPreferences.RememberMe = _chkRememberMe.Checked;
-                UserPreferences.RememberedUsername = _chkRememberMe.Checked ? username : null;
+                var canRememberUser = _chkRememberMe.Checked &&
+                    !string.Equals(username, "admin", StringComparison.OrdinalIgnoreCase);
+                UserPreferences.RememberMe = canRememberUser;
+                UserPreferences.RememberedUsername = canRememberUser ? username : null;
 
                 UserSession.Start(user);
 

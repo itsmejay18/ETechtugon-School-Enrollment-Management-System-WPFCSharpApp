@@ -16,6 +16,12 @@ namespace School_Management_System.Presentation.Theming
             form.BackColor = ThemeColors.Background;
             form.ForeColor = ThemeColors.Text;
             UiHelper.EnableDoubleBuffering(form);
+
+            var appIcon = BrandAssets.CreateAppIcon();
+            if (appIcon != null)
+            {
+                form.Icon = appIcon;
+            }
         }
 
         public static void StyleCardPanel(Panel panel)

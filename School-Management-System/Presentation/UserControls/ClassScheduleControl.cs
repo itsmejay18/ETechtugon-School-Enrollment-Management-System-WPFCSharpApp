@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -22,6 +23,7 @@ namespace School_Management_System.Presentation.UserControls
         private ComboBox _cmbSection;
         private Button _btnReloadSections;
         private ListView _lvSchedules;
+        private SplitContainer _splitMain;
 
         private ComboBox _cmbSubject;
         private TextBox _txtDay;
@@ -43,6 +45,24 @@ namespace School_Management_System.Presentation.UserControls
         private DataTable _subjectsTable;
         private int? _activeAcademicYearId;
         private int? _activeSemesterId;
+        private DataTable _scheduleTable;
+
+        private MonthCalendar _calendar;
+        private ListView _lvCalendarEvents;
+        private Label _lblCalendarMonth;
+        private Label _lblCalendarInfo;
+        private DateTime _calendarMonth;
+        private bool _suppressCalendarEvents;
+        private readonly Dictionary<DateTime, List<GeneratedScheduleEntry>> _generatedScheduleByDate = new Dictionary<DateTime, List<GeneratedScheduleEntry>>();
+
+        private sealed class GeneratedScheduleEntry
+        {
+            public string SubjectLabel { get; set; }
+            public TimeSpan? StartTime { get; set; }
+            public TimeSpan? EndTime { get; set; }
+            public string Room { get; set; }
+            public string Remarks { get; set; }
+        }
 
         public ClassScheduleControl()
             : this(null, null, null, null)
@@ -102,11 +122,27 @@ namespace School_Management_System.Presentation.UserControls
             _lvSchedules.Columns.Add("Remarks", 180);
             _lvSchedules.ItemSelectionChanged += (s, e) => PreviewSelected();
 
+            _splitMain = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Vertical,
+                SplitterWidth = 6,
+                SplitterDistance = 700,
+                BackColor = ThemeColors.Border
+            };
+
+            var left = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(0, 0, 10, 0) };
+            left.Controls.Add(_lvSchedules);
+            _splitMain.Panel1.Controls.Add(left);
+
+            var calendarPanel = BuildCalendarPanel();
+            _splitMain.Panel2.Controls.Add(calendarPanel);
+
             var editor = BuildEditorPanel();
 
             var body = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 0, 10, 10), BackColor = ThemeColors.Background };
             body.Controls.Add(editor);
-            body.Controls.Add(_lvSchedules);
+            body.Controls.Add(_splitMain);
             body.Controls.Add(header);
 
             Controls.Add(body);
@@ -189,6 +225,113 @@ namespace School_Management_System.Presentation.UserControls
             frame.Controls.Add(btnPanel);
             frame.Controls.Add(layout);
             panel.Controls.Add(frame);
+            return panel;
+        }
+
+        private Panel BuildCalendarPanel()
+        {
+            var panel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background, Padding = new Padding(0, 0, 0, 0) };
+            var frame = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
+            ThemeManager.StyleCardPanel(frame);
+
+            var monthNav = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 34,
+                ColumnCount = 4
+            };
+            monthNav.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 34));
+            monthNav.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 34));
+            monthNav.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
+            monthNav.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+            var btnPrev = new Button { Text = "<", Dock = DockStyle.Fill };
+            ThemeManager.StyleButtonNeutral(btnPrev);
+            btnPrev.Click += (s, e) => ChangeCalendarMonth(-1);
+
+            var btnNext = new Button { Text = ">", Dock = DockStyle.Fill };
+            ThemeManager.StyleButtonNeutral(btnNext);
+            btnNext.Click += (s, e) => ChangeCalendarMonth(1);
+
+            var btnToday = new Button { Text = "Today", Dock = DockStyle.Fill };
+            ThemeManager.StyleButtonNeutral(btnToday);
+            btnToday.Click += (s, e) =>
+            {
+                var today = DateTime.Today;
+                _calendarMonth = new DateTime(today.Year, today.Month, 1);
+                SetCalendarDate(today);
+                GenerateCalendarForMonth();
+            };
+
+            _lblCalendarMonth = new Label
+            {
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.SubHeader,
+                ForeColor = ThemeColors.Text,
+                TextAlign = ContentAlignment.MiddleRight
+            };
+
+            monthNav.Controls.Add(btnPrev, 0, 0);
+            monthNav.Controls.Add(btnNext, 1, 0);
+            monthNav.Controls.Add(btnToday, 2, 0);
+            monthNav.Controls.Add(_lblCalendarMonth, 3, 0);
+
+            _calendar = new MonthCalendar
+            {
+                Dock = DockStyle.Top,
+                MaxSelectionCount = 1,
+                ShowWeekNumbers = true,
+                FirstDayOfWeek = Day.Monday
+            };
+            _calendar.DateChanged += (s, e) =>
+            {
+                if (_suppressCalendarEvents)
+                {
+                    return;
+                }
+
+                var month = new DateTime(_calendar.SelectionStart.Year, _calendar.SelectionStart.Month, 1);
+                if (month != _calendarMonth)
+                {
+                    _calendarMonth = month;
+                    GenerateCalendarForMonth();
+                }
+                else
+                {
+                    RenderCalendarForDate(_calendar.SelectionStart.Date);
+                }
+            };
+
+            _lblCalendarInfo = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 28,
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.MutedText,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            _lvCalendarEvents = new ListView
+            {
+                Dock = DockStyle.Fill,
+                View = View.Details,
+                FullRowSelect = true,
+                GridLines = true
+            };
+            _lvCalendarEvents.Columns.Add("Time", 96);
+            _lvCalendarEvents.Columns.Add("Subject", 220);
+            _lvCalendarEvents.Columns.Add("Room", 80);
+            _lvCalendarEvents.Columns.Add("Remarks", 140);
+
+            frame.Controls.Add(_lvCalendarEvents);
+            frame.Controls.Add(_lblCalendarInfo);
+            frame.Controls.Add(_calendar);
+            frame.Controls.Add(monthNav);
+            panel.Controls.Add(frame);
+
+            _calendarMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            SetCalendarDate(DateTime.Today);
+
             return panel;
         }
 
@@ -296,13 +439,16 @@ namespace School_Management_System.Presentation.UserControls
         {
             if (_classScheduleService == null || _selectedSectionId <= 0)
             {
+                _scheduleTable = null;
                 _lvSchedules.Items.Clear();
+                GenerateCalendarForMonth();
                 return;
             }
 
             try
             {
                 var dt = _classScheduleService.GetBySection(_selectedSectionId);
+                _scheduleTable = dt;
                 _lvSchedules.BeginUpdate();
                 _lvSchedules.Items.Clear();
 
@@ -333,6 +479,7 @@ namespace School_Management_System.Presentation.UserControls
             finally
             {
                 _lvSchedules.EndUpdate();
+                GenerateCalendarForMonth();
             }
         }
 
@@ -402,6 +549,200 @@ namespace School_Management_System.Presentation.UserControls
             _btnAdd.Enabled = !active;
             _btnEdit.Enabled = !active && _editingScheduleId > 0;
             _btnDelete.Enabled = !active && _editingScheduleId > 0;
+        }
+
+        private void ChangeCalendarMonth(int offset)
+        {
+            _calendarMonth = _calendarMonth.AddMonths(offset);
+            var selectedDay = _calendar == null ? 1 : _calendar.SelectionStart.Day;
+            var maxDay = DateTime.DaysInMonth(_calendarMonth.Year, _calendarMonth.Month);
+            var targetDate = new DateTime(_calendarMonth.Year, _calendarMonth.Month, Math.Min(selectedDay, maxDay));
+            SetCalendarDate(targetDate);
+            GenerateCalendarForMonth();
+        }
+
+        private void SetCalendarDate(DateTime date)
+        {
+            if (_calendar == null)
+            {
+                return;
+            }
+
+            _suppressCalendarEvents = true;
+            try
+            {
+                _calendar.SetDate(date.Date);
+            }
+            finally
+            {
+                _suppressCalendarEvents = false;
+            }
+        }
+
+        private void GenerateCalendarForMonth()
+        {
+            if (_calendar == null || _lvCalendarEvents == null)
+            {
+                return;
+            }
+
+            _generatedScheduleByDate.Clear();
+
+            var monthStart = new DateTime(_calendarMonth.Year, _calendarMonth.Month, 1);
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            _lblCalendarMonth.Text = monthStart.ToString("MMMM yyyy");
+
+            if (_scheduleTable != null)
+            {
+                foreach (DataRow row in _scheduleTable.Rows)
+                {
+                    var days = ParseScheduleDays(Convert.ToString(row["DayOfWeek"]));
+                    if (days.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    var entry = new GeneratedScheduleEntry
+                    {
+                        SubjectLabel = (Convert.ToString(row["SubjectCode"]) + " - " + Convert.ToString(row["SubjectName"])).Trim(new[] { ' ', '-' }),
+                        StartTime = row["StartTime"] == DBNull.Value ? (TimeSpan?)null : (TimeSpan)row["StartTime"],
+                        EndTime = row["EndTime"] == DBNull.Value ? (TimeSpan?)null : (TimeSpan)row["EndTime"],
+                        Room = Convert.ToString(row["Room"]),
+                        Remarks = Convert.ToString(row["Remarks"])
+                    };
+
+                    foreach (var day in days)
+                    {
+                        for (var date = FirstDateForDay(monthStart, day); date <= monthEnd; date = date.AddDays(7))
+                        {
+                            List<GeneratedScheduleEntry> list;
+                            if (!_generatedScheduleByDate.TryGetValue(date.Date, out list))
+                            {
+                                list = new List<GeneratedScheduleEntry>();
+                                _generatedScheduleByDate[date.Date] = list;
+                            }
+                            list.Add(entry);
+                        }
+                    }
+                }
+            }
+
+            foreach (var entries in _generatedScheduleByDate.Values)
+            {
+                entries.Sort((a, b) =>
+                {
+                    var startCompare = Nullable.Compare(a.StartTime, b.StartTime);
+                    if (startCompare != 0) return startCompare;
+                    return string.Compare(a.SubjectLabel, b.SubjectLabel, StringComparison.OrdinalIgnoreCase);
+                });
+            }
+
+            _calendar.RemoveAllBoldedDates();
+            foreach (var date in _generatedScheduleByDate.Keys)
+            {
+                _calendar.AddBoldedDate(date);
+            }
+            _calendar.UpdateBoldedDates();
+
+            RenderCalendarForDate(_calendar.SelectionStart.Date);
+        }
+
+        private void RenderCalendarForDate(DateTime selectedDate)
+        {
+            if (_lvCalendarEvents == null || _lblCalendarInfo == null)
+            {
+                return;
+            }
+
+            _lvCalendarEvents.BeginUpdate();
+            _lvCalendarEvents.Items.Clear();
+
+            List<GeneratedScheduleEntry> entries;
+            if (_generatedScheduleByDate.TryGetValue(selectedDate.Date, out entries) && entries.Count > 0)
+            {
+                foreach (var entry in entries)
+                {
+                    var start = entry.StartTime.HasValue ? entry.StartTime.Value.ToString(@"hh\:mm") : string.Empty;
+                    var end = entry.EndTime.HasValue ? entry.EndTime.Value.ToString(@"hh\:mm") : string.Empty;
+                    var time = string.IsNullOrWhiteSpace(start) || string.IsNullOrWhiteSpace(end) ? string.Empty : start + "-" + end;
+
+                    var item = new ListViewItem(time);
+                    item.SubItems.Add(entry.SubjectLabel ?? string.Empty);
+                    item.SubItems.Add(entry.Room ?? string.Empty);
+                    item.SubItems.Add(entry.Remarks ?? string.Empty);
+                    _lvCalendarEvents.Items.Add(item);
+                }
+
+                _lblCalendarInfo.Text = entries.Count + " class(es) on " + selectedDate.ToString("dddd, MMMM d");
+            }
+            else
+            {
+                _lblCalendarInfo.Text = "No generated classes on " + selectedDate.ToString("dddd, MMMM d");
+            }
+
+            _lvCalendarEvents.EndUpdate();
+        }
+
+        private static DateTime FirstDateForDay(DateTime monthStart, DayOfWeek dayOfWeek)
+        {
+            var diff = ((int)dayOfWeek - (int)monthStart.DayOfWeek + 7) % 7;
+            return monthStart.AddDays(diff);
+        }
+
+        private static List<DayOfWeek> ParseScheduleDays(string dayText)
+        {
+            var found = new HashSet<DayOfWeek>();
+            if (string.IsNullOrWhiteSpace(dayText))
+            {
+                return found.ToList();
+            }
+
+            var value = dayText.Trim().ToLowerInvariant();
+
+            if (value.Contains("mon")) found.Add(DayOfWeek.Monday);
+            if (value.Contains("tue")) found.Add(DayOfWeek.Tuesday);
+            if (value.Contains("wed")) found.Add(DayOfWeek.Wednesday);
+            if (value.Contains("thu")) found.Add(DayOfWeek.Thursday);
+            if (value.Contains("fri")) found.Add(DayOfWeek.Friday);
+            if (value.Contains("sat")) found.Add(DayOfWeek.Saturday);
+            if (value.Contains("sun")) found.Add(DayOfWeek.Sunday);
+
+            if (found.Count == 0)
+            {
+                var normalized = value.Replace("/", " ").Replace(",", " ").Replace("-", " ").Replace("|", " ").Replace(";", " ");
+                var parts = normalized.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var part in parts)
+                {
+                    switch (part)
+                    {
+                        case "m":
+                            found.Add(DayOfWeek.Monday);
+                            break;
+                        case "tu":
+                        case "t":
+                            found.Add(DayOfWeek.Tuesday);
+                            break;
+                        case "w":
+                            found.Add(DayOfWeek.Wednesday);
+                            break;
+                        case "th":
+                        case "h":
+                            found.Add(DayOfWeek.Thursday);
+                            break;
+                        case "f":
+                            found.Add(DayOfWeek.Friday);
+                            break;
+                        case "sa":
+                            found.Add(DayOfWeek.Saturday);
+                            break;
+                        case "su":
+                            found.Add(DayOfWeek.Sunday);
+                            break;
+                    }
+                }
+            }
+
+            return found.OrderBy(d => d == DayOfWeek.Sunday ? 7 : (int)d).ToList();
         }
 
         private void Save()

@@ -29,7 +29,6 @@ namespace School_Management_System.Presentation.Forms
         private TextBox _txtConfirmPassword;
         private CheckBox _chkShowPassword;
         private Button _btnCreate;
-        private Button _btnBackLogin;
         private Button _btnCancel;
 
         private DatabaseHelper _db;
@@ -105,23 +104,22 @@ namespace School_Management_System.Presentation.Forms
 
         private void InitializeRuntimeComponent()
         {
-            _root = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background };
+            _root = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface };
             _root.Paint += DrawRootBackground;
             Controls.Add(_root);
 
             _hero = BuildHeroPanel();
-            _authHost = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Padding = new Padding(56, 36, 56, 36) };
-
-            _card = new Panel { Size = new Size(610, 510), BackColor = ThemeColors.CardBackground };
-            ThemeManager.StyleCardPanel(_card);
+            var divider = new Panel { Dock = DockStyle.Left, Width = 1, BackColor = ThemeColors.Border };
+            _authHost = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface, Padding = new Padding(46, 28, 46, 28) };
+            _card = new Panel { Size = new Size(760, 620), BackColor = ThemeColors.Surface };
             _authHost.Controls.Add(_card);
             _authHost.Resize += (s, e) => CenterCard();
 
             BuildRegisterCardContent();
 
             _root.Controls.Add(_authHost);
+            _root.Controls.Add(divider);
             _root.Controls.Add(_hero);
-
             CenterCard();
         }
 
@@ -148,140 +146,92 @@ namespace School_Management_System.Presentation.Forms
 
         private Panel BuildHeroPanel()
         {
-            var panel = new Panel { Dock = DockStyle.Left, Width = 430, BackColor = ThemeColors.Primary, Padding = new Padding(34, 36, 34, 36) };
-            panel.Paint += (s, e) =>
-            {
-                using (var brush = new LinearGradientBrush(panel.ClientRectangle, ColorTranslator.FromHtml("#1E2E3F"), ThemeColors.Primary, 140f))
-                {
-                    e.Graphics.FillRectangle(brush, panel.ClientRectangle);
-                }
-            };
-
-            var logo = new PictureBox
-            {
-                Size = new Size(74, 74),
-                Location = new Point(34, 42),
-                Image = IconFactory.CreateCircleIcon(ThemeColors.Success, IconKind.Register, 74),
-                SizeMode = PictureBoxSizeMode.CenterImage
-            };
-
-            var title = new Label
-            {
-                Text = "Create a New\nUser Account",
-                Location = new Point(34, 132),
-                Size = new Size(310, 72),
-                Font = ThemeFonts.Header,
-                ForeColor = Color.White
-            };
-
-            var subtitle = new Label
-            {
-                Text = "Add registrar or faculty users to start managing academics with secured role access.",
-                Location = new Point(34, 218),
-                Size = new Size(332, 74),
-                Font = ThemeFonts.Label,
-                ForeColor = ColorTranslator.FromHtml("#D6E4F0")
-            };
-
-            var badge = new Panel { Location = new Point(34, 318), Size = new Size(316, 84), BackColor = Color.FromArgb(47, 108, 140), Padding = new Padding(12, 10, 12, 10) };
-            UiHelper.ApplyRoundedCorners(badge, 6);
-
-            var badgeIcon = new PictureBox
-            {
-                Dock = DockStyle.Left,
-                Width = 44,
-                Image = IconFactory.CreateGlyphIcon(IconKind.Users, 22, Color.White),
-                SizeMode = PictureBoxSizeMode.CenterImage
-            };
-            var badgeText = new Label
+            var panel = new Panel { Dock = DockStyle.Left, Width = 640, BackColor = ThemeColors.Surface, Padding = new Padding(44, 34, 44, 34) };
+            var visualHost = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface };
+            var cardLogo = BrandAssets.CreateLogoImage();
+            var logoCanvas = new Panel
             {
                 Dock = DockStyle.Fill,
-                Text = "Admin accounts stay in\nUsers module policies",
-                ForeColor = Color.White,
-                Font = ThemeFonts.Label,
-                TextAlign = ContentAlignment.MiddleLeft
+                Padding = new Padding(16, 8, 16, 8),
+                BackColor = Color.Transparent
             };
-
-            badge.Controls.Add(badgeText);
-            badge.Controls.Add(badgeIcon);
-
-            panel.Controls.Add(badge);
-            panel.Controls.Add(subtitle);
-            panel.Controls.Add(title);
-            panel.Controls.Add(logo);
+            var logoFrame = new Panel
+            {
+                Size = new Size(440, 420),
+                BackColor = Color.Transparent
+            };
+            var heroLogo = new PictureBox
+            {
+                Dock = DockStyle.Fill,
+                Image = cardLogo ?? IconFactory.CreateCircleIcon(ThemeColors.SidebarIcon, IconKind.School, 260),
+                SizeMode = cardLogo != null ? PictureBoxSizeMode.Zoom : PictureBoxSizeMode.CenterImage
+            };
+            logoFrame.Controls.Add(heroLogo);
+            logoCanvas.Controls.Add(logoFrame);
+            logoCanvas.Resize += (s, e) =>
+            {
+                logoFrame.Left = (logoCanvas.ClientSize.Width - logoFrame.Width) / 2;
+                logoFrame.Top = (logoCanvas.ClientSize.Height - logoFrame.Height) / 2;
+            };
+            visualHost.Controls.Add(logoCanvas);
+            panel.Controls.Add(visualHost);
             return panel;
         }
 
         private void BuildRegisterCardContent()
         {
-            var cardTop = new Panel { Dock = DockStyle.Top, Height = 84, BackColor = ThemeColors.CardBackground, Padding = new Padding(20, 16, 20, 12) };
-            var tabs = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 34, FlowDirection = FlowDirection.LeftToRight, WrapContents = false };
+            _card.Controls.Clear();
+            var shell = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface, Padding = new Padding(14) };
+            _card.Controls.Add(shell);
 
-            _btnBackLogin = new Button { Text = "Login", Width = 130, Height = 34 };
-            ThemeManager.StyleButtonNeutral(_btnBackLogin);
-            _btnBackLogin.Click += (s, e) => Close();
-
-            var btnRegisterTab = new Button { Text = "Register", Width = 130, Height = 34, Enabled = false, Margin = new Padding(10, 0, 0, 0) };
-            ThemeManager.StyleButtonPrimary(btnRegisterTab);
-
-            tabs.Controls.Add(_btnBackLogin);
-            tabs.Controls.Add(btnRegisterTab);
-
+            var title = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 48,
+                Text = "Create your account",
+                Font = new Font("Segoe UI Semibold", 18f, FontStyle.Bold),
+                ForeColor = ThemeColors.Text,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
             var subtitle = new Label
             {
-                Dock = DockStyle.Bottom,
-                Height = 22,
-                Text = "Create account credentials for dashboard access",
+                Dock = DockStyle.Top,
+                Height = 30,
+                Text = "Enter account details to register new dashboard access.",
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
-            cardTop.Controls.Add(subtitle);
-            cardTop.Controls.Add(tabs);
-            _card.Controls.Add(cardTop);
-
-            var body = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(20, 2, 20, 20) };
-            _card.Controls.Add(body);
-
-            var statusHost = new Panel { Dock = DockStyle.Top, Height = 40, BackColor = ThemeColors.CardBackground, Padding = new Padding(2, 4, 2, 0) };
             _lblDbStatus = new Label
             {
                 Text = Messages.NoDatabaseConnection,
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.AccentDanger,
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                Height = 26,
                 Visible = false,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            var gb = new GroupBox
-            {
-                Text = "Registration Details",
-                Dock = DockStyle.Fill,
-                Padding = new Padding(14, 18, 14, 12)
-            };
-            ThemeManager.StyleGroupBox(gb);
-            body.Controls.Add(gb);
-            statusHost.Controls.Add(_lblDbStatus);
-            body.Controls.Add(statusHost);
 
-            var layout = new TableLayoutPanel
+            var form = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
                 ColumnCount = 2,
                 RowCount = 8,
-                Padding = new Padding(4, 12, 4, 4)
+                Height = 248,
+                Padding = new Padding(0, 8, 0, 0)
             };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
 
             _txtUsername = MakeTextBox();
             _txtDisplayName = MakeTextBox();
@@ -290,64 +240,93 @@ namespace School_Management_System.Presentation.Forms
             _txtConfirmPassword = MakeTextBox();
             _txtConfirmPassword.UseSystemPasswordChar = true;
 
-            _cmbRole = new ComboBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input };
+            _cmbRole = new ComboBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input, Margin = new Padding(0) };
             ThemeManager.StyleComboBox(_cmbRole);
+            _cmbRole.Height = 38;
             _cmbRole.Items.AddRange(new object[] { AppConstants.Roles.Registrar, AppConstants.Roles.Faculty });
             if (_cmbRole.Items.Count > 0) _cmbRole.SelectedIndex = 0;
 
-            layout.Controls.Add(MakeLabel("Username *"), 0, 0);
-            layout.Controls.Add(_txtUsername, 1, 0);
-            layout.Controls.Add(MakeLabel("Display Name"), 0, 1);
-            layout.Controls.Add(_txtDisplayName, 1, 1);
-            layout.Controls.Add(MakeLabel("Role *"), 0, 2);
-            layout.Controls.Add(_cmbRole, 1, 2);
-            layout.Controls.Add(MakeLabel("Password *"), 0, 3);
-            layout.Controls.Add(_txtPassword, 1, 3);
-            layout.Controls.Add(MakeLabel("Confirm Password *"), 0, 4);
-            layout.Controls.Add(_txtConfirmPassword, 1, 4);
+            var lblUser = MakeLabel("Username *");
+            var lblDisplay = MakeLabel("Display Name");
+            var lblRole = MakeLabel("Role *");
+            var lblPassword = MakeLabel("Password *");
+            var lblConfirm = MakeLabel("Confirm Password *");
 
-            _chkShowPassword = new CheckBox { Text = "Show password", AutoSize = true, Margin = new Padding(0, 6, 0, 0) };
+            const int columnGap = 12;
+            var leftCellMargin = new Padding(0, 0, columnGap / 2, 0);
+            var rightCellMargin = new Padding(columnGap / 2, 0, 0, 0);
+
+            lblUser.Margin = leftCellMargin;
+            _txtUsername.Margin = leftCellMargin;
+            lblDisplay.Margin = rightCellMargin;
+            _txtDisplayName.Margin = rightCellMargin;
+            lblPassword.Margin = leftCellMargin;
+            _txtPassword.Margin = leftCellMargin;
+            lblConfirm.Margin = rightCellMargin;
+            _txtConfirmPassword.Margin = rightCellMargin;
+
+            form.Controls.Add(lblUser, 0, 0);
+            form.Controls.Add(lblDisplay, 1, 0);
+            form.Controls.Add(_txtUsername, 0, 1);
+            form.Controls.Add(_txtDisplayName, 1, 1);
+            form.Controls.Add(lblRole, 0, 2);
+            form.Controls.Add(new Panel(), 1, 2);
+            form.Controls.Add(_cmbRole, 0, 3);
+            form.SetColumnSpan(_cmbRole, 2);
+            form.Controls.Add(lblPassword, 0, 4);
+            form.Controls.Add(lblConfirm, 1, 4);
+            form.Controls.Add(_txtPassword, 0, 5);
+            form.Controls.Add(_txtConfirmPassword, 1, 5);
+
+            _chkShowPassword = new CheckBox { Text = "Show password", AutoSize = true, Dock = DockStyle.Left, Margin = new Padding(0, 6, 0, 0) };
             _chkShowPassword.CheckedChanged += (s, e) =>
             {
                 var visible = _chkShowPassword.Checked;
                 _txtPassword.UseSystemPasswordChar = !visible;
                 _txtConfirmPassword.UseSystemPasswordChar = !visible;
             };
-            layout.Controls.Add(_chkShowPassword, 1, 5);
+            form.Controls.Add(_chkShowPassword, 0, 6);
+            form.SetColumnSpan(_chkShowPassword, 2);
 
-            var actions = new Panel { Dock = DockStyle.Fill };
-            var right = new FlowLayoutPanel { Dock = DockStyle.Right, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Width = 300 };
-
-            _btnCreate = new Button { Text = "Create Account", Width = 150, Height = 34, Margin = new Padding(10, 0, 0, 0) };
-            _btnCreate.Image = IconFactory.CreateGlyphIcon(IconKind.Register, 16, Color.White);
-            _btnCreate.TextImageRelation = TextImageRelation.ImageBeforeText;
+            _btnCreate = new Button { Text = "Create account", Dock = DockStyle.Fill };
             ThemeManager.StyleButtonPrimary(_btnCreate);
+            _btnCreate.Margin = new Padding(0);
             _btnCreate.Click += (s, e) => DoRegister();
+            form.Controls.Add(_btnCreate, 0, 7);
+            form.SetColumnSpan(_btnCreate, 2);
 
-            _btnCancel = new Button { Text = "Cancel", Width = 140, Height = 34 };
-            _btnCancel.Image = IconFactory.CreateGlyphIcon(IconKind.Logout, 16, Color.White);
-            _btnCancel.TextImageRelation = TextImageRelation.ImageBeforeText;
-            ThemeManager.StyleButtonDanger(_btnCancel);
+            var actions = new Panel { Dock = DockStyle.Top, Height = 46, Padding = new Padding(0, 8, 0, 0) };
+            _btnCancel = new Button
+            {
+                Text = "Cancel",
+                Size = new Size(120, 38),
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            ThemeManager.StyleButtonNeutral(_btnCancel);
             _btnCancel.Click += (s, e) => Close();
-
-            right.Controls.Add(_btnCreate);
-            right.Controls.Add(_btnCancel);
-            actions.Controls.Add(right);
-            layout.Controls.Add(actions, 0, 6);
-            layout.SetColumnSpan(actions, 2);
+            actions.Resize += (s, e) =>
+            {
+                _btnCancel.Left = actions.ClientSize.Width - _btnCancel.Width;
+                _btnCancel.Top = Math.Max(0, (actions.ClientSize.Height - _btnCancel.Height) / 2);
+            };
+            actions.Controls.Add(_btnCancel);
 
             var note = new Label
             {
-                Text = "Admin accounts are managed from the Users module.",
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                Height = 44,
+                Text = "Admin accounts are managed from User Roles inside the dashboard.",
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
-                TextAlign = ContentAlignment.TopLeft
+                TextAlign = ContentAlignment.MiddleLeft
             };
-            layout.Controls.Add(note, 0, 7);
-            layout.SetColumnSpan(note, 2);
 
-            gb.Controls.Add(layout);
+            shell.Controls.Add(note);
+            shell.Controls.Add(actions);
+            shell.Controls.Add(form);
+            shell.Controls.Add(_lblDbStatus);
+            shell.Controls.Add(subtitle);
+            shell.Controls.Add(title);
 
             _txtConfirmPassword.KeyDown += (s, e) =>
             {
@@ -363,8 +342,8 @@ namespace School_Management_System.Presentation.Forms
         {
             _lblDbStatus.Text = isConnected ? string.Empty : (string.IsNullOrWhiteSpace(errorMessage) ? Messages.NoDatabaseConnection : errorMessage);
             _lblDbStatus.Visible = !isConnected;
-
-            if (_btnCreate != null) _btnCreate.Enabled = isConnected;
+            // Keep create enabled so users can retry once DB becomes reachable.
+            if (_btnCreate != null) _btnCreate.Enabled = true;
         }
 
         private void DoRegister()
@@ -450,7 +429,15 @@ namespace School_Management_System.Presentation.Forms
 
         private static TextBox MakeTextBox()
         {
-            var tb = new TextBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input };
+            var tb = new TextBox
+            {
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.Input,
+                Margin = new Padding(0),
+                AutoSize = false,
+                Height = 38,
+                MinimumSize = new Size(0, 38)
+            };
             ThemeManager.StyleInput(tb);
             return tb;
         }

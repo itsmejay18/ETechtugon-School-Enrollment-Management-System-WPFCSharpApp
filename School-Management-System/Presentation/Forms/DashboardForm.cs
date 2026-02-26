@@ -18,6 +18,8 @@ namespace School_Management_System.Presentation.Forms
 {
     public sealed partial class DashboardForm : BaseForm
     {
+        private const int SidebarHeaderHeight = 94;
+
         private readonly DatabaseHelper _db;
 
         private Panel _sidebar;
@@ -199,10 +201,11 @@ namespace School_Management_System.Presentation.Forms
         /// </summary>
         private Panel BuildBrandPanel()
         {
+            var brandLogo = BrandAssets.CreateLogoImage();
             var brand = new Panel 
             { 
                 Dock = DockStyle.Top, 
-                Height = 84, 
+                Height = SidebarHeaderHeight, 
                 BackColor = ThemeColors.SidebarBackground,
                 Name = "BrandPanel"
             };
@@ -210,35 +213,56 @@ namespace School_Management_System.Presentation.Forms
             var brandLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                Padding = new Padding(12, 12, 12, 12),
+                Padding = new Padding(12, 10, 12, 8),
                 ColumnCount = 2,
                 RowCount = 1,
                 AutoSize = false
             };
-            brandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 42));
+            brandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));
             brandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             brandLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             var brandIcon = new PictureBox
             {
-                Size = new Size(42, 42),
-                SizeMode = PictureBoxSizeMode.CenterImage,
-                Image = IconFactory.CreateCircleIcon(ThemeColors.SidebarIcon, IconKind.School, 42),
+                Size = new Size(50, 50),
+                SizeMode = brandLogo != null ? PictureBoxSizeMode.Zoom : PictureBoxSizeMode.CenterImage,
+                Image = brandLogo ?? IconFactory.CreateCircleIcon(ThemeColors.SidebarIcon, IconKind.School, 44),
                 Dock = DockStyle.Fill
             };
 
-            var brandText = new Label
+            var textHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 6, 0, 0), BackColor = Color.Transparent };
+            var brandTitle = new Label
             {
-                Text = "School\nManagement",
-                ForeColor = Color.White,
+                Text = "School Management",
+                ForeColor = ThemeColors.Text,
                 Font = ThemeFonts.Sidebar,
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                Height = 22,
                 TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(10, 0, 0, 0)
+                Padding = new Padding(0)
+            };
+            var brandSubtitle = new Label
+            {
+                Text = "SYSTEM",
+                ForeColor = ThemeColors.SidebarSectionText,
+                Font = ThemeFonts.Label,
+                Dock = DockStyle.Top,
+                Height = 18,
+                TextAlign = ContentAlignment.MiddleLeft
             };
 
+            textHost.Controls.Add(brandSubtitle);
+            textHost.Controls.Add(brandTitle);
+
             brandLayout.Controls.Add(brandIcon, 0, 0);
-            brandLayout.Controls.Add(brandText, 1, 0);
+            brandLayout.Controls.Add(textHost, 1, 0);
+            var accentLine = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 2,
+                BackColor = Color.FromArgb(120, ThemeColors.Secondary)
+            };
+            brand.Controls.Add(accentLine);
             brand.Controls.Add(brandLayout);
 
             return brand;
@@ -289,7 +313,7 @@ namespace School_Management_System.Presentation.Forms
             var btnLogout = new Button { Text = "  Logout", Dock = DockStyle.Fill };
             btnLogout.Image = IconFactory.CreateCircleIcon(ThemeColors.SidebarIconDanger, IconKind.Logout, 22);
             ThemeManager.StyleSidebarButton(btnLogout);
-            btnLogout.ForeColor = Color.White;
+            btnLogout.ForeColor = ThemeColors.Text;
             btnLogout.Click += (s, e) => Close();
 
             logoutPanel.Controls.Add(btnLogout);
@@ -327,9 +351,9 @@ namespace School_Management_System.Presentation.Forms
             _header = new Panel 
             { 
                 Dock = DockStyle.Top, 
-                Height = 60, 
+                Height = SidebarHeaderHeight, 
                 BackColor = ThemeColors.CardBackground, 
-                Padding = new Padding(18, 14, 18, 14),
+                Padding = new Padding(18, 0, 18, 0),
                 Name = "HeaderPanel"
             };
 
@@ -367,6 +391,7 @@ namespace School_Management_System.Presentation.Forms
             headerLayout.Controls.Add(_lblHeader, 0, 0);
             headerLayout.Controls.Add(_lblUser, 2, 0);
             _header.Controls.Add(headerLayout);
+            _header.Controls.Add(new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = ThemeColors.SidebarDivider });
 
             // Body panel for content
             _body = new Panel 
@@ -419,7 +444,7 @@ namespace School_Management_System.Presentation.Forms
             AddNavButton("curriculum", "Curriculum", IconKind.Curriculum, ThemeColors.SidebarIcon, 
                 () => LoadModule("curriculum", () => new CurriculumControl(_curriculumService, _courseService, _lookupService)));
             
-            AddNavButton("schedule", "Class Schedule", IconKind.Enrollment, ThemeColors.SidebarIcon, 
+            AddNavButton("schedule", "Schedule Calendar", IconKind.Enrollment, ThemeColors.SidebarIcon, 
                 () => LoadModule("schedule", () => new ClassScheduleControl(_classScheduleService, _sectionService, _curriculumService, _systemSettingService)));
             
             AddNavButton("enrollment", "Enrollment", IconKind.Enrollment, ThemeColors.SidebarIcon, 
@@ -603,7 +628,7 @@ namespace School_Management_System.Presentation.Forms
             if (string.Equals(key, "departments", StringComparison.OrdinalIgnoreCase)) return "Departments";
             if (string.Equals(key, "yearlevels", StringComparison.OrdinalIgnoreCase)) return "Year Levels";
             if (string.Equals(key, "sections", StringComparison.OrdinalIgnoreCase)) return "Sections";
-            if (string.Equals(key, "schedule", StringComparison.OrdinalIgnoreCase)) return "Class Schedule";
+            if (string.Equals(key, "schedule", StringComparison.OrdinalIgnoreCase)) return "Schedule Calendar";
             if (string.Equals(key, "settings", StringComparison.OrdinalIgnoreCase)) return "Settings";
             return "Module";
         }

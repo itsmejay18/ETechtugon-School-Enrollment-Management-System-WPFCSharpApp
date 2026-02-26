@@ -291,10 +291,41 @@ namespace School_Management_System.Presentation.UserControls
             _grid.Columns.Clear();
             _grid.DataSource = dt;
 
+            ConfigureGridColumnsForListView();
+
             if (_grid.Columns["FacultyId"] != null)
             {
-                _grid.Columns["FacultyId"].Visible = false;
+                _grid.Columns["FacultyId"].HeaderText = "ID";
+                _grid.Columns["FacultyId"].DisplayIndex = 0;
+                _grid.Columns["FacultyId"].FillWeight = 16f;
+                _grid.Columns["FacultyId"].MinimumWidth = 56;
             }
+
+            if (_grid.Columns["FirstName"] != null)
+            {
+                _grid.Columns["FirstName"].HeaderText = "First Name";
+                _grid.Columns["FirstName"].DisplayIndex = 1;
+                _grid.Columns["FirstName"].FillWeight = 28f;
+                _grid.Columns["FirstName"].MinimumWidth = 110;
+            }
+
+            if (_grid.Columns["LastName"] != null)
+            {
+                _grid.Columns["LastName"].HeaderText = "Last Name";
+                _grid.Columns["LastName"].DisplayIndex = 2;
+                _grid.Columns["LastName"].FillWeight = 28f;
+                _grid.Columns["LastName"].MinimumWidth = 110;
+            }
+
+            if (_grid.Columns["FacultyCode"] != null)
+            {
+                _grid.Columns["FacultyCode"].HeaderText = "Number";
+                _grid.Columns["FacultyCode"].DisplayIndex = 3;
+                _grid.Columns["FacultyCode"].FillWeight = 28f;
+                _grid.Columns["FacultyCode"].MinimumWidth = 130;
+            }
+
+            _grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
             if (_grid.Rows.Count > 0)
             {
@@ -314,6 +345,26 @@ namespace School_Management_System.Presentation.UserControls
                 _txtAddress.Text = string.Empty;
                 _dtHireDate.Checked = false;
                 SetEditorState(false);
+            }
+        }
+
+        private void ConfigureGridColumnsForListView()
+        {
+            var allowed = new[] { "FacultyId", "FirstName", "LastName", "FacultyCode" };
+
+            foreach (DataGridViewColumn col in _grid.Columns)
+            {
+                var show = false;
+                foreach (var name in allowed)
+                {
+                    if (string.Equals(col.Name, name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        show = true;
+                        break;
+                    }
+                }
+
+                col.Visible = show;
             }
         }
 

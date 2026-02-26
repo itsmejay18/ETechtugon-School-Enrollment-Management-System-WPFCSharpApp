@@ -114,14 +114,14 @@ namespace School_Management_System.Presentation.UserControls
             };
             formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
             formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
             formLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
 
@@ -152,10 +152,10 @@ namespace School_Management_System.Presentation.UserControls
             formLayout.Controls.Add(_dtBirthDate, 1, 5);
             formLayout.Controls.Add(MakeLabel("Email"), 0, 6);
             formLayout.Controls.Add(_txtEmail, 1, 6);
-            formLayout.Controls.Add(MakeLabel("Address"), 0, 7);
-            formLayout.Controls.Add(_txtAddress, 1, 7);
-            formLayout.Controls.Add(MakeLabel("Phone"), 0, 8);
-            formLayout.Controls.Add(_txtPhone, 1, 8);
+            formLayout.Controls.Add(MakeLabel("Phone"), 0, 7);
+            formLayout.Controls.Add(_txtPhone, 1, 7);
+            formLayout.Controls.Add(MakeLabel("Address"), 0, 8);
+            formLayout.Controls.Add(_txtAddress, 1, 8);
 
             var note = new Label
             {
@@ -216,8 +216,8 @@ namespace School_Management_System.Presentation.UserControls
                 ColumnCount = 1,
                 RowCount = 2
             };
-            rightLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 60));
-            rightLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 40));
+            rightLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 64));
+            rightLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 36));
             rightLayout.Controls.Add(_gb, 0, 0);
             rightLayout.Controls.Add(_gbEnrollment, 0, 1);
 
@@ -403,13 +403,71 @@ namespace School_Management_System.Presentation.UserControls
             _grid.Columns.Clear();
             _grid.DataSource = dt;
 
-            if (_grid.Columns["StudentId"] != null)
-            {
-                _grid.Columns["StudentId"].Visible = false;
-            }
+            ConfigureGridColumnsForListView();
+
             if (_grid.Columns["PhotoPath"] != null)
             {
                 _grid.Columns["PhotoPath"].Visible = false;
+            }
+
+            if (_grid.Columns["CreatedAt"] != null)
+            {
+                _grid.Columns["CreatedAt"].Visible = false;
+            }
+
+            if (_grid.Columns["UpdatedAt"] != null)
+            {
+                _grid.Columns["UpdatedAt"].Visible = false;
+            }
+
+            if (_grid.Columns["StudentId"] != null)
+            {
+                _grid.Columns["StudentId"].HeaderText = "ID";
+                _grid.Columns["StudentId"].DisplayIndex = 0;
+                _grid.Columns["StudentId"].FillWeight = 16f;
+            }
+
+            if (_grid.Columns["FirstName"] != null)
+            {
+                _grid.Columns["FirstName"].HeaderText = "First Name";
+                _grid.Columns["FirstName"].DisplayIndex = 1;
+                _grid.Columns["FirstName"].FillWeight = 28f;
+            }
+
+            if (_grid.Columns["LastName"] != null)
+            {
+                _grid.Columns["LastName"].HeaderText = "Last Name";
+                _grid.Columns["LastName"].DisplayIndex = 2;
+                _grid.Columns["LastName"].FillWeight = 28f;
+            }
+
+            if (_grid.Columns["StudentNumber"] != null)
+            {
+                _grid.Columns["StudentNumber"].HeaderText = "Number";
+                _grid.Columns["StudentNumber"].DisplayIndex = 3;
+                _grid.Columns["StudentNumber"].FillWeight = 28f;
+            }
+
+            _grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+            if (_grid.Columns["StudentId"] != null)
+            {
+                _grid.Columns["StudentId"].MinimumWidth = 56;
+            }
+
+            if (_grid.Columns["FirstName"] != null)
+            {
+                _grid.Columns["FirstName"].MinimumWidth = 110;
+            }
+
+            if (_grid.Columns["LastName"] != null)
+            {
+                _grid.Columns["LastName"].MinimumWidth = 110;
+            }
+
+            if (_grid.Columns["StudentNumber"] != null)
+            {
+                _grid.Columns["StudentNumber"].MinimumWidth = 130;
             }
 
             if (_grid.Rows.Count > 0)
@@ -432,6 +490,26 @@ namespace School_Management_System.Presentation.UserControls
                 _txtAddress.Text = string.Empty;
                 if (_lvEnrollments != null) _lvEnrollments.Items.Clear();
                 SetEditorState(false);
+            }
+        }
+
+        private void ConfigureGridColumnsForListView()
+        {
+            var allowed = new[] { "StudentId", "FirstName", "LastName", "StudentNumber" };
+
+            foreach (DataGridViewColumn col in _grid.Columns)
+            {
+                var show = false;
+                foreach (var name in allowed)
+                {
+                    if (string.Equals(col.Name, name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        show = true;
+                        break;
+                    }
+                }
+
+                col.Visible = show;
             }
         }
 
