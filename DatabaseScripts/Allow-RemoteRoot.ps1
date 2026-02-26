@@ -2,15 +2,23 @@ param(
     [string]$HostName = 'localhost',
     [int]$Port = 3306,
     [string]$AdminUser = 'root',
-    [string]$AdminPassword = 'root',
+    [string]$AdminPassword = '',
     [string]$ClientHost = '%',
-    [string]$RootPasswordForClient = 'root',
+    [string]$RootPasswordForClient = '',
     [string]$Database = 'schoolmanagementsystem'
 )
 
 $mysqlExe = 'C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe'
 if (!(Test-Path $mysqlExe)) {
     throw "mysql.exe not found at: $mysqlExe"
+}
+
+if ([string]::IsNullOrWhiteSpace($AdminPassword)) {
+    throw "Admin password is required. Pass -AdminPassword <password>."
+}
+
+if ([string]::IsNullOrWhiteSpace($RootPasswordForClient)) {
+    throw "Root password for remote client is required. Pass -RootPasswordForClient <password>."
 }
 
 function Escape-Sql([string]$value) {

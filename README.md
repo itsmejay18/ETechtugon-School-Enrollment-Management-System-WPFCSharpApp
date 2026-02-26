@@ -2,7 +2,7 @@
 
 ## Setup
 1. Create the MySQL database by running `DatabaseScripts/SchoolManagementSystem.sql` in MySQL Workbench, or run `DatabaseScripts/Init-MySQL.ps1`.
-2. Verify the connection string in `School-Management-System/App.config` points to your MySQL server.
+2. Set database values using `SMS_DB_HOST`, `SMS_DB_PORT`, `SMS_DB_NAME`, `SMS_DB_USER`, `SMS_DB_PASSWORD` environment variables (recommended), or update `School-Management-System/App.config` locally.
 3. Build and run the solution `School-Management-System.sln`.
 
 ## Remote Client Access (Laptop -> Windows 10 MySQL Host)
@@ -12,10 +12,10 @@ If login fails with `Access denied for user ...` from a remote host, run this on
 powershell -ExecutionPolicy Bypass -File .\DatabaseScripts\Allow-RemoteRoot.ps1 `
   -HostName localhost `
   -Port 3306 `
-  -AdminUser root `
-  -AdminPassword root `
-  -ClientHost ZM `
-  -RootPasswordForClient root `
+  -AdminUser <ADMIN_USER> `
+  -AdminPassword <ADMIN_PASSWORD> `
+  -ClientHost <CLIENT_HOSTNAME_OR_%> `
+  -RootPasswordForClient <REMOTE_ROOT_PASSWORD> `
   -Database schoolmanagementsystem
 ```
 
@@ -25,12 +25,16 @@ If modules fail with errors like `Table '...systemsetting' doesn't exist`, run t
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\DatabaseScripts\Patch-RemoteMySQL.ps1 `
-  -HostName 192.168.1.107 `
+  -HostName <DB_HOST_IP> `
   -Port 3306 `
-  -Username root `
-  -Password root `
+  -Username <DB_USER> `
+  -Password <DB_PASSWORD> `
   -Database schoolmanagementsystem
 ```
+
+## Security Note
+- Do not commit real database hostnames, usernames, or passwords to Git.
+- If credentials were already pushed, rotate them on MySQL and then push the sanitized config/docs.
 
 ## Default Login (Seeded By SQL Script)
 - Username: `admin`

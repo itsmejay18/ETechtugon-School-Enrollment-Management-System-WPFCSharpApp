@@ -2,7 +2,7 @@
     [string]$HostName = 'localhost',
     [int]$Port = 3306,
     [string]$Username = 'root',
-    [string]$Password = 'root'
+    [string]$Password = ''
 )
 
 $scriptPath = Join-Path $PSScriptRoot 'SchoolManagementSystem.sql'
@@ -14,6 +14,10 @@ if (!(Test-Path $mysqlExe)) {
 
 if (!(Test-Path $scriptPath)) {
     throw "SQL script not found: $scriptPath"
+}
+
+if ([string]::IsNullOrWhiteSpace($Password)) {
+    throw "MySQL password is required. Pass -Password <password>."
 }
 
 Write-Host ("Initializing SchoolManagementSystem on MySQL {0}:{1} ..." -f $HostName, $Port)

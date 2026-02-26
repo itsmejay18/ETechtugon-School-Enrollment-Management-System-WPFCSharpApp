@@ -2,7 +2,7 @@ param(
     [string]$HostName = '192.168.1.107',
     [int]$Port = 3306,
     [string]$Username = 'root',
-    [string]$Password = 'root',
+    [string]$Password = '',
     [string]$Database = 'schoolmanagementsystem'
 )
 
@@ -15,6 +15,10 @@ if (!(Test-Path $mysqlExe)) {
 
 if (!(Test-Path $scriptPath)) {
     throw "SQL script not found: $scriptPath"
+}
+
+if ([string]::IsNullOrWhiteSpace($Password)) {
+    throw "MySQL password is required. Pass -Password <password>."
 }
 
 Write-Host ("Patching remote MySQL schema on {0}:{1} ({2}) ..." -f $HostName, $Port, $Database)

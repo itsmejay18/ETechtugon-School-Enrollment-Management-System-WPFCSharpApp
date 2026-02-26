@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
@@ -62,7 +62,6 @@ namespace School_Management_System.Presentation.UserControls
             this.Size = new System.Drawing.Size(852, 179);
             this.ResumeLayout(false);
 
-<<<<<<< Updated upstream
             var toolbar = BuildToolbar();
             _split = new SplitContainer
             {
@@ -161,8 +160,6 @@ namespace School_Management_System.Presentation.UserControls
             Controls.Clear();
             Controls.Add(_split);
             Controls.Add(toolbar);
-=======
->>>>>>> Stashed changes
         }
 
         private Panel BuildToolbar()
@@ -229,7 +226,7 @@ namespace School_Management_System.Presentation.UserControls
         private void SetEditorState(bool active)
         {
             _isEditorActive = active;
-            // If controls aren’t initialized yet (designer/constructor), just exit safely.
+            // If controls are not initialized yet (designer/constructor), exit safely.
             if (_txtFirstName == null) return;
 
             _txtFirstName.ReadOnly = !active;
@@ -486,3 +483,4 @@ namespace School_Management_System.Presentation.UserControls
         }
     }
 }
+
