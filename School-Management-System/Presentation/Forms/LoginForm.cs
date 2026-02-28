@@ -215,7 +215,7 @@ namespace School_Management_System.Presentation.Forms
             {
                 Text = "Log in to School Management",
                 Dock = DockStyle.Fill,
-                Font = new Font("Segoe UI Semibold", 16f, FontStyle.Bold),
+                Font = ThemeFonts.AuthTitle,
                 ForeColor = ThemeColors.Text,
                 TextAlign = ContentAlignment.MiddleLeft
             };
@@ -247,8 +247,10 @@ namespace School_Management_System.Presentation.Forms
 
             _chkShowPassword = new CheckBox { Text = "Show password", AutoSize = true, Dock = DockStyle.Left, Margin = new Padding(0, 6, 0, 0) };
             _chkShowPassword.CheckedChanged += (s, e) => _txtPassword.UseSystemPasswordChar = !_chkShowPassword.Checked;
+            ThemeManager.StyleCheckBox(_chkShowPassword);
 
             _chkRememberMe = new CheckBox { Text = "Remember me", AutoSize = true, Dock = DockStyle.Right, Margin = new Padding(0, 6, 0, 0) };
+            ThemeManager.StyleCheckBox(_chkRememberMe);
 
             var options = new Panel { Dock = DockStyle.Fill };
             options.Controls.Add(_chkShowPassword);
@@ -264,11 +266,9 @@ namespace School_Management_System.Presentation.Forms
                 Text = "Forgot password?",
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
-                LinkColor = ThemeColors.Secondary,
-                ActiveLinkColor = ThemeColors.Secondary,
-                VisitedLinkColor = ThemeColors.Secondary,
                 Font = ThemeFonts.Label
             };
+            ThemeManager.StyleLinkLabel(forgotLink);
             forgotLink.Click += (s, e) => ShowInfo("Please contact your administrator to reset your password.", "Password Recovery");
 
             _btnRegister = new Button { Text = "Create new account", Dock = DockStyle.Fill };

@@ -24,6 +24,22 @@ namespace School_Management_System.Common
             public const string Curriculum = "Curriculum";
             public const string Enrollment = "Enrollment";
         }
+
+        public static class SettingKeys
+        {
+            public const string CurrentAcademicYearId = "CurrentAcademicYearId";
+            public const string CurrentSemesterId = "CurrentSemesterId";
+
+            public const string DbConnectionMode = "DbConnectionMode";
+
+            public const string DbHostLocal = "DbHost.Local";
+            public const string DbPortLocal = "DbPort.Local";
+            public const string DbNameLocal = "DbName.Local";
+
+            public const string DbHostNetwork = "DbHost.Network";
+            public const string DbPortNetwork = "DbPort.Network";
+            public const string DbNameNetwork = "DbName.Network";
+        }
     }
 }
 

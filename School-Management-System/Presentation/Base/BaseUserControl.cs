@@ -15,6 +15,20 @@ namespace School_Management_System.Presentation.Base
             Dock = DockStyle.Fill;
         }
 
+        protected override void OnCreateControl()
+        {
+            base.OnCreateControl();
+            if (IsInDesigner) return;
+            ThemeManager.ApplyPaletteToControlTree(this);
+        }
+
+        protected override void OnControlAdded(ControlEventArgs e)
+        {
+            base.OnControlAdded(e);
+            if (e == null || e.Control == null || IsInDesigner) return;
+            ThemeManager.ApplyPaletteToControlTree(e.Control);
+        }
+
         protected bool IsInDesigner
         {
             get

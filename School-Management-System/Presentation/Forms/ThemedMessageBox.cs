@@ -40,7 +40,7 @@ namespace School_Management_System.Presentation.Forms
             _lblTitle = new Label
             {
                 Dock = DockStyle.Fill,
-                ForeColor = Color.White,
+                ForeColor = ThemeColors.CardBackground,
                 Font = ThemeFonts.SubHeader,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Text = string.IsNullOrWhiteSpace(title) ? AppConstants.AppTitle : title
@@ -102,8 +102,8 @@ namespace School_Management_System.Presentation.Forms
             {
                 f._btnOk.Text = "Yes";
                 f._btnCancel.Text = "No";
-                ThemeManager.StyleButtonDanger(f._btnCancel);
-                ThemeManager.StyleButtonPrimary(f._btnOk);
+                ThemeManager.StyleButtonDanger(f._btnOk);
+                ThemeManager.StyleButtonNeutral(f._btnCancel);
                 return f.ShowDialog(owner);
             }
         }

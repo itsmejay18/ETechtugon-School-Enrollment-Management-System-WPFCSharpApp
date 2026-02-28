@@ -901,9 +901,9 @@ namespace School_Management_System.Presentation.UserControls
             _printDocument.PrintPage += (s, e) =>
             {
                 var text = _printText ?? string.Empty;
-                using (var font = new Font("Consolas", 10F))
+                using (var brush = new SolidBrush(ThemeColors.Text))
                 {
-                    e.Graphics.DrawString(text, font, Brushes.Black, new RectangleF(40, 40, e.MarginBounds.Width, e.MarginBounds.Height));
+                    e.Graphics.DrawString(text, ThemeFonts.Input, brush, new RectangleF(40, 40, e.MarginBounds.Width, e.MarginBounds.Height));
                 }
             };
         }

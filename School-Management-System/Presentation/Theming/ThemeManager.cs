@@ -123,15 +123,46 @@ namespace School_Management_System.Presentation.Theming
             button.Cursor = Cursors.Hand;
         }
 
+        public static void StyleCheckBox(CheckBox checkBox)
+        {
+            if (checkBox == null) return;
+
+            checkBox.Font = ThemeFonts.Label;
+            checkBox.ForeColor = ThemeColors.Text;
+            checkBox.BackColor = Color.Transparent;
+            checkBox.FlatStyle = FlatStyle.Standard;
+        }
+
+        public static void StyleLinkLabel(LinkLabel linkLabel)
+        {
+            if (linkLabel == null) return;
+
+            linkLabel.Font = ThemeFonts.Label;
+            linkLabel.LinkColor = ThemeColors.Secondary;
+            linkLabel.ActiveLinkColor = Darken(ThemeColors.Secondary, 0.1f);
+            linkLabel.VisitedLinkColor = ThemeColors.Secondary;
+        }
+
+        public static void StyleDatePicker(DateTimePicker dateTimePicker)
+        {
+            if (dateTimePicker == null) return;
+
+            dateTimePicker.Font = ThemeFonts.Input;
+            dateTimePicker.CalendarForeColor = ThemeColors.Text;
+            dateTimePicker.CalendarMonthBackground = Color.White;
+        }
+
         public static void StyleSidebarButton(Button button)
         {
             if (button == null) return;
 
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
+            button.FlatAppearance.BorderColor = Color.Transparent;
             button.FlatAppearance.MouseOverBackColor = ThemeColors.SidebarHover;
             button.FlatAppearance.MouseDownBackColor = ThemeColors.SidebarActive;
             button.BackColor = ThemeColors.SidebarBackground;
+            button.UseVisualStyleBackColor = false;
             button.ForeColor = ThemeColors.SidebarTextMuted;
             button.Font = ThemeFonts.Sidebar;
             button.TextAlign = ContentAlignment.MiddleLeft;
@@ -141,6 +172,7 @@ namespace School_Management_System.Presentation.Theming
             button.Height = 46;
             button.AutoEllipsis = true;
             button.Cursor = Cursors.Hand;
+            button.TabStop = false;
             UiHelper.ApplyRoundedCorners(button, 6);
         }
 
@@ -149,10 +181,20 @@ namespace School_Management_System.Presentation.Theming
             if (button == null) return;
             button.BackColor = active ? ThemeColors.SidebarActive : ThemeColors.SidebarBackground;
             button.ForeColor = active ? Color.White : ThemeColors.SidebarTextMuted;
-            button.FlatAppearance.BorderSize = active ? 1 : 0;
-            if (active)
+            button.FlatAppearance.BorderSize = 0;
+            button.FlatAppearance.BorderColor = Color.Transparent;
+            button.FlatAppearance.MouseOverBackColor = active ? ThemeColors.SidebarActive : ThemeColors.SidebarHover;
+            button.FlatAppearance.MouseDownBackColor = ThemeColors.SidebarActive;
+        }
+
+        public static void ApplyPaletteToControlTree(Control root)
+        {
+            if (root == null) return;
+
+            ApplyPaletteToControl(root);
+            foreach (Control child in root.Controls)
             {
-                button.FlatAppearance.BorderColor = Color.FromArgb(130, ThemeColors.Secondary);
+                ApplyPaletteToControlTree(child);
             }
         }
 
@@ -198,6 +240,94 @@ namespace School_Management_System.Presentation.Theming
             button.FlatAppearance.MouseOverBackColor = hoverBackColor;
             button.FlatAppearance.MouseDownBackColor = Darken(backColor, 0.12f);
             UiHelper.ApplyRoundedCorners(button, 4);
+        }
+
+        private static void ApplyPaletteToControl(Control control)
+        {
+            if (control == null) return;
+
+            var textBox = control as TextBox;
+            if (textBox != null)
+            {
+                StyleInput(textBox);
+                return;
+            }
+
+            var numericUpDown = control as NumericUpDown;
+            if (numericUpDown != null)
+            {
+                StyleInput(numericUpDown);
+                return;
+            }
+
+            var comboBox = control as ComboBox;
+            if (comboBox != null)
+            {
+                StyleComboBox(comboBox);
+                return;
+            }
+
+            var checkBox = control as CheckBox;
+            if (checkBox != null)
+            {
+                StyleCheckBox(checkBox);
+                return;
+            }
+
+            var linkLabel = control as LinkLabel;
+            if (linkLabel != null)
+            {
+                StyleLinkLabel(linkLabel);
+                return;
+            }
+
+            var datePicker = control as DateTimePicker;
+            if (datePicker != null)
+            {
+                StyleDatePicker(datePicker);
+                return;
+            }
+
+            var groupBox = control as GroupBox;
+            if (groupBox != null)
+            {
+                StyleGroupBox(groupBox);
+                return;
+            }
+
+            var dataGrid = control as DataGridView;
+            if (dataGrid != null)
+            {
+                StyleDataGrid(dataGrid);
+                return;
+            }
+
+            var button = control as Button;
+            if (button != null)
+            {
+                if (button.FlatStyle == FlatStyle.Standard || button.FlatStyle == FlatStyle.System)
+                {
+                    StyleButtonNeutral(button);
+                }
+                return;
+            }
+
+            var label = control as Label;
+            if (label != null && IsDefaultLikeFont(label.Font))
+            {
+                label.Font = ThemeFonts.Label;
+            }
+        }
+
+        private static bool IsDefaultLikeFont(Font font)
+        {
+            if (font == null) return true;
+
+            var defaultFont = Control.DefaultFont;
+            var sizeDiff = Math.Abs(font.SizeInPoints - defaultFont.SizeInPoints);
+            return string.Equals(font.FontFamily.Name, defaultFont.FontFamily.Name, StringComparison.OrdinalIgnoreCase) &&
+                   sizeDiff < 0.2f &&
+                   font.Style == defaultFont.Style;
         }
 
         private static Color Darken(Color color, float amount)

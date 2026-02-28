@@ -14,6 +14,20 @@ namespace School_Management_System.Presentation.Base
             StartPosition = FormStartPosition.CenterScreen;
         }
 
+        protected override void OnControlAdded(ControlEventArgs e)
+        {
+            base.OnControlAdded(e);
+            if (e == null || e.Control == null || IsInDesigner) return;
+            ThemeManager.ApplyPaletteToControlTree(e.Control);
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            if (IsInDesigner) return;
+            ThemeManager.ApplyPaletteToControlTree(this);
+        }
+
         protected bool IsInDesigner
         {
             get

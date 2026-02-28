@@ -161,6 +161,34 @@ INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
 VALUES ('CurrentSemesterId', CAST(@semId AS CHAR))
 ON DUPLICATE KEY UPDATE `SettingValue` = VALUES(`SettingValue`);
 
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbConnectionMode', 'Local')
+ON DUPLICATE KEY UPDATE `SettingValue` = VALUES(`SettingValue`);
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbHost.Local', 'localhost')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbPort.Local', '3306')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbName.Local', 'schoolmanagementsystem')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbHost.Network', 'localhost')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbPort.Network', '3306')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbName.Network', 'schoolmanagementsystem')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
 -- Seed sample sections if none exist.
 INSERT INTO `section`
 (`SectionName`, `CourseId`, `YearLevelId`, `AcademicYearId`, `SemesterId`, `Capacity`, `IsActive`, `CreatedAt`, `UpdatedAt`)

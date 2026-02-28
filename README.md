@@ -3,7 +3,15 @@
 ## Setup
 1. Create the MySQL database by running `DatabaseScripts/SchoolManagementSystem.sql` in MySQL Workbench, or run `DatabaseScripts/Init-MySQL.ps1`.
 2. Set database values using `SMS_DB_HOST`, `SMS_DB_PORT`, `SMS_DB_NAME`, `SMS_DB_USER`, `SMS_DB_PASSWORD` environment variables (recommended), or update `School-Management-System/App.config` locally.
-3. Build and run the solution `School-Management-System.sln`.
+3. Choose active connection mode using either:
+   - command line: `School-Management-System.exe --db-mode=Local` or `School-Management-System.exe --db-mode=Network`
+   - Settings module: `Settings > General > Database Connection Profiles`
+4. Build and run the solution `School-Management-System.sln`.
+
+## Navigation Layout
+- Workflow menu: `Dashboard`, `Students`, `Faculty`, `Enrollment`, `Schedule`, `Calendar`, `Settings`
+- Administrative setup is consolidated under `Settings` tabs:
+  - `Departments`, `Courses`, `Year Levels`, `Sections`, `Subjects`, `Curriculum`, `User Management`
 
 ## Remote Client Access (Laptop -> Windows 10 MySQL Host)
 If login fails with `Access denied for user ...` from a remote host, run this on the **Windows 10 machine that hosts MySQL**:

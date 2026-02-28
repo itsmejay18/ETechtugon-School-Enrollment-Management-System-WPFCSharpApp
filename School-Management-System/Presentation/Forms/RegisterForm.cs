@@ -85,7 +85,7 @@ namespace School_Management_System.Presentation.Forms
                 if (!_db.TestConnection(out error))
                 {
                     _userManagementService = null;
-                    SetConnectionState(false, string.IsNullOrWhiteSpace(error) ? Messages.NoDatabaseConnection : error);
+                    SetConnectionState(false, BuildConnectionStateMessage(error));
                 }
                 else
                 {
@@ -97,7 +97,7 @@ namespace School_Management_System.Presentation.Forms
             catch (Exception ex)
             {
                 _userManagementService = null;
-                SetConnectionState(false, Messages.NoDatabaseConnection);
+                SetConnectionState(false, BuildConnectionStateMessage(ex.Message));
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("RegisterForm.TryInitServices", ex);
             }
         }
@@ -189,7 +189,7 @@ namespace School_Management_System.Presentation.Forms
                 Dock = DockStyle.Top,
                 Height = 48,
                 Text = "Create your account",
-                Font = new Font("Segoe UI Semibold", 18f, FontStyle.Bold),
+                Font = ThemeFonts.PageTitle,
                 ForeColor = ThemeColors.Text,
                 TextAlign = ContentAlignment.MiddleLeft
             };
@@ -285,6 +285,7 @@ namespace School_Management_System.Presentation.Forms
                 _txtPassword.UseSystemPasswordChar = !visible;
                 _txtConfirmPassword.UseSystemPasswordChar = !visible;
             };
+            ThemeManager.StyleCheckBox(_chkShowPassword);
             form.Controls.Add(_chkShowPassword, 0, 6);
             form.SetColumnSpan(_chkShowPassword, 2);
 
@@ -346,6 +347,30 @@ namespace School_Management_System.Presentation.Forms
             if (_btnCreate != null) _btnCreate.Enabled = true;
         }
 
+        private string BuildConnectionStateMessage(string rawError)
+        {
+            if (string.IsNullOrWhiteSpace(rawError))
+            {
+                return Messages.NoDatabaseConnection;
+            }
+
+            var message = rawError.Trim();
+            var lower = message.ToLowerInvariant();
+
+            if (lower.Contains("access denied for user") || (lower.Contains("host") && lower.Contains("not allowed to connect")))
+            {
+                return "Database access denied. Run DatabaseScripts\\Allow-RemoteRoot.ps1 on the MySQL server, then allow host '" +
+                    Environment.MachineName + "' (or '%') and retry.";
+            }
+
+            if (message.Length > 220)
+            {
+                return message.Substring(0, 220) + "...";
+            }
+
+            return message;
+        }
+
         private void DoRegister()
         {
             if (_userManagementService == null)
@@ -353,7 +378,7 @@ namespace School_Management_System.Presentation.Forms
                 TryInitServices();
                 if (_userManagementService == null)
                 {
-                    ShowError(Messages.NoDatabaseConnection);
+                    ShowError(string.IsNullOrWhiteSpace(_lblDbStatus.Text) ? Messages.NoDatabaseConnection : _lblDbStatus.Text);
                     return;
                 }
             }

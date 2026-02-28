@@ -178,6 +178,8 @@ namespace School_Management_System.Presentation.Forms
             // Brand section (top)
             var brand = BuildBrandPanel();
             var brandDivider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = ThemeColors.SidebarDivider };
+            var profile = BuildProfilePanel();
+            var profileDivider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = ThemeColors.SidebarDivider };
 
             // Navigation header
             var navHeader = BuildNavigationHeader();
@@ -192,6 +194,8 @@ namespace School_Management_System.Presentation.Forms
             _sidebar.Controls.Add(_nav);
             _sidebar.Controls.Add(logoutPanel);
             _sidebar.Controls.Add(navHeader);
+            _sidebar.Controls.Add(profileDivider);
+            _sidebar.Controls.Add(profile);
             _sidebar.Controls.Add(brandDivider);
             _sidebar.Controls.Add(brand);
         }
@@ -293,6 +297,81 @@ namespace School_Management_System.Presentation.Forms
 
             navHeader.Controls.Add(navHeaderText);
             return navHeader;
+        }
+
+        private Panel BuildProfilePanel()
+        {
+            var user = UserSession.CurrentUser;
+            var displayName = user == null
+                ? "Guest User"
+                : (string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username : user.DisplayName);
+            var role = user == null || string.IsNullOrWhiteSpace(user.Role) ? "User" : user.Role.Trim();
+            var roleColor = GetRoleAccentColor(role);
+
+            var profilePanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 88,
+                BackColor = ThemeColors.SidebarBackground,
+                Padding = new Padding(12, 10, 12, 10),
+                Name = "SidebarProfilePanel"
+            };
+
+            var card = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = ThemeColors.Surface,
+                Padding = new Padding(10, 8, 10, 8)
+            };
+            UiHelper.ApplyRoundedCorners(card, 6);
+
+            var layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 2
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 42));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 55));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 45));
+
+            var avatar = new PictureBox
+            {
+                Dock = DockStyle.Fill,
+                SizeMode = PictureBoxSizeMode.CenterImage,
+                Image = IconFactory.CreateCircleIcon(roleColor, displayName, 36),
+                Margin = new Padding(0, 0, 8, 0)
+            };
+
+            var nameLabel = new Label
+            {
+                Dock = DockStyle.Fill,
+                Text = displayName,
+                AutoEllipsis = true,
+                TextAlign = ContentAlignment.BottomLeft,
+                ForeColor = ThemeColors.Text,
+                Font = ThemeFonts.Sidebar
+            };
+
+            var roleLabel = new Label
+            {
+                Dock = DockStyle.Fill,
+                Text = role,
+                AutoEllipsis = true,
+                TextAlign = ContentAlignment.TopLeft,
+                ForeColor = roleColor,
+                Font = ThemeFonts.CaptionStrong
+            };
+
+            layout.Controls.Add(avatar, 0, 0);
+            layout.SetRowSpan(avatar, 2);
+            layout.Controls.Add(nameLabel, 1, 0);
+            layout.Controls.Add(roleLabel, 1, 1);
+
+            card.Controls.Add(layout);
+            profilePanel.Controls.Add(card);
+            return profilePanel;
         }
 
         /// <summary>
@@ -425,39 +504,30 @@ namespace School_Management_System.Presentation.Forms
 
             AddNavButton("faculty", "Faculty", IconKind.Faculty, ThemeColors.SidebarIcon, 
                 () => LoadModule("faculty", () => new FacultyControl(_facultyService)));
-            
-            AddNavButton("departments", "Departments", IconKind.School, ThemeColors.SidebarIcon, 
-                () => LoadModule("departments", () => new DepartmentControl(_departmentService)));
-            
-            AddNavButton("courses", "Courses", IconKind.Courses, ThemeColors.SidebarIcon, 
-                () => LoadModule("courses", () => new CourseControl(_courseService, _departmentService)));
-            
-            AddNavButton("yearlevels", "Year Levels", IconKind.Curriculum, ThemeColors.SidebarIcon, 
-                () => LoadModule("yearlevels", () => new YearLevelControl(_yearLevelService)));
-            
-            AddNavButton("sections", "Sections", IconKind.Subjects, ThemeColors.SidebarIcon, 
-                () => LoadModule("sections", () => new SectionControl(_sectionService, _courseService, _lookupService, _systemSettingService)));
-            
-            AddNavButton("subjects", "Subjects", IconKind.Subjects, ThemeColors.SidebarIcon, 
-                () => LoadModule("subjects", () => new SubjectControl(_subjectService, _courseService)));
-            
-            AddNavButton("curriculum", "Curriculum", IconKind.Curriculum, ThemeColors.SidebarIcon, 
-                () => LoadModule("curriculum", () => new CurriculumControl(_curriculumService, _courseService, _lookupService)));
-            
-            AddNavButton("schedule", "Schedule Calendar", IconKind.Enrollment, ThemeColors.SidebarIcon, 
-                () => LoadModule("schedule", () => new ClassScheduleControl(_classScheduleService, _sectionService, _curriculumService, _systemSettingService)));
-            
-            AddNavButton("enrollment", "Enrollment", IconKind.Enrollment, ThemeColors.SidebarIcon, 
-                () => LoadModule("enrollment", () => new EnrollmentControl(_enrollmentService, _studentService, _curriculumService, _courseService, _lookupService, _sectionService, _systemSettingService, _classScheduleService)));
-            
-            AddNavButton("settings", "Settings", IconKind.Trend, ThemeColors.SidebarIcon, 
-                () => LoadModule("settings", () => new SettingsControl(_systemSettingService, _lookupService)));
 
-            if (isAdmin)
-            {
-                AddNavButton("users", "User Roles", IconKind.Users, ThemeColors.SidebarIcon, 
-                    () => LoadModule("users", () => new UsersControl(_userManagementService)));
-            }
+            AddNavButton("enrollment", "Enrollment", IconKind.Enrollment, ThemeColors.SidebarIcon,
+                () => LoadModule("enrollment", () => new EnrollmentControl(_enrollmentService, _studentService, _curriculumService, _courseService, _lookupService, _sectionService, _systemSettingService, _classScheduleService)));
+
+            AddNavButton("schedule", "Schedule", IconKind.Enrollment, ThemeColors.SidebarIcon,
+                () => LoadModule("schedule", () => new ClassScheduleControl(_classScheduleService, _sectionService, _curriculumService, _systemSettingService)));
+
+            AddNavButton("calendar", "Calendar", IconKind.Pie, ThemeColors.SidebarIcon,
+                () => LoadModule("calendar", () => new ClassScheduleControl(_classScheduleService, _sectionService, _curriculumService, _systemSettingService)));
+
+            AddNavButton("settings", "Settings", IconKind.Trend, ThemeColors.SidebarIcon,
+                () => LoadModule(
+                    "settings",
+                    () => new SettingsControl(
+                        _systemSettingService,
+                        _lookupService,
+                        _departmentService,
+                        _courseService,
+                        _yearLevelService,
+                        _sectionService,
+                        _subjectService,
+                        _curriculumService,
+                        _userManagementService,
+                        isAdmin)));
 
             // Load default page
             LoadModule("dashboard", () => new DashboardHomeControl(_studentService, _facultyService, _courseService, _subjectService));
@@ -510,7 +580,14 @@ namespace School_Management_System.Presentation.Forms
             catch (Exception ex)
             {
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("DashboardForm.LoadModule." + key, ex);
-                ThemedMessageBox.ShowError(this, "Unable to open " + GetHeaderForKey(key) + ". Check database setup and try again.", "Module Error");
+                var message = "Unable to open " + GetHeaderForKey(key) + ". Check database setup and try again.";
+                var detail = BuildModuleErrorHint(ex);
+                if (!string.IsNullOrWhiteSpace(detail))
+                {
+                    message += "\n" + detail;
+                }
+
+                ThemedMessageBox.ShowError(this, message, "Module Error");
             }
         }
 
@@ -628,7 +705,8 @@ namespace School_Management_System.Presentation.Forms
             if (string.Equals(key, "departments", StringComparison.OrdinalIgnoreCase)) return "Departments";
             if (string.Equals(key, "yearlevels", StringComparison.OrdinalIgnoreCase)) return "Year Levels";
             if (string.Equals(key, "sections", StringComparison.OrdinalIgnoreCase)) return "Sections";
-            if (string.Equals(key, "schedule", StringComparison.OrdinalIgnoreCase)) return "Schedule Calendar";
+            if (string.Equals(key, "schedule", StringComparison.OrdinalIgnoreCase)) return "Schedule";
+            if (string.Equals(key, "calendar", StringComparison.OrdinalIgnoreCase)) return "Calendar";
             if (string.Equals(key, "settings", StringComparison.OrdinalIgnoreCase)) return "Settings";
             return "Module";
         }
@@ -643,6 +721,52 @@ namespace School_Management_System.Presentation.Forms
 
             var name = string.IsNullOrWhiteSpace(u.DisplayName) ? u.Username : u.DisplayName;
             return name + " (" + (u.Role ?? "User") + ")";
+        }
+
+        private static Color GetRoleAccentColor(string role)
+        {
+            if (string.Equals(role, AppConstants.Roles.Admin, StringComparison.OrdinalIgnoreCase))
+            {
+                return ThemeColors.AccentDanger;
+            }
+
+            if (string.Equals(role, AppConstants.Roles.Registrar, StringComparison.OrdinalIgnoreCase))
+            {
+                return ThemeColors.Secondary;
+            }
+
+            if (string.Equals(role, AppConstants.Roles.Faculty, StringComparison.OrdinalIgnoreCase))
+            {
+                return ThemeColors.Success;
+            }
+
+            return ThemeColors.MutedText;
+        }
+
+        private static string BuildModuleErrorHint(Exception ex)
+        {
+            if (ex == null || string.IsNullOrWhiteSpace(ex.Message))
+            {
+                return string.Empty;
+            }
+
+            var lower = ex.Message.ToLowerInvariant();
+            if (lower.Contains("doesn't exist") || lower.Contains("unknown column"))
+            {
+                return "Database schema appears outdated. Run DatabaseScripts\\Patch-RemoteSchema.sql (or Patch-RemoteMySQL.ps1) then reopen the app.";
+            }
+
+            if (lower.Contains("access denied") || (lower.Contains("host") && lower.Contains("not allowed")))
+            {
+                return "Database credentials/host is blocked. Verify App.config or Settings > General > Database Connection Profiles.";
+            }
+
+            if (ex.Message.Length > 180)
+            {
+                return ex.Message.Substring(0, 180) + "...";
+            }
+
+            return ex.Message;
         }
     }
 }

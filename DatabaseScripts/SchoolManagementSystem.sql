@@ -568,7 +568,16 @@ CREATE TABLE `systemsetting` (
 
 LOCK TABLES `systemsetting` WRITE;
 /*!40000 ALTER TABLE `systemsetting` DISABLE KEYS */;
-INSERT INTO `systemsetting` VALUES ('CurrentAcademicYearId','1'),('CurrentSemesterId','1');
+INSERT INTO `systemsetting` VALUES
+('CurrentAcademicYearId','1'),
+('CurrentSemesterId','1'),
+('DbConnectionMode','Local'),
+('DbHost.Local','localhost'),
+('DbPort.Local','3306'),
+('DbName.Local','schoolmanagementsystem'),
+('DbHost.Network','localhost'),
+('DbPort.Network','3306'),
+('DbName.Network','schoolmanagementsystem');
 /*!40000 ALTER TABLE `systemsetting` ENABLE KEYS */;
 UNLOCK TABLES;
 
