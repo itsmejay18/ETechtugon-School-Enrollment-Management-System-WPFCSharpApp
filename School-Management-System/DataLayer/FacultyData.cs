@@ -10,6 +10,7 @@ namespace School_Management_System.DataLayer
     public sealed class FacultyData : IFacultyData
     {
         private readonly DatabaseHelper _db;
+        private bool? _hasPhotoPathColumn;
 
         public FacultyData(DatabaseHelper db)
         {
@@ -18,7 +19,8 @@ namespace School_Management_System.DataLayer
 
         public DataTable GetAllActive()
         {
-            const string sql = @"
+            var photoColumn = HasPhotoPathColumn() ? "PhotoPath" : "NULL AS PhotoPath";
+            var sql = @"
 SELECT
     FacultyId,
     FacultyCode,
@@ -28,6 +30,7 @@ SELECT
     Email,
     Phone,
     Address,
+    " + photoColumn + @",
     HireDate,
     CreatedAt
 FROM Faculty
@@ -41,7 +44,8 @@ ORDER BY LastName, FirstName;";
         {
             query = (query ?? string.Empty).Trim();
 
-            const string sql = @"
+            var photoColumn = HasPhotoPathColumn() ? "PhotoPath" : "NULL AS PhotoPath";
+            var sql = @"
 SELECT
     FacultyId,
     FacultyCode,
@@ -51,6 +55,7 @@ SELECT
     Email,
     Phone,
     Address,
+    " + photoColumn + @",
     HireDate,
     CreatedAt
 FROM Faculty
@@ -88,7 +93,38 @@ WHERE FacultyCode LIKE CONCAT('FAC-', YEAR(UTC_DATE()), '-', '____');";
         {
             Guard.NotNull(faculty, nameof(faculty));
 
-            const string sql = @"
+            var includePhoto = HasPhotoPathColumn();
+            var sql = includePhoto ? @"
+INSERT INTO Faculty
+(
+    FacultyCode,
+    FirstName,
+    LastName,
+    MiddleName,
+    Email,
+    Phone,
+    Address,
+    PhotoPath,
+    HireDate,
+    IsActive,
+    CreatedAt
+)
+VALUES
+(
+    @FacultyCode,
+    @FirstName,
+    @LastName,
+    @MiddleName,
+    @Email,
+    @Phone,
+    @Address,
+    @PhotoPath,
+    @HireDate,
+    1,
+    UTC_TIMESTAMP()
+)
+"
+            : @"
 INSERT INTO Faculty
 (
     FacultyCode,
@@ -116,10 +152,20 @@ VALUES
     UTC_TIMESTAMP()
 );";
 
-            var id = _db.ExecuteInsert(
-                sql,
-                CommandType.Text,
-                new[]
+            var parameters = includePhoto
+                ? new[]
+                {
+                    new MySqlParameter("@FacultyCode", (object)faculty.FacultyCode ?? DBNull.Value),
+                    new MySqlParameter("@FirstName", (object)faculty.FirstName ?? DBNull.Value),
+                    new MySqlParameter("@LastName", (object)faculty.LastName ?? DBNull.Value),
+                    new MySqlParameter("@MiddleName", (object)faculty.MiddleName ?? DBNull.Value),
+                    new MySqlParameter("@Email", (object)faculty.Email ?? DBNull.Value),
+                    new MySqlParameter("@Phone", (object)faculty.Phone ?? DBNull.Value),
+                    new MySqlParameter("@Address", (object)faculty.Address ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)faculty.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@HireDate", (object)faculty.HireDate ?? DBNull.Value)
+                }
+                : new[]
                 {
                     new MySqlParameter("@FacultyCode", (object)faculty.FacultyCode ?? DBNull.Value),
                     new MySqlParameter("@FirstName", (object)faculty.FirstName ?? DBNull.Value),
@@ -129,7 +175,12 @@ VALUES
                     new MySqlParameter("@Phone", (object)faculty.Phone ?? DBNull.Value),
                     new MySqlParameter("@Address", (object)faculty.Address ?? DBNull.Value),
                     new MySqlParameter("@HireDate", (object)faculty.HireDate ?? DBNull.Value)
-                });
+                };
+
+            var id = _db.ExecuteInsert(
+                sql,
+                CommandType.Text,
+                parameters);
 
             return Convert.ToInt32(id);
         }
@@ -138,7 +189,22 @@ VALUES
         {
             Guard.NotNull(faculty, nameof(faculty));
 
-            const string sql = @"
+            var includePhoto = HasPhotoPathColumn();
+            var sql = includePhoto ? @"
+UPDATE Faculty
+SET
+    FacultyCode = @FacultyCode,
+    FirstName = @FirstName,
+    LastName = @LastName,
+    MiddleName = @MiddleName,
+    Email = @Email,
+    Phone = @Phone,
+    Address = @Address,
+    PhotoPath = @PhotoPath,
+    HireDate = @HireDate,
+    UpdatedAt = UTC_TIMESTAMP()
+WHERE FacultyId = @FacultyId;"
+            : @"
 UPDATE Faculty
 SET
     FacultyCode = @FacultyCode,
@@ -152,10 +218,21 @@ SET
     UpdatedAt = UTC_TIMESTAMP()
 WHERE FacultyId = @FacultyId;";
 
-            _db.ExecuteNonQuery(
-                sql,
-                CommandType.Text,
-                new[]
+            var parameters = includePhoto
+                ? new[]
+                {
+                    new MySqlParameter("@FacultyId", faculty.FacultyId),
+                    new MySqlParameter("@FacultyCode", (object)faculty.FacultyCode ?? DBNull.Value),
+                    new MySqlParameter("@FirstName", (object)faculty.FirstName ?? DBNull.Value),
+                    new MySqlParameter("@LastName", (object)faculty.LastName ?? DBNull.Value),
+                    new MySqlParameter("@MiddleName", (object)faculty.MiddleName ?? DBNull.Value),
+                    new MySqlParameter("@Email", (object)faculty.Email ?? DBNull.Value),
+                    new MySqlParameter("@Phone", (object)faculty.Phone ?? DBNull.Value),
+                    new MySqlParameter("@Address", (object)faculty.Address ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)faculty.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@HireDate", (object)faculty.HireDate ?? DBNull.Value)
+                }
+                : new[]
                 {
                     new MySqlParameter("@FacultyId", faculty.FacultyId),
                     new MySqlParameter("@FacultyCode", (object)faculty.FacultyCode ?? DBNull.Value),
@@ -166,7 +243,12 @@ WHERE FacultyId = @FacultyId;";
                     new MySqlParameter("@Phone", (object)faculty.Phone ?? DBNull.Value),
                     new MySqlParameter("@Address", (object)faculty.Address ?? DBNull.Value),
                     new MySqlParameter("@HireDate", (object)faculty.HireDate ?? DBNull.Value)
-                });
+                };
+
+            _db.ExecuteNonQuery(
+                sql,
+                CommandType.Text,
+                parameters);
         }
 
         public void Delete(int facultyId)
@@ -179,6 +261,38 @@ WHERE FacultyId = @FacultyId;";
         {
             const string sql = @"SELECT COUNT(1) FROM Faculty WHERE IsActive = 1;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
+        }
+
+        private bool HasPhotoPathColumn()
+        {
+            if (_hasPhotoPathColumn.HasValue)
+            {
+                return _hasPhotoPathColumn.Value;
+            }
+
+            const string sql = @"
+SELECT COUNT(1)
+FROM information_schema.columns
+WHERE table_schema = DATABASE()
+  AND table_name = 'faculty'
+  AND column_name = 'PhotoPath';";
+
+            _hasPhotoPathColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
+            if (!_hasPhotoPathColumn.Value)
+            {
+                try
+                {
+                    const string alterSql = @"ALTER TABLE `faculty` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `Address`;";
+                    _db.ExecuteNonQuery(alterSql, CommandType.Text, null);
+                    _hasPhotoPathColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
+                }
+                catch
+                {
+                    // Ignore migration failure; caller will continue without photo-column persistence.
+                }
+            }
+
+            return _hasPhotoPathColumn.Value;
         }
     }
 }

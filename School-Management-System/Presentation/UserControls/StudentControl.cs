@@ -1,13 +1,13 @@
 using System;
 using System.Data;
 using System.Drawing;
-using System.IO;
 using System.Windows.Forms;
 using School_Management_System.BusinessLayer.Services;
 using School_Management_System.Common;
 using School_Management_System.Models;
 using School_Management_System.Presentation.Base;
 using School_Management_System.Presentation.Forms;
+using School_Management_System.Presentation.Helpers;
 using School_Management_System.Presentation.Theming;
 
 namespace School_Management_System.Presentation.UserControls
@@ -259,46 +259,66 @@ namespace School_Management_System.Presentation.UserControls
 
         private Panel BuildToolbar()
         {
-            var toolbar = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
+            var toolbar = new Panel { Dock = DockStyle.Top, Height = 56, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
+            var strip = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = true,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
 
-            var lblSearch = new Label { Text = "Last Name:", AutoSize = true, Location = new Point(0, 14), ForeColor = ThemeColors.MutedText, Font = ThemeFonts.Label };
+            var lblSearch = new Label
+            {
+                Text = "Search:",
+                AutoSize = false,
+                Width = 58,
+                Height = 32,
+                ForeColor = ThemeColors.MutedText,
+                Font = ThemeFonts.Label,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 2, 4, 0)
+            };
 
-            _txtSearch = new TextBox { Width = 220, Location = new Point(80, 10) };
+            _txtSearch = new TextBox { Width = 220, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleInput(_txtSearch);
             _txtSearch.TextChanged += (s, e) => LoadGrid();
 
-            _btnRefresh = new Button { Text = "Refresh", Width = 86, Location = new Point(310, 8) };
+            _btnRefresh = new Button { Text = "Refresh", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonNeutral(_btnRefresh);
             _btnRefresh.Click += (s, e) => LoadGrid();
 
-            _btnAdd = new Button { Text = "New Student", Width = 110, Location = new Point(406, 8) };
+            _btnAdd = new Button { Text = "New Student", Width = 110, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonPrimary(_btnAdd);
             _btnAdd.Click += (s, e) => BeginAdd();
 
-            _btnEdit = new Button { Text = "Edit", Width = 86, Location = new Point(528, 8) };
+            _btnEdit = new Button { Text = "Edit", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonNeutral(_btnEdit);
             _btnEdit.Click += (s, e) => BeginEdit();
 
-            _btnDelete = new Button { Text = "Delete", Width = 86, Location = new Point(622, 8) };
+            _btnDelete = new Button { Text = "Delete", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonDanger(_btnDelete);
             _btnDelete.Click += (s, e) => DeleteCurrent();
 
-            _btnSave = new Button { Text = "Save", Width = 86, Location = new Point(716, 8) };
+            _btnSave = new Button { Text = "Save", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonPrimary(_btnSave);
             _btnSave.Click += (s, e) => Save();
 
-            _btnCancel = new Button { Text = "Cancel", Width = 86, Location = new Point(810, 8) };
+            _btnCancel = new Button { Text = "Cancel", Width = 86 };
             ThemeManager.StyleButtonNeutral(_btnCancel);
             _btnCancel.Click += (s, e) => CancelEdit();
 
-            toolbar.Controls.Add(lblSearch);
-            toolbar.Controls.Add(_txtSearch);
-            toolbar.Controls.Add(_btnRefresh);
-            toolbar.Controls.Add(_btnAdd);
-            toolbar.Controls.Add(_btnEdit);
-            toolbar.Controls.Add(_btnDelete);
-            toolbar.Controls.Add(_btnSave);
-            toolbar.Controls.Add(_btnCancel);
+            strip.Controls.Add(lblSearch);
+            strip.Controls.Add(_txtSearch);
+            strip.Controls.Add(_btnRefresh);
+            strip.Controls.Add(_btnAdd);
+            strip.Controls.Add(_btnEdit);
+            strip.Controls.Add(_btnDelete);
+            strip.Controls.Add(_btnSave);
+            strip.Controls.Add(_btnCancel);
+            toolbar.Controls.Add(strip);
             return toolbar;
         }
 
@@ -332,7 +352,7 @@ namespace School_Management_System.Presentation.UserControls
             _txtAddress.ReadOnly = !active;
             _cmbGender.Enabled = active;
             _dtBirthDate.Enabled = active;
-            if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = active;
+            if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = true;
             if (_btnRemovePhoto != null) _btnRemovePhoto.Enabled = active && !string.IsNullOrWhiteSpace(_currentPhotoPath);
 
             _btnSave.Enabled = active;
@@ -578,19 +598,19 @@ namespace School_Management_System.Presentation.UserControls
                     Address = (_txtAddress.Text ?? string.Empty).Trim()
                 };
 
-                var photoPathToSave = _currentPhotoPath;
-                if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
-                {
-                    photoPathToSave = PersistPhoto(_selectedPhotoPath, student.StudentNumber);
-                }
-                student.PhotoPath = photoPathToSave;
-
                 var vr = _studentService.Validate(student);
                 if (!vr.IsValid)
                 {
                     ThemedMessageBox.ShowError(this, vr.ToString(), "Validation");
                     return;
                 }
+
+                var photoPathToSave = _currentPhotoPath;
+                if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
+                {
+                    photoPathToSave = PersistPhoto(_selectedPhotoPath, student.StudentNumber);
+                }
+                student.PhotoPath = photoPathToSave;
 
                 UseWaitCursor = true;
                 _btnSave.Enabled = false;
@@ -719,7 +739,17 @@ namespace School_Management_System.Presentation.UserControls
 
         private void UploadPhoto()
         {
-            if (!_isEditorActive) return;
+            if (!_isEditorActive)
+            {
+                if (_editingStudentId > 0)
+                {
+                    BeginEdit();
+                }
+                else
+                {
+                    BeginAdd();
+                }
+            }
 
             using (var ofd = new OpenFileDialog())
             {
@@ -750,77 +780,19 @@ namespace School_Management_System.Presentation.UserControls
 
         private void ShowPhoto(string path)
         {
-            if (_picPhoto == null) return;
-            try
-            {
-                _picPhoto.Image = null;
-                var fullPath = ResolvePhotoPath(path);
-                if (string.IsNullOrWhiteSpace(fullPath) || !File.Exists(fullPath))
-                {
-                    return;
-                }
-
-                using (var img = Image.FromFile(fullPath))
-                {
-                    _picPhoto.Image = new Bitmap(img);
-                }
-            }
-            catch
-            {
-                _picPhoto.Image = null;
-            }
-        }
-
-        private string ResolvePhotoPath(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return null;
-            }
-
-            if (Path.IsPathRooted(path))
-            {
-                return path;
-            }
-
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, path);
+            PhotoStorageHelper.ShowPhoto(_picPhoto, path);
         }
 
         private string PersistPhoto(string sourcePath, string studentNumber)
         {
-            try
+            var savedPath = PhotoStorageHelper.PersistPhoto(sourcePath, "Students", studentNumber, _currentPhotoPath);
+            if (string.Equals(savedPath, _currentPhotoPath, StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(sourcePath))
             {
-                if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
-                {
-                    return _currentPhotoPath;
-                }
-
-                var photosDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Photos");
-                if (!Directory.Exists(photosDir))
-                {
-                    Directory.CreateDirectory(photosDir);
-                }
-
-                var ext = Path.GetExtension(sourcePath);
-                if (string.IsNullOrWhiteSpace(ext))
-                {
-                    ext = ".jpg";
-                }
-
-                var safeName = string.IsNullOrWhiteSpace(studentNumber) ? "student" : studentNumber.Replace(" ", "_");
-                var destFile = Path.Combine(photosDir, safeName + ext);
-                File.Copy(sourcePath, destFile, true);
-
-                // store relative path so it survives folder moves
-                var relative = Path.Combine("Photos", safeName + ext);
-                return relative;
-            }
-            catch (Exception ex)
-            {
-                School_Management_System.DataLayer.Logging.FileLogger.LogError("StudentControl.PersistPhoto", ex);
                 ThemedMessageBox.ShowError(this, "Unable to save photo. Please choose a different image.", "Photo");
-                return _currentPhotoPath;
             }
+
+            return savedPath;
         }
 
         private void DeleteCurrent()

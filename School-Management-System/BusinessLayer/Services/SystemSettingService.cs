@@ -45,34 +45,125 @@ namespace School_Management_System.BusinessLayer.Services
 
         public string GetDbConnectionMode()
         {
-            return Get(AppConstants.SettingKeys.DbConnectionMode);
+            return NormalizeDbMode(Get(AppConstants.SettingKeys.DbConnectionMode));
         }
 
         public void SetDbConnectionMode(string mode)
         {
-            _data.Set(AppConstants.SettingKeys.DbConnectionMode, mode ?? string.Empty);
+            _data.Set(AppConstants.SettingKeys.DbConnectionMode, NormalizeDbMode(mode));
         }
 
-        public (string Host, string Port, string Database) GetDbProfile(string mode)
+        public (string Host, string Port, string Database, string Username, string Password) GetDbProfile(string mode)
         {
-            var isNetwork = string.Equals(mode, "Network", StringComparison.OrdinalIgnoreCase);
-            var hostKey = isNetwork ? AppConstants.SettingKeys.DbHostNetwork : AppConstants.SettingKeys.DbHostLocal;
-            var portKey = isNetwork ? AppConstants.SettingKeys.DbPortNetwork : AppConstants.SettingKeys.DbPortLocal;
-            var dbKey = isNetwork ? AppConstants.SettingKeys.DbNameNetwork : AppConstants.SettingKeys.DbNameLocal;
+            var normalizedMode = NormalizeDbMode(mode);
+            string hostKey;
+            string portKey;
+            string dbKey;
+            string userKey;
+            string passwordKey;
+            ResolveProfileKeys(normalizedMode, out hostKey, out portKey, out dbKey, out userKey, out passwordKey);
 
-            return (Get(hostKey), Get(portKey), Get(dbKey));
+            var host = Get(hostKey);
+            var port = Get(portKey);
+            var db = Get(dbKey);
+            var user = Get(userKey);
+            var password = Get(passwordKey);
+
+            // Backward compatibility with old "Network" keys.
+            if (string.Equals(normalizedMode, "Wired", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(host)) host = Get(AppConstants.SettingKeys.DbHostNetwork);
+                if (string.IsNullOrWhiteSpace(port)) port = Get(AppConstants.SettingKeys.DbPortNetwork);
+                if (string.IsNullOrWhiteSpace(db)) db = Get(AppConstants.SettingKeys.DbNameNetwork);
+            }
+
+            return (host, port, db, user, password);
         }
 
-        public void SetDbProfile(string mode, string host, string port, string database)
+        public void SetDbProfile(string mode, string host, string port, string database, string username, string password)
         {
-            var isNetwork = string.Equals(mode, "Network", StringComparison.OrdinalIgnoreCase);
-            var hostKey = isNetwork ? AppConstants.SettingKeys.DbHostNetwork : AppConstants.SettingKeys.DbHostLocal;
-            var portKey = isNetwork ? AppConstants.SettingKeys.DbPortNetwork : AppConstants.SettingKeys.DbPortLocal;
-            var dbKey = isNetwork ? AppConstants.SettingKeys.DbNameNetwork : AppConstants.SettingKeys.DbNameLocal;
+            var normalizedMode = NormalizeDbMode(mode);
+            string hostKey;
+            string portKey;
+            string dbKey;
+            string userKey;
+            string passwordKey;
+            ResolveProfileKeys(normalizedMode, out hostKey, out portKey, out dbKey, out userKey, out passwordKey);
 
             _data.Set(hostKey, host ?? string.Empty);
             _data.Set(portKey, port ?? string.Empty);
             _data.Set(dbKey, database ?? string.Empty);
+            _data.Set(userKey, username ?? string.Empty);
+            _data.Set(passwordKey, password ?? string.Empty);
+
+            if (string.Equals(normalizedMode, "Wired", StringComparison.OrdinalIgnoreCase))
+            {
+                // Keep legacy keys updated for older builds/clients.
+                _data.Set(AppConstants.SettingKeys.DbHostNetwork, host ?? string.Empty);
+                _data.Set(AppConstants.SettingKeys.DbPortNetwork, port ?? string.Empty);
+                _data.Set(AppConstants.SettingKeys.DbNameNetwork, database ?? string.Empty);
+            }
+        }
+
+        private static void ResolveProfileKeys(
+            string mode,
+            out string hostKey,
+            out string portKey,
+            out string dbKey,
+            out string userKey,
+            out string passwordKey)
+        {
+            if (string.Equals(mode, "Wireless", StringComparison.OrdinalIgnoreCase))
+            {
+                hostKey = AppConstants.SettingKeys.DbHostWireless;
+                portKey = AppConstants.SettingKeys.DbPortWireless;
+                dbKey = AppConstants.SettingKeys.DbNameWireless;
+                userKey = AppConstants.SettingKeys.DbUserWireless;
+                passwordKey = AppConstants.SettingKeys.DbPasswordWireless;
+                return;
+            }
+
+            if (string.Equals(mode, "Wired", StringComparison.OrdinalIgnoreCase))
+            {
+                hostKey = AppConstants.SettingKeys.DbHostWired;
+                portKey = AppConstants.SettingKeys.DbPortWired;
+                dbKey = AppConstants.SettingKeys.DbNameWired;
+                userKey = AppConstants.SettingKeys.DbUserWired;
+                passwordKey = AppConstants.SettingKeys.DbPasswordWired;
+                return;
+            }
+
+            hostKey = AppConstants.SettingKeys.DbHostLocal;
+            portKey = AppConstants.SettingKeys.DbPortLocal;
+            dbKey = AppConstants.SettingKeys.DbNameLocal;
+            userKey = AppConstants.SettingKeys.DbUserLocal;
+            passwordKey = AppConstants.SettingKeys.DbPasswordLocal;
+        }
+
+        private static string NormalizeDbMode(string mode)
+        {
+            if (string.IsNullOrWhiteSpace(mode))
+            {
+                return "Local";
+            }
+
+            var normalized = mode.Trim();
+            if (string.Equals(normalized, "wireless", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "wifi", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "wlan", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Wireless";
+            }
+
+            if (string.Equals(normalized, "wired", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "network", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "lan", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "ip", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Wired";
+            }
+
+            return "Local";
         }
 
         private static int? ParseNullableInt(string value)

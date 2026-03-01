@@ -41,7 +41,19 @@ namespace School_Management_System
 
                 if (string.Equals(token, "--network", StringComparison.OrdinalIgnoreCase))
                 {
-                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Network", EnvironmentVariableTarget.Process);
+                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Wired", EnvironmentVariableTarget.Process);
+                    continue;
+                }
+
+                if (string.Equals(token, "--wired", StringComparison.OrdinalIgnoreCase))
+                {
+                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Wired", EnvironmentVariableTarget.Process);
+                    continue;
+                }
+
+                if (string.Equals(token, "--wireless", StringComparison.OrdinalIgnoreCase))
+                {
+                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Wireless", EnvironmentVariableTarget.Process);
                     continue;
                 }
 

@@ -395,6 +395,7 @@ CREATE TABLE `faculty` (
   `Email` varchar(100) DEFAULT NULL,
   `Phone` varchar(30) DEFAULT NULL,
   `Address` varchar(250) DEFAULT NULL,
+  `PhotoPath` varchar(260) DEFAULT NULL,
   `HireDate` date DEFAULT NULL,
   `IsActive` tinyint(1) NOT NULL DEFAULT '1',
   `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
@@ -525,6 +526,7 @@ CREATE TABLE `users` (
   `PasswordSalt` binary(16) NOT NULL,
   `Role` varchar(30) NOT NULL,
   `DisplayName` varchar(100) DEFAULT NULL,
+  `PhotoPath` varchar(260) DEFAULT NULL,
   `IsActive` tinyint(1) NOT NULL DEFAULT '1',
   `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
   `UpdatedAt` datetime DEFAULT NULL,
@@ -541,10 +543,11 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES
-  (1,'admin',UNHEX('491B306728DB9AB65DC7504B3EF8DA1293693F2E55A958405C4BB7BB6672A934'),UNHEX('2C8FA907A42255A3FB0F3C02B49C7473'),'Admin','System Administrator',1,'2026-02-15 14:06:21',NULL,'2026-02-15 16:21:32'),
-  (2,'registrar',UNHEX('828F4E3EE279C5D766D8C58C257E87C0CB44F4843EDC051D1A41219B72738523'),UNHEX('474715AC6A02F482A85FA09479BE5C30'),'Registrar','Default Registrar',1,'2026-02-15 14:06:21',NULL,NULL),
-  (3,'faculty1',UNHEX('DD9B92F18FDBD92BE8126B29ECF7362CA8DD9ACAFEFDCA7803CC62EB46B945AF'),UNHEX('42E2DBAFA5230A27DA3A31C49A8203F0'),'Faculty','Default Faculty',1,'2026-02-15 14:06:21',NULL,NULL);
+INSERT INTO `users`
+(`UserId`,`Username`,`PasswordHash`,`PasswordSalt`,`Role`,`DisplayName`,`PhotoPath`,`IsActive`,`CreatedAt`,`UpdatedAt`,`LastLoginAt`) VALUES
+  (1,'admin',UNHEX('491B306728DB9AB65DC7504B3EF8DA1293693F2E55A958405C4BB7BB6672A934'),UNHEX('2C8FA907A42255A3FB0F3C02B49C7473'),'Admin','System Administrator',NULL,1,'2026-02-15 14:06:21',NULL,'2026-02-15 16:21:32'),
+  (2,'registrar',UNHEX('828F4E3EE279C5D766D8C58C257E87C0CB44F4843EDC051D1A41219B72738523'),UNHEX('474715AC6A02F482A85FA09479BE5C30'),'Registrar','Default Registrar',NULL,1,'2026-02-15 14:06:21',NULL,NULL),
+  (3,'faculty1',UNHEX('DD9B92F18FDBD92BE8126B29ECF7362CA8DD9ACAFEFDCA7803CC62EB46B945AF'),UNHEX('42E2DBAFA5230A27DA3A31C49A8203F0'),'Faculty','Default Faculty',NULL,1,'2026-02-15 14:06:21',NULL,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -575,6 +578,18 @@ INSERT INTO `systemsetting` VALUES
 ('DbHost.Local','localhost'),
 ('DbPort.Local','3306'),
 ('DbName.Local','schoolmanagementsystem'),
+('DbUser.Local','root'),
+('DbPassword.Local','root'),
+('DbHost.Wired','localhost'),
+('DbPort.Wired','3306'),
+('DbName.Wired','schoolmanagementsystem'),
+('DbUser.Wired','root'),
+('DbPassword.Wired','root'),
+('DbHost.Wireless','localhost'),
+('DbPort.Wireless','3306'),
+('DbName.Wireless','schoolmanagementsystem'),
+('DbUser.Wireless','root'),
+('DbPassword.Wireless','root'),
 ('DbHost.Network','localhost'),
 ('DbPort.Network','3306'),
 ('DbName.Network','schoolmanagementsystem');

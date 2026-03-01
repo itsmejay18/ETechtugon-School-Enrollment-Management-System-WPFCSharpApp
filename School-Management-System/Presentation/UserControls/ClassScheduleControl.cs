@@ -127,8 +127,14 @@ namespace School_Management_System.Presentation.UserControls
                 Dock = DockStyle.Fill,
                 Orientation = Orientation.Vertical,
                 SplitterWidth = 6,
-                SplitterDistance = 700,
                 BackColor = ThemeColors.Border
+            };
+            _splitMain.Panel1MinSize = 120;
+            _splitMain.Panel2MinSize = 120;
+            _splitMain.SizeChanged += (s, e) =>
+            {
+                EnsureCalendarPanelWidth();
+                UpdateCalendarEventColumns();
             };
 
             var left = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(0, 0, 10, 0) };
@@ -146,11 +152,22 @@ namespace School_Management_System.Presentation.UserControls
             body.Controls.Add(header);
 
             Controls.Add(body);
+            EnsureCalendarPanelWidth();
+            if (!IsHandleCreated)
+            {
+                EventHandler onHandleCreated = null;
+                onHandleCreated = (s, e) =>
+                {
+                    EnsureCalendarPanelWidth();
+                    HandleCreated -= onHandleCreated;
+                };
+                HandleCreated += onHandleCreated;
+            }
         }
 
         private Panel BuildEditorPanel()
         {
-            var panel = new Panel { Dock = DockStyle.Bottom, Height = 150, Padding = new Padding(0, 10, 0, 0), BackColor = ThemeColors.Background };
+            var panel = new Panel { Dock = DockStyle.Bottom, Height = 188, Padding = new Padding(0, 8, 0, 0), BackColor = ThemeColors.Background };
             var frame = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
             ThemeManager.StyleCardPanel(frame);
 
@@ -159,12 +176,13 @@ namespace School_Management_System.Presentation.UserControls
                 Dock = DockStyle.Fill,
                 ColumnCount = 4,
                 RowCount = 3,
-                Padding = new Padding(4)
+                Padding = new Padding(4, 2, 4, 2),
+                Margin = new Padding(0)
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
@@ -195,7 +213,16 @@ namespace School_Management_System.Presentation.UserControls
             layout.Controls.Add(MakeLabel("Remarks"), 2, 2);
             layout.Controls.Add(_txtRemarks, 3, 2);
 
-            var btnPanel = new FlowLayoutPanel { Dock = DockStyle.Right, Width = 320, FlowDirection = FlowDirection.LeftToRight, WrapContents = false, Padding = new Padding(0, 4, 0, 0) };
+            var btnPanel = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Dock = DockStyle.Right,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
             _btnAdd = new Button { Text = "Add", Width = 72, Margin = new Padding(6, 0, 0, 0) };
             ThemeManager.StyleButtonPrimary(_btnAdd);
             _btnAdd.Click += (s, e) => BeginAdd();
@@ -222,8 +249,31 @@ namespace School_Management_System.Presentation.UserControls
             btnPanel.Controls.Add(_btnSave);
             btnPanel.Controls.Add(_btnCancel);
 
-            frame.Controls.Add(btnPanel);
-            frame.Controls.Add(layout);
+            var buttonRow = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Height = 32,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+            buttonRow.Controls.Add(btnPanel);
+
+            var frameLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 2,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+            frameLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            frameLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            frameLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+
+            frameLayout.Controls.Add(layout, 0, 0);
+            frameLayout.Controls.Add(buttonRow, 0, 1);
+
+            frame.Controls.Add(frameLayout);
             panel.Controls.Add(frame);
             return panel;
         }
@@ -318,10 +368,9 @@ namespace School_Management_System.Presentation.UserControls
                 FullRowSelect = true,
                 GridLines = true
             };
-            _lvCalendarEvents.Columns.Add("Time", 96);
+            _lvCalendarEvents.Columns.Add("Time", 90);
             _lvCalendarEvents.Columns.Add("Subject", 220);
-            _lvCalendarEvents.Columns.Add("Room", 80);
-            _lvCalendarEvents.Columns.Add("Remarks", 140);
+            _lvCalendarEvents.SizeChanged += (s, e) => UpdateCalendarEventColumns();
 
             frame.Controls.Add(_lvCalendarEvents);
             frame.Controls.Add(_lblCalendarInfo);
@@ -331,6 +380,7 @@ namespace School_Management_System.Presentation.UserControls
 
             _calendarMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
             SetCalendarDate(DateTime.Today);
+            UpdateCalendarEventColumns();
 
             return panel;
         }
@@ -367,19 +417,28 @@ namespace School_Management_System.Presentation.UserControls
                     if (_activeAcademicYearId.HasValue) filters.Add("AcademicYearId = " + _activeAcademicYearId.Value);
                     if (_activeSemesterId.HasValue) filters.Add("SemesterId = " + _activeSemesterId.Value);
                     if (filters.Count > 0) view.RowFilter = string.Join(" AND ", filters);
+                    _cmbSection.DisplayMember = "SectionName";
+                    _cmbSection.ValueMember = "SectionId";
                     _cmbSection.DataSource = view;
                 }
                 else
                 {
+                    _cmbSection.DisplayMember = "SectionName";
+                    _cmbSection.ValueMember = "SectionId";
                     _cmbSection.DataSource = dt;
                 }
-
-                _cmbSection.DisplayMember = "SectionName";
-                _cmbSection.ValueMember = "SectionId";
 
                 if (_cmbSection.Items.Count > 0)
                 {
                     _cmbSection.SelectedIndex = 0;
+                    var selected = _cmbSection.SelectedValue;
+                    int sectionId;
+                    if (TryResolveSectionId(selected, out sectionId))
+                    {
+                        _selectedSectionId = sectionId;
+                        LoadSubjectsForSection(sectionId);
+                        LoadSchedules();
+                    }
                 }
             }
             catch (Exception ex)
@@ -391,9 +450,9 @@ namespace School_Management_System.Presentation.UserControls
 
         private void OnSectionChanged()
         {
-            if (_cmbSection.SelectedValue == null) return;
             int sectionId;
-            if (!int.TryParse(Convert.ToString(_cmbSection.SelectedValue), out sectionId))
+            if (!TryResolveSectionId(_cmbSection.SelectedValue, out sectionId) &&
+                !TryResolveSectionId(_cmbSection.SelectedItem, out sectionId))
             {
                 return;
             }
@@ -456,8 +515,8 @@ namespace School_Management_System.Presentation.UserControls
                 {
                     var subject = Convert.ToString(r["SubjectCode"]) + " - " + Convert.ToString(r["SubjectName"]);
                     var day = Convert.ToString(r["DayOfWeek"]);
-                    var start = r["StartTime"] is TimeSpan ? ((TimeSpan)r["StartTime"]).ToString(@"hh\\:mm") : string.Empty;
-                    var end = r["EndTime"] is TimeSpan ? ((TimeSpan)r["EndTime"]).ToString(@"hh\\:mm") : string.Empty;
+                    var start = FormatTimeCell(r["StartTime"]);
+                    var end = FormatTimeCell(r["EndTime"]);
                     var time = string.IsNullOrWhiteSpace(start) || string.IsNullOrWhiteSpace(end) ? string.Empty : start + "-" + end;
                     var room = Convert.ToString(r["Room"]);
                     var remarks = Convert.ToString(r["Remarks"]);
@@ -644,7 +703,15 @@ namespace School_Management_System.Presentation.UserControls
             }
             _calendar.UpdateBoldedDates();
 
-            RenderCalendarForDate(_calendar.SelectionStart.Date);
+            var selectedDate = _calendar.SelectionStart.Date;
+            if (!_generatedScheduleByDate.ContainsKey(selectedDate) && _generatedScheduleByDate.Count > 0)
+            {
+                var nearestDate = _generatedScheduleByDate.Keys.OrderBy(d => d).First();
+                SetCalendarDate(nearestDate);
+                selectedDate = nearestDate;
+            }
+
+            RenderCalendarForDate(selectedDate);
         }
 
         private void RenderCalendarForDate(DateTime selectedDate)
@@ -667,9 +734,7 @@ namespace School_Management_System.Presentation.UserControls
                     var time = string.IsNullOrWhiteSpace(start) || string.IsNullOrWhiteSpace(end) ? string.Empty : start + "-" + end;
 
                     var item = new ListViewItem(time);
-                    item.SubItems.Add(entry.SubjectLabel ?? string.Empty);
-                    item.SubItems.Add(entry.Room ?? string.Empty);
-                    item.SubItems.Add(entry.Remarks ?? string.Empty);
+                    item.SubItems.Add(BuildCalendarSubjectText(entry));
                     _lvCalendarEvents.Items.Add(item);
                 }
 
@@ -743,6 +808,161 @@ namespace School_Management_System.Presentation.UserControls
             }
 
             return found.OrderBy(d => d == DayOfWeek.Sunday ? 7 : (int)d).ToList();
+        }
+
+        private void EnsureCalendarPanelWidth()
+        {
+            if (_splitMain == null || _splitMain.IsDisposed || _splitMain.Width <= 0)
+            {
+                return;
+            }
+
+            const int desiredCalendarPanelWidth = 360;
+            var width = _splitMain.Width;
+            var safePanel2Min = width >= 860 ? 320 : (width >= 740 ? 280 : 220);
+            var safePanel1Min = width >= 860 ? 420 : (width >= 740 ? 360 : 280);
+
+            var required = safePanel1Min + safePanel2Min + _splitMain.SplitterWidth;
+            if (required >= width)
+            {
+                safePanel1Min = 120;
+                safePanel2Min = 120;
+            }
+
+            try
+            {
+                _splitMain.Panel1MinSize = safePanel1Min;
+                _splitMain.Panel2MinSize = safePanel2Min;
+
+                var minSplitterDistance = _splitMain.Panel1MinSize;
+                var maxSplitterDistance = _splitMain.Width - _splitMain.SplitterWidth - _splitMain.Panel2MinSize;
+                if (maxSplitterDistance <= 0 || maxSplitterDistance < minSplitterDistance)
+                {
+                    return;
+                }
+
+                var targetDistance = _splitMain.Width - _splitMain.SplitterWidth - desiredCalendarPanelWidth;
+                if (targetDistance < minSplitterDistance)
+                {
+                    targetDistance = minSplitterDistance;
+                }
+
+                if (targetDistance > maxSplitterDistance)
+                {
+                    targetDistance = maxSplitterDistance;
+                }
+
+                if (targetDistance > 0 && _splitMain.SplitterDistance != targetDistance)
+                {
+                    _splitMain.SplitterDistance = targetDistance;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Ignore transient split-container layout states during initial docking.
+            }
+        }
+
+        private void UpdateCalendarEventColumns()
+        {
+            if (_lvCalendarEvents == null || _lvCalendarEvents.Columns.Count < 2)
+            {
+                return;
+            }
+
+            var availableWidth = Math.Max(160, _lvCalendarEvents.ClientSize.Width - 6);
+            var timeWidth = Math.Min(100, Math.Max(82, availableWidth / 3));
+            var subjectWidth = Math.Max(76, availableWidth - timeWidth);
+
+            _lvCalendarEvents.Columns[0].Width = timeWidth;
+            _lvCalendarEvents.Columns[1].Width = subjectWidth;
+        }
+
+        private static string BuildCalendarSubjectText(GeneratedScheduleEntry entry)
+        {
+            if (entry == null)
+            {
+                return string.Empty;
+            }
+
+            var label = entry.SubjectLabel ?? string.Empty;
+            var separatorIndex = label.IndexOf(" - ", StringComparison.Ordinal);
+            if (separatorIndex >= 0 && separatorIndex + 3 < label.Length)
+            {
+                label = label.Substring(separatorIndex + 3);
+            }
+
+            if (!string.IsNullOrWhiteSpace(entry.Room))
+            {
+                label += " (" + entry.Room.Trim() + ")";
+            }
+
+            return label.Trim();
+        }
+
+        private static string FormatTimeCell(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return string.Empty;
+            }
+
+            if (value is TimeSpan)
+            {
+                return ((TimeSpan)value).ToString(@"hh\:mm");
+            }
+
+            if (value is DateTime)
+            {
+                return ((DateTime)value).ToString("HH:mm");
+            }
+
+            TimeSpan parsedTimeSpan;
+            if (TimeSpan.TryParse(Convert.ToString(value), out parsedTimeSpan))
+            {
+                return parsedTimeSpan.ToString(@"hh\:mm");
+            }
+
+            DateTime parsedDateTime;
+            if (DateTime.TryParse(Convert.ToString(value), out parsedDateTime))
+            {
+                return parsedDateTime.ToString("HH:mm");
+            }
+
+            return string.Empty;
+        }
+
+        private static bool TryResolveSectionId(object value, out int sectionId)
+        {
+            sectionId = 0;
+            if (value == null || value == DBNull.Value)
+            {
+                return false;
+            }
+
+            if (value is int)
+            {
+                sectionId = (int)value;
+                return sectionId > 0;
+            }
+
+            if (value is long)
+            {
+                sectionId = Convert.ToInt32((long)value);
+                return sectionId > 0;
+            }
+
+            var rowView = value as DataRowView;
+            if (rowView != null && rowView.Row != null && rowView.Row.Table.Columns.Contains("SectionId"))
+            {
+                var raw = rowView["SectionId"];
+                if (raw != null && raw != DBNull.Value && int.TryParse(Convert.ToString(raw), out sectionId))
+                {
+                    return sectionId > 0;
+                }
+            }
+
+            return int.TryParse(Convert.ToString(value), out sectionId) && sectionId > 0;
         }
 
         private void Save()

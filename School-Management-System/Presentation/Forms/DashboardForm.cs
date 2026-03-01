@@ -9,6 +9,7 @@ using School_Management_System.BusinessLayer.Session;
 using School_Management_System.Common;
 using School_Management_System.DataLayer;
 using School_Management_System.DataLayer.Interfaces;
+using School_Management_System.Models;
 using School_Management_System.Presentation.Base;
 using School_Management_System.Presentation.Helpers;
 using School_Management_System.Presentation.Theming;
@@ -179,7 +180,7 @@ namespace School_Management_System.Presentation.Forms
             var brand = BuildBrandPanel();
             var brandDivider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = ThemeColors.SidebarDivider };
             var profile = BuildProfilePanel();
-            var profileDivider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = ThemeColors.SidebarDivider };
+            var profileDivider = new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = ThemeColors.SidebarDivider };
 
             // Navigation header
             var navHeader = BuildNavigationHeader();
@@ -192,10 +193,10 @@ namespace School_Management_System.Presentation.Forms
 
             // For Dock layout, add Fill first then Bottom/Top panels.
             _sidebar.Controls.Add(_nav);
+            _sidebar.Controls.Add(profile);
+            _sidebar.Controls.Add(profileDivider);
             _sidebar.Controls.Add(logoutPanel);
             _sidebar.Controls.Add(navHeader);
-            _sidebar.Controls.Add(profileDivider);
-            _sidebar.Controls.Add(profile);
             _sidebar.Controls.Add(brandDivider);
             _sidebar.Controls.Add(brand);
         }
@@ -307,10 +308,12 @@ namespace School_Management_System.Presentation.Forms
                 : (string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username : user.DisplayName);
             var role = user == null || string.IsNullOrWhiteSpace(user.Role) ? "User" : user.Role.Trim();
             var roleColor = GetRoleAccentColor(role);
+            var hasPhoto = false;
+            var avatarImage = BuildProfileAvatarImage(user, roleColor, displayName, out hasPhoto);
 
             var profilePanel = new Panel
             {
-                Dock = DockStyle.Top,
+                Dock = DockStyle.Bottom,
                 Height = 88,
                 BackColor = ThemeColors.SidebarBackground,
                 Padding = new Padding(12, 10, 12, 10),
@@ -339,8 +342,10 @@ namespace School_Management_System.Presentation.Forms
             var avatar = new PictureBox
             {
                 Dock = DockStyle.Fill,
-                SizeMode = PictureBoxSizeMode.CenterImage,
-                Image = IconFactory.CreateCircleIcon(roleColor, displayName, 36),
+                SizeMode = hasPhoto ? PictureBoxSizeMode.Zoom : PictureBoxSizeMode.CenterImage,
+                Image = avatarImage,
+                BackColor = hasPhoto ? Color.White : Color.Transparent,
+                BorderStyle = hasPhoto ? BorderStyle.FixedSingle : BorderStyle.None,
                 Margin = new Padding(0, 0, 8, 0)
             };
 
@@ -372,6 +377,33 @@ namespace School_Management_System.Presentation.Forms
             card.Controls.Add(layout);
             profilePanel.Controls.Add(card);
             return profilePanel;
+        }
+
+        private static Image BuildProfileAvatarImage(User user, Color roleColor, string displayName, out bool hasPhoto)
+        {
+            hasPhoto = false;
+            var photoPath = user == null ? null : user.PhotoPath;
+            var fullPath = PhotoStorageHelper.ResolvePhotoPath(photoPath);
+            if (!string.IsNullOrWhiteSpace(fullPath))
+            {
+                try
+                {
+                    if (System.IO.File.Exists(fullPath))
+                    {
+                        using (var image = Image.FromFile(fullPath))
+                        {
+                            hasPhoto = true;
+                            return new Bitmap(image);
+                        }
+                    }
+                }
+                catch
+                {
+                    // Fallback to generated avatar.
+                }
+            }
+
+            return IconFactory.CreateCircleIcon(roleColor, displayName, 36);
         }
 
         /// <summary>
@@ -758,7 +790,7 @@ namespace School_Management_System.Presentation.Forms
 
             if (lower.Contains("access denied") || (lower.Contains("host") && lower.Contains("not allowed")))
             {
-                return "Database credentials/host is blocked. Verify App.config or Settings > General > Database Connection Profiles.";
+                return "Database credentials/host is blocked. Verify App.config or Settings > Database > Database Connection Profiles.";
             }
 
             if (ex.Message.Length > 180)

@@ -19,6 +19,32 @@ SET @sql := IF(
     SELECT 1
     FROM information_schema.columns
     WHERE table_schema = DATABASE()
+      AND table_name = 'faculty'
+      AND column_name = 'PhotoPath'
+  ),
+  'SELECT 1',
+  'ALTER TABLE `faculty` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `Address`'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+  EXISTS(
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
+      AND table_name = 'users'
+      AND column_name = 'PhotoPath'
+  ),
+  'SELECT 1',
+  'ALTER TABLE `users` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `DisplayName`'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+  EXISTS(
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE()
       AND table_name = 'student'
       AND column_name = 'PhotoPath'
   ),
@@ -175,6 +201,54 @@ ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALU
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
 VALUES ('DbName.Local', 'schoolmanagementsystem')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbUser.Local', 'root')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbPassword.Local', 'root')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbHost.Wired', 'localhost')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbPort.Wired', '3306')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbName.Wired', 'schoolmanagementsystem')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbUser.Wired', 'root')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbPassword.Wired', 'root')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbHost.Wireless', 'localhost')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbPort.Wireless', '3306')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbName.Wireless', 'schoolmanagementsystem')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbUser.Wireless', 'root')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbPassword.Wireless', 'root')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)

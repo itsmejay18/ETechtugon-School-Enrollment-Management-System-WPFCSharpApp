@@ -406,7 +406,7 @@ namespace School_Management_System.Presentation.Forms
 
                 UseWaitCursor = true;
                 _btnCreate.Enabled = false;
-                _userManagementService.Create(username, password, role, displayName, true);
+                _userManagementService.Create(username, password, role, displayName, true, null);
 
                 RegisteredUsername = username;
                 ShowInfo("Account created successfully. Please sign in.", "Registration Complete");

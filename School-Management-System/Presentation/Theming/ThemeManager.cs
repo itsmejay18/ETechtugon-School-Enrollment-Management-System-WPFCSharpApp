@@ -158,7 +158,6 @@ namespace School_Management_System.Presentation.Theming
 
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
-            button.FlatAppearance.BorderColor = Color.Transparent;
             button.FlatAppearance.MouseOverBackColor = ThemeColors.SidebarHover;
             button.FlatAppearance.MouseDownBackColor = ThemeColors.SidebarActive;
             button.BackColor = ThemeColors.SidebarBackground;
@@ -182,7 +181,6 @@ namespace School_Management_System.Presentation.Theming
             button.BackColor = active ? ThemeColors.SidebarActive : ThemeColors.SidebarBackground;
             button.ForeColor = active ? Color.White : ThemeColors.SidebarTextMuted;
             button.FlatAppearance.BorderSize = 0;
-            button.FlatAppearance.BorderColor = Color.Transparent;
             button.FlatAppearance.MouseOverBackColor = active ? ThemeColors.SidebarActive : ThemeColors.SidebarHover;
             button.FlatAppearance.MouseDownBackColor = ThemeColors.SidebarActive;
         }

@@ -27,7 +27,7 @@ namespace School_Management_System.DataLayer.Configuration
 
         /// <summary>
         /// Clears cached SystemSetting connection profile values.
-        /// Call this after updating DbHost/DbPort/DbName settings in the database.
+        /// Call this after updating DB profile settings in the database.
         /// </summary>
         public static void ResetDatabaseProfileCache()
         {
@@ -122,40 +122,71 @@ namespace School_Management_System.DataLayer.Configuration
             }
 
             var mode = NormalizeMode(preferredMode);
-            if (string.IsNullOrWhiteSpace(mode))
-            {
-                mode = "Local";
-            }
 
-            var hostKey = string.Equals(mode, "Network", StringComparison.OrdinalIgnoreCase)
-                ? AppConstants.SettingKeys.DbHostNetwork
-                : AppConstants.SettingKeys.DbHostLocal;
-
-            var portKey = string.Equals(mode, "Network", StringComparison.OrdinalIgnoreCase)
-                ? AppConstants.SettingKeys.DbPortNetwork
-                : AppConstants.SettingKeys.DbPortLocal;
-
-            var dbNameKey = string.Equals(mode, "Network", StringComparison.OrdinalIgnoreCase)
-                ? AppConstants.SettingKeys.DbNameNetwork
-                : AppConstants.SettingKeys.DbNameLocal;
+            string hostKey;
+            string portKey;
+            string dbNameKey;
+            string userKey;
+            string passwordKey;
+            string hostLegacyKey;
+            string portLegacyKey;
+            string dbLegacyKey;
+            ResolveProfileKeys(
+                mode,
+                out hostKey,
+                out portKey,
+                out dbNameKey,
+                out userKey,
+                out passwordKey,
+                out hostLegacyKey,
+                out portLegacyKey,
+                out dbLegacyKey);
 
             var host = ReadSetting(dbSettings, hostKey);
+            var portValue = ReadSetting(dbSettings, portKey);
+            var dbName = ReadSetting(dbSettings, dbNameKey);
+            var user = ReadSetting(dbSettings, userKey);
+            var password = ReadSetting(dbSettings, passwordKey);
+
+            if (string.IsNullOrWhiteSpace(host) && !string.IsNullOrWhiteSpace(hostLegacyKey))
+            {
+                host = ReadSetting(dbSettings, hostLegacyKey);
+            }
+
+            if (string.IsNullOrWhiteSpace(portValue) && !string.IsNullOrWhiteSpace(portLegacyKey))
+            {
+                portValue = ReadSetting(dbSettings, portLegacyKey);
+            }
+
+            if (string.IsNullOrWhiteSpace(dbName) && !string.IsNullOrWhiteSpace(dbLegacyKey))
+            {
+                dbName = ReadSetting(dbSettings, dbLegacyKey);
+            }
+
             if (!string.IsNullOrWhiteSpace(host))
             {
                 builder.Server = host.Trim();
             }
 
-            var portValue = ReadSetting(dbSettings, portKey);
             uint port;
             if (!string.IsNullOrWhiteSpace(portValue) && uint.TryParse(portValue, out port) && port > 0)
             {
                 builder.Port = port;
             }
 
-            var dbName = ReadSetting(dbSettings, dbNameKey);
             if (!string.IsNullOrWhiteSpace(dbName))
             {
                 builder.Database = dbName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(user))
+            {
+                builder.UserID = user.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                builder.Password = password;
             }
         }
 
@@ -180,26 +211,12 @@ namespace School_Management_System.DataLayer.Configuration
                     const string sql = @"
 SELECT SettingKey, SettingValue
 FROM SystemSetting
-WHERE SettingKey IN
-(
-    @ModeKey,
-    @HostLocalKey,
-    @PortLocalKey,
-    @DbLocalKey,
-    @HostNetworkKey,
-    @PortNetworkKey,
-    @DbNetworkKey
-);";
+WHERE SettingKey = @ModeKey
+   OR SettingKey LIKE 'Db%.%';";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@ModeKey", AppConstants.SettingKeys.DbConnectionMode);
-                        cmd.Parameters.AddWithValue("@HostLocalKey", AppConstants.SettingKeys.DbHostLocal);
-                        cmd.Parameters.AddWithValue("@PortLocalKey", AppConstants.SettingKeys.DbPortLocal);
-                        cmd.Parameters.AddWithValue("@DbLocalKey", AppConstants.SettingKeys.DbNameLocal);
-                        cmd.Parameters.AddWithValue("@HostNetworkKey", AppConstants.SettingKeys.DbHostNetwork);
-                        cmd.Parameters.AddWithValue("@PortNetworkKey", AppConstants.SettingKeys.DbPortNetwork);
-                        cmd.Parameters.AddWithValue("@DbNetworkKey", AppConstants.SettingKeys.DbNameNetwork);
 
                         using (var reader = cmd.ExecuteReader())
                         {
@@ -236,23 +253,71 @@ WHERE SettingKey IN
         {
             if (string.IsNullOrWhiteSpace(mode))
             {
-                return null;
-            }
-
-            var normalized = mode.Trim();
-            if (string.Equals(normalized, "local", StringComparison.OrdinalIgnoreCase))
-            {
                 return "Local";
             }
 
-            if (string.Equals(normalized, "network", StringComparison.OrdinalIgnoreCase) ||
+            var normalized = mode.Trim();
+            if (string.Equals(normalized, "wireless", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "wifi", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "wlan", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Wireless";
+            }
+
+            if (string.Equals(normalized, "wired", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "network", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(normalized, "lan", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(normalized, "ip", StringComparison.OrdinalIgnoreCase))
             {
-                return "Network";
+                return "Wired";
             }
 
-            return normalized;
+            return "Local";
+        }
+
+        private static void ResolveProfileKeys(
+            string mode,
+            out string hostKey,
+            out string portKey,
+            out string dbNameKey,
+            out string userKey,
+            out string passwordKey,
+            out string hostLegacyKey,
+            out string portLegacyKey,
+            out string dbLegacyKey)
+        {
+            hostLegacyKey = null;
+            portLegacyKey = null;
+            dbLegacyKey = null;
+
+            if (string.Equals(mode, "Wireless", StringComparison.OrdinalIgnoreCase))
+            {
+                hostKey = AppConstants.SettingKeys.DbHostWireless;
+                portKey = AppConstants.SettingKeys.DbPortWireless;
+                dbNameKey = AppConstants.SettingKeys.DbNameWireless;
+                userKey = AppConstants.SettingKeys.DbUserWireless;
+                passwordKey = AppConstants.SettingKeys.DbPasswordWireless;
+                return;
+            }
+
+            if (string.Equals(mode, "Wired", StringComparison.OrdinalIgnoreCase))
+            {
+                hostKey = AppConstants.SettingKeys.DbHostWired;
+                portKey = AppConstants.SettingKeys.DbPortWired;
+                dbNameKey = AppConstants.SettingKeys.DbNameWired;
+                userKey = AppConstants.SettingKeys.DbUserWired;
+                passwordKey = AppConstants.SettingKeys.DbPasswordWired;
+                hostLegacyKey = AppConstants.SettingKeys.DbHostNetwork;
+                portLegacyKey = AppConstants.SettingKeys.DbPortNetwork;
+                dbLegacyKey = AppConstants.SettingKeys.DbNameNetwork;
+                return;
+            }
+
+            hostKey = AppConstants.SettingKeys.DbHostLocal;
+            portKey = AppConstants.SettingKeys.DbPortLocal;
+            dbNameKey = AppConstants.SettingKeys.DbNameLocal;
+            userKey = AppConstants.SettingKeys.DbUserLocal;
+            passwordKey = AppConstants.SettingKeys.DbPasswordLocal;
         }
 
         private static string ReadSetting(IDictionary<string, string> settings, string key)

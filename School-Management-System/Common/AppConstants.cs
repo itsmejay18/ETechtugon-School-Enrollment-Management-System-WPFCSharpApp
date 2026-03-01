@@ -35,7 +35,22 @@ namespace School_Management_System.Common
             public const string DbHostLocal = "DbHost.Local";
             public const string DbPortLocal = "DbPort.Local";
             public const string DbNameLocal = "DbName.Local";
+            public const string DbUserLocal = "DbUser.Local";
+            public const string DbPasswordLocal = "DbPassword.Local";
 
+            public const string DbHostWired = "DbHost.Wired";
+            public const string DbPortWired = "DbPort.Wired";
+            public const string DbNameWired = "DbName.Wired";
+            public const string DbUserWired = "DbUser.Wired";
+            public const string DbPasswordWired = "DbPassword.Wired";
+
+            public const string DbHostWireless = "DbHost.Wireless";
+            public const string DbPortWireless = "DbPort.Wireless";
+            public const string DbNameWireless = "DbName.Wireless";
+            public const string DbUserWireless = "DbUser.Wireless";
+            public const string DbPasswordWireless = "DbPassword.Wireless";
+
+            // Legacy key names kept for backward compatibility.
             public const string DbHostNetwork = "DbHost.Network";
             public const string DbPortNetwork = "DbPort.Network";
             public const string DbNameNetwork = "DbName.Network";

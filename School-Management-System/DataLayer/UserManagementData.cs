@@ -10,6 +10,7 @@ namespace School_Management_System.DataLayer
     public sealed class UserManagementData : IUserManagementData
     {
         private readonly DatabaseHelper _db;
+        private bool? _hasPhotoPathColumn;
 
         public UserManagementData(DatabaseHelper db)
         {
@@ -18,11 +19,13 @@ namespace School_Management_System.DataLayer
 
         public DataTable GetAll()
         {
-            const string sql = @"
+            var photoColumn = HasPhotoPathColumn() ? "PhotoPath" : "NULL AS PhotoPath";
+            var sql = @"
 SELECT
     UserId,
     Username,
     DisplayName,
+    " + photoColumn + @",
     `Role` AS Role,
     IsActive,
     CreatedAt,
@@ -37,11 +40,13 @@ ORDER BY Username;";
         {
             query = (query ?? string.Empty).Trim();
 
-            const string sql = @"
+            var photoColumn = HasPhotoPathColumn() ? "PhotoPath" : "NULL AS PhotoPath";
+            var sql = @"
 SELECT
     UserId,
     Username,
     DisplayName,
+    " + photoColumn + @",
     `Role` AS Role,
     IsActive,
     CreatedAt,
@@ -79,7 +84,31 @@ WHERE Username = @Username
         {
             Guard.NotNull(user, nameof(user));
 
-            const string sql = @"
+            var includePhoto = HasPhotoPathColumn();
+            var sql = includePhoto ? @"
+INSERT INTO Users
+(
+    Username,
+    PasswordHash,
+    PasswordSalt,
+    `Role`,
+    DisplayName,
+    PhotoPath,
+    IsActive,
+    CreatedAt
+)
+VALUES
+(
+    @Username,
+    @PasswordHash,
+    @PasswordSalt,
+    @Role,
+    @DisplayName,
+    @PhotoPath,
+    @IsActive,
+    UTC_TIMESTAMP()
+);"
+            : @"
 INSERT INTO Users
 (
     Username,
@@ -101,10 +130,18 @@ VALUES
     UTC_TIMESTAMP()
 );";
 
-            var id = _db.ExecuteInsert(
-                sql,
-                CommandType.Text,
-                new[]
+            var parameters = includePhoto
+                ? new[]
+                {
+                    new MySqlParameter("@Username", (object)user.Username ?? DBNull.Value),
+                    new MySqlParameter("@PasswordHash", (object)user.PasswordHash ?? DBNull.Value),
+                    new MySqlParameter("@PasswordSalt", (object)user.PasswordSalt ?? DBNull.Value),
+                    new MySqlParameter("@Role", (object)user.Role ?? DBNull.Value),
+                    new MySqlParameter("@DisplayName", (object)user.DisplayName ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)user.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@IsActive", user.IsActive)
+                }
+                : new[]
                 {
                     new MySqlParameter("@Username", (object)user.Username ?? DBNull.Value),
                     new MySqlParameter("@PasswordHash", (object)user.PasswordHash ?? DBNull.Value),
@@ -112,7 +149,12 @@ VALUES
                     new MySqlParameter("@Role", (object)user.Role ?? DBNull.Value),
                     new MySqlParameter("@DisplayName", (object)user.DisplayName ?? DBNull.Value),
                     new MySqlParameter("@IsActive", user.IsActive)
-                });
+                };
+
+            var id = _db.ExecuteInsert(
+                sql,
+                CommandType.Text,
+                parameters);
 
             return Convert.ToInt32(id);
         }
@@ -121,7 +163,18 @@ VALUES
         {
             Guard.NotNull(user, nameof(user));
 
-            const string sql = @"
+            var includePhoto = HasPhotoPathColumn();
+            var sql = includePhoto ? @"
+UPDATE Users
+SET
+    Username = @Username,
+    `Role` = @Role,
+    DisplayName = @DisplayName,
+    PhotoPath = @PhotoPath,
+    IsActive = @IsActive,
+    UpdatedAt = UTC_TIMESTAMP()
+WHERE UserId = @UserId;"
+            : @"
 UPDATE Users
 SET
     Username = @Username,
@@ -131,17 +184,29 @@ SET
     UpdatedAt = UTC_TIMESTAMP()
 WHERE UserId = @UserId;";
 
-            _db.ExecuteNonQuery(
-                sql,
-                CommandType.Text,
-                new[]
+            var parameters = includePhoto
+                ? new[]
+                {
+                    new MySqlParameter("@UserId", user.UserId),
+                    new MySqlParameter("@Username", (object)user.Username ?? DBNull.Value),
+                    new MySqlParameter("@Role", (object)user.Role ?? DBNull.Value),
+                    new MySqlParameter("@DisplayName", (object)user.DisplayName ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)user.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@IsActive", user.IsActive)
+                }
+                : new[]
                 {
                     new MySqlParameter("@UserId", user.UserId),
                     new MySqlParameter("@Username", (object)user.Username ?? DBNull.Value),
                     new MySqlParameter("@Role", (object)user.Role ?? DBNull.Value),
                     new MySqlParameter("@DisplayName", (object)user.DisplayName ?? DBNull.Value),
                     new MySqlParameter("@IsActive", user.IsActive)
-                });
+                };
+
+            _db.ExecuteNonQuery(
+                sql,
+                CommandType.Text,
+                parameters);
         }
 
         public void SetPassword(int userId, byte[] passwordHash, byte[] passwordSalt)
@@ -176,6 +241,38 @@ WHERE UserId = @UserId;";
                     new MySqlParameter("@UserId", userId),
                     new MySqlParameter("@IsActive", isActive)
                 });
+        }
+
+        private bool HasPhotoPathColumn()
+        {
+            if (_hasPhotoPathColumn.HasValue)
+            {
+                return _hasPhotoPathColumn.Value;
+            }
+
+            const string sql = @"
+SELECT COUNT(1)
+FROM information_schema.columns
+WHERE table_schema = DATABASE()
+  AND table_name = 'users'
+  AND column_name = 'PhotoPath';";
+
+            _hasPhotoPathColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
+            if (!_hasPhotoPathColumn.Value)
+            {
+                try
+                {
+                    const string alterSql = @"ALTER TABLE `users` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `DisplayName`;";
+                    _db.ExecuteNonQuery(alterSql, CommandType.Text, null);
+                    _hasPhotoPathColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
+                }
+                catch
+                {
+                    // Ignore migration failure; caller will continue without photo-column persistence.
+                }
+            }
+
+            return _hasPhotoPathColumn.Value;
         }
     }
 }

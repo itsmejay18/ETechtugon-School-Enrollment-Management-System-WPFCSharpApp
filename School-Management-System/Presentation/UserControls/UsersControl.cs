@@ -6,6 +6,7 @@ using School_Management_System.BusinessLayer.Services;
 using School_Management_System.Common;
 using School_Management_System.Presentation.Base;
 using School_Management_System.Presentation.Forms;
+using School_Management_System.Presentation.Helpers;
 using School_Management_System.Presentation.Theming;
 
 namespace School_Management_System.Presentation.UserControls
@@ -20,6 +21,9 @@ namespace School_Management_System.Presentation.UserControls
         private ComboBox _cmbRole;
         private CheckBox _chkActive;
         private TextBox _txtPassword;
+        private PictureBox _picPhoto;
+        private Button _btnUploadPhoto;
+        private Button _btnRemovePhoto;
 
         private TextBox _txtSearch;
         private DataGridView _grid;
@@ -34,6 +38,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private int _editingUserId;
         private bool _isEditorActive;
+        private string _currentPhotoPath;
+        private string _selectedPhotoPath;
 
         public UsersControl()
             : this(null)
@@ -61,7 +67,7 @@ namespace School_Management_System.Presentation.UserControls
                 SplitterDistance = 730,
                 BackColor = ThemeColors.Border
             };
-            LockSplitEditorPanel(_split, 420);
+            LockSplitEditorPanel(_split, 500);
 
             _grid = new DataGridView { Dock = DockStyle.Fill };
             ThemeManager.StyleDataGrid(_grid);
@@ -145,7 +151,18 @@ namespace School_Management_System.Presentation.UserControls
             layout.Controls.Add(note, 0, 7);
             layout.SetColumnSpan(note, 2);
 
-            _gb.Controls.Add(layout);
+            var photoPanel = BuildPhotoPanel();
+            var detailsLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1
+            };
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+            detailsLayout.Controls.Add(layout, 0, 0);
+            detailsLayout.Controls.Add(photoPanel, 1, 0);
+            _gb.Controls.Add(detailsLayout);
 
             var right = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
             right.Controls.Add(_gb);
@@ -155,45 +172,95 @@ namespace School_Management_System.Presentation.UserControls
             Controls.Add(toolbar);
         }
 
+        private Panel BuildPhotoPanel()
+        {
+            var panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(6, 0, 0, 0), BackColor = ThemeColors.CardBackground };
+
+            _picPhoto = new PictureBox
+            {
+                Dock = DockStyle.Top,
+                Height = 180,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BorderStyle = BorderStyle.FixedSingle,
+                BackColor = ThemeColors.Background
+            };
+
+            _btnUploadPhoto = new Button { Text = "Upload Photo", Dock = DockStyle.Top, Height = 36 };
+            ThemeManager.StyleButtonNeutral(_btnUploadPhoto);
+            _btnUploadPhoto.Click += (s, e) => UploadPhoto();
+
+            _btnRemovePhoto = new Button { Text = "Remove Photo", Dock = DockStyle.Top, Height = 32 };
+            ThemeManager.StyleButtonDanger(_btnRemovePhoto);
+            _btnRemovePhoto.Click += (s, e) => ClearPhoto();
+
+            panel.Controls.Add(_btnRemovePhoto);
+            panel.Controls.Add(_btnUploadPhoto);
+            panel.Controls.Add(_picPhoto);
+            return panel;
+        }
+
         private Panel BuildToolbar()
         {
-            var toolbar = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
+            var toolbar = new Panel { Dock = DockStyle.Top, Height = 56, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
+            var strip = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = true,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
 
-            _txtSearch = new TextBox { Width = 260, Location = new Point(0, 10) };
+            var lblSearch = new Label
+            {
+                Text = "Search:",
+                AutoSize = false,
+                Width = 58,
+                Height = 32,
+                ForeColor = ThemeColors.MutedText,
+                Font = ThemeFonts.Label,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 2, 4, 0)
+            };
+
+            _txtSearch = new TextBox { Width = 240, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleInput(_txtSearch);
             _txtSearch.TextChanged += (s, e) => LoadGrid();
 
-            _btnRefresh = new Button { Text = "Refresh", Width = 96, Location = new Point(270, 8) };
+            _btnRefresh = new Button { Text = "Refresh", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonNeutral(_btnRefresh);
             _btnRefresh.Click += (s, e) => LoadGrid();
 
-            _btnAdd = new Button { Text = "Add", Width = 86, Location = new Point(384, 8) };
+            _btnAdd = new Button { Text = "Add", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonPrimary(_btnAdd);
             _btnAdd.Click += (s, e) => BeginAdd();
 
-            _btnEdit = new Button { Text = "Edit", Width = 86, Location = new Point(478, 8) };
+            _btnEdit = new Button { Text = "Edit", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonNeutral(_btnEdit);
             _btnEdit.Click += (s, e) => BeginEdit();
 
-            _btnDelete = new Button { Text = "Delete", Width = 86, Location = new Point(572, 8) };
+            _btnDelete = new Button { Text = "Delete", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonDanger(_btnDelete);
             _btnDelete.Click += (s, e) => DisableCurrent();
 
-            _btnSave = new Button { Text = "Save", Width = 86, Location = new Point(666, 8) };
+            _btnSave = new Button { Text = "Save", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonPrimary(_btnSave);
             _btnSave.Click += (s, e) => Save();
 
-            _btnCancel = new Button { Text = "Cancel", Width = 86, Location = new Point(760, 8) };
+            _btnCancel = new Button { Text = "Cancel", Width = 86 };
             ThemeManager.StyleButtonNeutral(_btnCancel);
             _btnCancel.Click += (s, e) => CancelEdit();
 
-            toolbar.Controls.Add(_txtSearch);
-            toolbar.Controls.Add(_btnRefresh);
-            toolbar.Controls.Add(_btnAdd);
-            toolbar.Controls.Add(_btnEdit);
-            toolbar.Controls.Add(_btnDelete);
-            toolbar.Controls.Add(_btnSave);
-            toolbar.Controls.Add(_btnCancel);
+            strip.Controls.Add(lblSearch);
+            strip.Controls.Add(_txtSearch);
+            strip.Controls.Add(_btnRefresh);
+            strip.Controls.Add(_btnAdd);
+            strip.Controls.Add(_btnEdit);
+            strip.Controls.Add(_btnDelete);
+            strip.Controls.Add(_btnSave);
+            strip.Controls.Add(_btnCancel);
+            toolbar.Controls.Add(strip);
             return toolbar;
         }
 
@@ -224,6 +291,8 @@ namespace School_Management_System.Presentation.UserControls
             _cmbRole.Enabled = active;
             _chkActive.Enabled = active;
             _txtPassword.ReadOnly = !active;
+            if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = true;
+            if (_btnRemovePhoto != null) _btnRemovePhoto.Enabled = active && (!string.IsNullOrWhiteSpace(_selectedPhotoPath) || !string.IsNullOrWhiteSpace(_currentPhotoPath));
 
             _btnSave.Enabled = active;
             _btnCancel.Enabled = active;
@@ -240,6 +309,9 @@ namespace School_Management_System.Presentation.UserControls
             _cmbRole.SelectedIndex = _cmbRole.Items.Count > 0 ? 0 : -1;
             _chkActive.Checked = true;
             _txtPassword.Text = string.Empty;
+            _currentPhotoPath = null;
+            _selectedPhotoPath = null;
+            ShowPhoto(null);
             SetEditorState(true);
             _txtUsername.Focus();
         }
@@ -281,11 +353,54 @@ namespace School_Management_System.Presentation.UserControls
             _grid.DataSource = null;
             _grid.Columns.Clear();
             _grid.DataSource = dt;
+            ConfigureGridColumnsForListView();
+
+            if (_grid.Columns["PhotoPath"] != null)
+            {
+                _grid.Columns["PhotoPath"].Visible = false;
+            }
 
             if (_grid.Columns["UserId"] != null)
             {
-                _grid.Columns["UserId"].Visible = false;
+                _grid.Columns["UserId"].HeaderText = "ID";
+                _grid.Columns["UserId"].DisplayIndex = 0;
+                _grid.Columns["UserId"].FillWeight = 14f;
+                _grid.Columns["UserId"].MinimumWidth = 56;
             }
+
+            if (_grid.Columns["Username"] != null)
+            {
+                _grid.Columns["Username"].HeaderText = "Username";
+                _grid.Columns["Username"].DisplayIndex = 1;
+                _grid.Columns["Username"].FillWeight = 26f;
+                _grid.Columns["Username"].MinimumWidth = 120;
+            }
+
+            if (_grid.Columns["DisplayName"] != null)
+            {
+                _grid.Columns["DisplayName"].HeaderText = "Display Name";
+                _grid.Columns["DisplayName"].DisplayIndex = 2;
+                _grid.Columns["DisplayName"].FillWeight = 34f;
+                _grid.Columns["DisplayName"].MinimumWidth = 160;
+            }
+
+            if (_grid.Columns["Role"] != null)
+            {
+                _grid.Columns["Role"].HeaderText = "Role";
+                _grid.Columns["Role"].DisplayIndex = 3;
+                _grid.Columns["Role"].FillWeight = 16f;
+                _grid.Columns["Role"].MinimumWidth = 90;
+            }
+
+            if (_grid.Columns["IsActive"] != null)
+            {
+                _grid.Columns["IsActive"].HeaderText = "Active";
+                _grid.Columns["IsActive"].DisplayIndex = 4;
+                _grid.Columns["IsActive"].FillWeight = 12f;
+                _grid.Columns["IsActive"].MinimumWidth = 70;
+            }
+
+            _grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
             if (_grid.Rows.Count > 0)
             {
@@ -301,7 +416,30 @@ namespace School_Management_System.Presentation.UserControls
                 _cmbRole.SelectedIndex = _cmbRole.Items.Count > 0 ? 0 : -1;
                 _chkActive.Checked = true;
                 _txtPassword.Text = string.Empty;
+                _currentPhotoPath = null;
+                _selectedPhotoPath = null;
+                ShowPhoto(null);
                 SetEditorState(false);
+            }
+        }
+
+        private void ConfigureGridColumnsForListView()
+        {
+            var allowed = new[] { "UserId", "Username", "DisplayName", "Role", "IsActive" };
+
+            foreach (DataGridViewColumn col in _grid.Columns)
+            {
+                var show = false;
+                foreach (var name in allowed)
+                {
+                    if (string.Equals(col.Name, name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        show = true;
+                        break;
+                    }
+                }
+
+                col.Visible = show;
             }
         }
 
@@ -316,6 +454,9 @@ namespace School_Management_System.Presentation.UserControls
             _editingUserId = Convert.ToInt32(row.Cells["UserId"].Value);
             _txtUsername.Text = Convert.ToString(row.Cells["Username"].Value);
             _txtDisplayName.Text = Convert.ToString(row.Cells["DisplayName"].Value);
+            _currentPhotoPath = row.Cells["PhotoPath"] == null ? null : Convert.ToString(row.Cells["PhotoPath"].Value);
+            _selectedPhotoPath = null;
+            ShowPhoto(_currentPhotoPath);
 
             var role = Convert.ToString(row.Cells["Role"].Value);
             if (!string.IsNullOrWhiteSpace(role) && _cmbRole.Items.Contains(role))
@@ -342,11 +483,12 @@ namespace School_Management_System.Presentation.UserControls
                 var role = Convert.ToString(_cmbRole.SelectedItem) ?? string.Empty;
                 var displayName = (_txtDisplayName.Text ?? string.Empty).Trim();
                 var isActive = _chkActive.Checked;
+                var isCreate = _editingUserId == 0;
 
                 UseWaitCursor = true;
                 _btnSave.Enabled = false;
 
-                if (_editingUserId == 0)
+                if (isCreate)
                 {
                     var vr = _userService.ValidateNewUser(username, password, role);
                     if (!vr.IsValid)
@@ -354,20 +496,22 @@ namespace School_Management_System.Presentation.UserControls
                         ThemedMessageBox.ShowError(this, vr.ToString(), "Validation");
                         return;
                     }
+                }
 
-                    _userService.Create(username, password, role, displayName, isActive);
+                var photoPathToSave = _currentPhotoPath;
+                if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
+                {
+                    photoPathToSave = PersistPhoto(_selectedPhotoPath, username);
+                }
+
+                if (isCreate)
+                {
+                    _userService.Create(username, password, role, displayName, isActive, photoPathToSave);
                     ThemedMessageBox.ShowInfo(this, "User created successfully.", "Saved");
                 }
                 else
                 {
-                    var vr = _userService.ValidateUpdateUser(_editingUserId, username, role);
-                    if (!vr.IsValid)
-                    {
-                        ThemedMessageBox.ShowError(this, vr.ToString(), "Validation");
-                        return;
-                    }
-
-                    _userService.Update(_editingUserId, username, role, displayName, isActive);
+                    _userService.Update(_editingUserId, username, role, displayName, isActive, photoPathToSave);
                     if (!string.IsNullOrWhiteSpace(password))
                     {
                         _userService.ResetPassword(_editingUserId, password);
@@ -376,6 +520,9 @@ namespace School_Management_System.Presentation.UserControls
                 }
 
                 LoadGrid();
+                _currentPhotoPath = photoPathToSave;
+                _selectedPhotoPath = null;
+                ShowPhoto(_currentPhotoPath);
                 SetEditorState(false);
             }
             catch (Exception ex)
@@ -388,6 +535,65 @@ namespace School_Management_System.Presentation.UserControls
                 UseWaitCursor = false;
                 _btnSave.Enabled = true;
             }
+        }
+
+        private void UploadPhoto()
+        {
+            if (!_isEditorActive)
+            {
+                if (_editingUserId > 0)
+                {
+                    BeginEdit();
+                }
+                else
+                {
+                    BeginAdd();
+                }
+            }
+
+            using (var ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif";
+                ofd.Title = "Select user profile photo";
+                if (ofd.ShowDialog() != DialogResult.OK) return;
+
+                _selectedPhotoPath = ofd.FileName;
+                ShowPhoto(_selectedPhotoPath);
+                if (_btnRemovePhoto != null)
+                {
+                    _btnRemovePhoto.Enabled = true;
+                }
+            }
+        }
+
+        private void ClearPhoto()
+        {
+            if (!_isEditorActive) return;
+
+            _selectedPhotoPath = null;
+            _currentPhotoPath = null;
+            ShowPhoto(null);
+            if (_btnRemovePhoto != null)
+            {
+                _btnRemovePhoto.Enabled = false;
+            }
+        }
+
+        private void ShowPhoto(string path)
+        {
+            PhotoStorageHelper.ShowPhoto(_picPhoto, path);
+        }
+
+        private string PersistPhoto(string sourcePath, string username)
+        {
+            var savedPath = PhotoStorageHelper.PersistPhoto(sourcePath, "Users", username, _currentPhotoPath);
+            if (string.Equals(savedPath, _currentPhotoPath, StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(sourcePath))
+            {
+                ThemedMessageBox.ShowError(this, "Unable to save photo. Please choose a different image.", "Photo");
+            }
+
+            return savedPath;
         }
 
         private void DisableCurrent()
