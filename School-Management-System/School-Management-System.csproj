@@ -14,11 +14,11 @@
     <Deterministic>true</Deterministic>
     <ApplicationIcon>assets\app-logo.ico</ApplicationIcon>
     <GenerateManifests>true</GenerateManifests>
-    <SignManifests>true</SignManifests>
-    <ManifestKeyFile>Properties\ClickOnce\SchoolManagementSystem_ClickOnce.pfx</ManifestKeyFile>
-    <ManifestCertificateThumbprint>C29C3CAAA283C3F3974EA66911A553B2B0B11338</ManifestCertificateThumbprint>
+    <SignManifests>false</SignManifests>
+    <ManifestKeyFile></ManifestKeyFile>
+    <ManifestCertificateThumbprint></ManifestCertificateThumbprint>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <PublishUrl>C:\Users\acer\Downloads\</PublishUrl>
+    <PublishUrl>bin\Publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
