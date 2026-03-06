@@ -272,6 +272,14 @@ WHERE SettingKey = @ModeKey
                 return "Wired";
             }
 
+            if (string.Equals(normalized, "online", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "hostinger", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "cloud", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "internet", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Online";
+            }
+
             return "Local";
         }
 
@@ -310,6 +318,16 @@ WHERE SettingKey = @ModeKey
                 hostLegacyKey = AppConstants.SettingKeys.DbHostNetwork;
                 portLegacyKey = AppConstants.SettingKeys.DbPortNetwork;
                 dbLegacyKey = AppConstants.SettingKeys.DbNameNetwork;
+                return;
+            }
+
+            if (string.Equals(mode, "Online", StringComparison.OrdinalIgnoreCase))
+            {
+                hostKey = AppConstants.SettingKeys.DbHostOnline;
+                portKey = AppConstants.SettingKeys.DbPortOnline;
+                dbNameKey = AppConstants.SettingKeys.DbNameOnline;
+                userKey = AppConstants.SettingKeys.DbUserOnline;
+                passwordKey = AppConstants.SettingKeys.DbPasswordOnline;
                 return;
             }
 

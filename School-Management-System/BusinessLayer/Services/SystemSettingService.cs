@@ -133,6 +133,16 @@ namespace School_Management_System.BusinessLayer.Services
                 return;
             }
 
+            if (string.Equals(mode, "Online", StringComparison.OrdinalIgnoreCase))
+            {
+                hostKey = AppConstants.SettingKeys.DbHostOnline;
+                portKey = AppConstants.SettingKeys.DbPortOnline;
+                dbKey = AppConstants.SettingKeys.DbNameOnline;
+                userKey = AppConstants.SettingKeys.DbUserOnline;
+                passwordKey = AppConstants.SettingKeys.DbPasswordOnline;
+                return;
+            }
+
             hostKey = AppConstants.SettingKeys.DbHostLocal;
             portKey = AppConstants.SettingKeys.DbPortLocal;
             dbKey = AppConstants.SettingKeys.DbNameLocal;
@@ -161,6 +171,14 @@ namespace School_Management_System.BusinessLayer.Services
                 string.Equals(normalized, "ip", StringComparison.OrdinalIgnoreCase))
             {
                 return "Wired";
+            }
+
+            if (string.Equals(normalized, "online", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "hostinger", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "cloud", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "internet", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Online";
             }
 
             return "Local";

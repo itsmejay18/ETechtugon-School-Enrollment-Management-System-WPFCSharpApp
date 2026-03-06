@@ -162,6 +162,21 @@ CREATE TABLE IF NOT EXISTS `systemsetting` (
   PRIMARY KEY (`SettingKey`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE IF NOT EXISTS `activitylog` (
+  `ActivityLogId` int NOT NULL AUTO_INCREMENT,
+  `UserId` int DEFAULT NULL,
+  `Action` varchar(50) NOT NULL,
+  `Entity` varchar(50) DEFAULT NULL,
+  `EntityId` int DEFAULT NULL,
+  `Details` varchar(4000) DEFAULT NULL,
+  `MachineName` varchar(100) DEFAULT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  PRIMARY KEY (`ActivityLogId`),
+  KEY `IX_ActivityLog_CreatedAt` (`CreatedAt`),
+  KEY `FK_ActivityLog_Users` (`UserId`),
+  CONSTRAINT `FK_ActivityLog_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 -- Seed baseline reference values if empty.
 INSERT INTO `department`
 (`DepartmentCode`, `DepartmentName`, `Description`, `IsActive`, `CreatedAt`, `UpdatedAt`)
@@ -252,6 +267,26 @@ VALUES ('DbPassword.Wireless', 'root')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbHost.Online', 'localhost')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbPort.Online', '3306')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbName.Online', 'schoolmanagementsystem')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbUser.Online', 'root')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbPassword.Online', 'root')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
 VALUES ('DbHost.Network', 'localhost')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
@@ -261,6 +296,14 @@ ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALU
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
 VALUES ('DbName.Network', 'schoolmanagementsystem')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('Backup.Directory', '')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(`SettingValue`, VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('Backup.PreferredType', 'Full')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 -- Seed sample sections if none exist.

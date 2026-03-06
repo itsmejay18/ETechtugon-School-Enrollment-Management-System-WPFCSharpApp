@@ -63,6 +63,13 @@ namespace School_Management_System
                     continue;
                 }
 
+                if (string.Equals(token, "--online", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(token, "--hostinger", StringComparison.OrdinalIgnoreCase))
+                {
+                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Online", EnvironmentVariableTarget.Process);
+                    continue;
+                }
+
                 const string longPrefix = "--db-mode=";
                 if (token.StartsWith(longPrefix, StringComparison.OrdinalIgnoreCase))
                 {

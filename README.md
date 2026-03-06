@@ -4,9 +4,13 @@
 1. Create the MySQL database by running `DatabaseScripts/SchoolManagementSystem.sql` in MySQL Workbench, or run `DatabaseScripts/Init-MySQL.ps1`.
 2. Set database values using `SMS_DB_HOST`, `SMS_DB_PORT`, `SMS_DB_NAME`, `SMS_DB_USER`, `SMS_DB_PASSWORD` environment variables (recommended), or update `School-Management-System/App.config` locally.
 3. Choose active connection mode using either:
-   - command line: `School-Management-System.exe --db-mode=Local|Wired|Wireless`
+   - command line: `School-Management-System.exe --db-mode=Local|Wired|Wireless|Online`
    - Settings module: `Settings > Database > Database Connection Profiles`
-4. Build and run the solution `School-Management-System.sln`.
+4. Database settings also include:
+   - Full / Incremental / Differential backup creation
+   - Restore from `.smsbak` files
+   - User activity logs (filter + CSV export)
+5. Build and run the solution `School-Management-System.sln`.
 
 ## Navigation Layout
 - Workflow menu: `Dashboard`, `Students`, `Faculty`, `Enrollment`, `Schedule`, `Calendar`, `Settings`

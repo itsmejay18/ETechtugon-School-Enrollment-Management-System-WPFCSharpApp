@@ -48,6 +48,8 @@ namespace School_Management_System.Presentation.Forms
         private SectionService _sectionService;
         private ClassScheduleService _classScheduleService;
         private SystemSettingService _systemSettingService;
+        private ActivityLogService _activityLogService;
+        private DatabaseBackupService _databaseBackupService;
 
         public DashboardForm()
         {
@@ -126,6 +128,10 @@ namespace School_Management_System.Presentation.Forms
 
             ISystemSettingData systemSettingData = new SystemSettingData(_db);
             _systemSettingService = new SystemSettingService(systemSettingData);
+
+            IActivityLogData activityLogData = new ActivityLogData(_db);
+            _activityLogService = new ActivityLogService(activityLogData);
+            _databaseBackupService = new DatabaseBackupService(_db, _activityLogService);
         }
 
         private void InitializeRuntimeComponent()
@@ -559,6 +565,8 @@ namespace School_Management_System.Presentation.Forms
                         _subjectService,
                         _curriculumService,
                         _userManagementService,
+                        _activityLogService,
+                        _databaseBackupService,
                         isAdmin)));
 
             // Load default page
@@ -799,6 +807,17 @@ namespace School_Management_System.Presentation.Forms
             }
 
             return ex.Message;
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            var user = UserSession.CurrentUser;
+            if (user != null && _activityLogService != null)
+            {
+                _activityLogService.LogLogout(user);
+            }
+
+            base.OnFormClosing(e);
         }
     }
 }

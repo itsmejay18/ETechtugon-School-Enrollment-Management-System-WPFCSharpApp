@@ -590,9 +590,16 @@ INSERT INTO `systemsetting` VALUES
 ('DbName.Wireless','schoolmanagementsystem'),
 ('DbUser.Wireless','root'),
 ('DbPassword.Wireless','root'),
+('DbHost.Online','localhost'),
+('DbPort.Online','3306'),
+('DbName.Online','schoolmanagementsystem'),
+('DbUser.Online','root'),
+('DbPassword.Online','root'),
 ('DbHost.Network','localhost'),
 ('DbPort.Network','3306'),
-('DbName.Network','schoolmanagementsystem');
+('DbName.Network','schoolmanagementsystem'),
+('Backup.Directory',''),
+('Backup.PreferredType','Full');
 /*!40000 ALTER TABLE `systemsetting` ENABLE KEYS */;
 UNLOCK TABLES;
 

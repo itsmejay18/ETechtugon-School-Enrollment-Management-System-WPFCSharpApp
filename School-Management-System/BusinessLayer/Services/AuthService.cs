@@ -9,10 +9,12 @@ namespace School_Management_System.BusinessLayer.Services
     public sealed class AuthService
     {
         private readonly IUserData _userData;
+        private readonly ActivityLogService _activityLogService;
 
-        public AuthService(IUserData userData)
+        public AuthService(IUserData userData, ActivityLogService activityLogService = null)
         {
             _userData = userData ?? throw new ArgumentNullException(nameof(userData));
+            _activityLogService = activityLogService;
         }
 
         /// <summary>
@@ -29,20 +31,24 @@ namespace School_Management_System.BusinessLayer.Services
                 return false;
             }
 
-            var existing = _userData.GetByUsername(username.Trim());
+            var safeUsername = username.Trim();
+            var existing = _userData.GetByUsername(safeUsername);
             if (existing == null || !existing.IsActive)
             {
                 errorMessage = Messages.InvalidCredentials;
+                _activityLogService?.LogLoginFailure(safeUsername);
                 return false;
             }
 
             if (!PasswordHasher.Verify(password, existing.PasswordSalt, existing.PasswordHash))
             {
                 errorMessage = Messages.InvalidCredentials;
+                _activityLogService?.LogLoginFailure(safeUsername);
                 return false;
             }
 
             _userData.UpdateLastLogin(existing.UserId);
+            _activityLogService?.LogLoginSuccess(existing);
             user = existing;
             return true;
         }

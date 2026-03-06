@@ -1,10 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 using School_Management_System.BusinessLayer.Services;
+using School_Management_System.BusinessLayer.Session;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Configuration;
 using School_Management_System.Presentation.Base;
@@ -49,22 +55,49 @@ namespace School_Management_System.Presentation.UserControls
         private TextBox _txtWirelessUsername;
         private TextBox _txtWirelessPassword;
 
+        private TextBox _txtOnlineHost;
+        private TextBox _txtOnlinePort;
+        private TextBox _txtOnlineDbName;
+        private TextBox _txtOnlineUsername;
+        private TextBox _txtOnlinePassword;
+
         private Button _btnSaveConnection;
         private Button _btnTestConnection;
         private Button _btnApplyRuntime;
         private Label _lblConnectionStatus;
 
+        private ComboBox _cmbBackupType;
+        private TextBox _txtBackupDirectory;
+        private Button _btnBrowseBackupDirectory;
+        private Button _btnOpenBackupDirectory;
+        private Button _btnSaveBackupSettings;
+        private Button _btnCreateBackup;
+        private Button _btnRestoreBackup;
+        private Label _lblBackupStatus;
+
+        private DateTimePicker _dtLogFrom;
+        private DateTimePicker _dtLogTo;
+        private TextBox _txtLogUser;
+        private ComboBox _cmbLogAction;
+        private NumericUpDown _numLogLimit;
+        private Button _btnRefreshLogs;
+        private Button _btnExportLogs;
+        private DataGridView _gridUserLogs;
+        private IList<School_Management_System.Models.ActivityLog> _currentLogs = new List<School_Management_System.Models.ActivityLog>();
+
         private TabControl _tabs;
         private readonly Dictionary<TabPage, Func<UserControl>> _moduleFactories = new Dictionary<TabPage, Func<UserControl>>();
         private readonly HashSet<TabPage> _loadedModuleTabs = new HashSet<TabPage>();
+        private readonly ActivityLogService _activityLogService;
+        private readonly DatabaseBackupService _databaseBackupService;
 
         public SettingsControl()
-            : this(null, null, null, null, null, null, null, null, null, false)
+            : this(null, null, null, null, null, null, null, null, null, null, null, false)
         {
         }
 
         public SettingsControl(SystemSettingService settingsService, LookupService lookupService)
-            : this(settingsService, lookupService, null, null, null, null, null, null, null, false)
+            : this(settingsService, lookupService, null, null, null, null, null, null, null, null, null, false)
         {
         }
 
@@ -78,6 +111,8 @@ namespace School_Management_System.Presentation.UserControls
             SubjectService subjectService,
             CurriculumService curriculumService,
             UserManagementService userManagementService,
+            ActivityLogService activityLogService,
+            DatabaseBackupService databaseBackupService,
             bool isAdmin)
         {
             _settingsService = settingsService;
@@ -89,12 +124,16 @@ namespace School_Management_System.Presentation.UserControls
             _subjectService = subjectService;
             _curriculumService = curriculumService;
             _userManagementService = userManagementService;
+            _activityLogService = activityLogService;
+            _databaseBackupService = databaseBackupService;
             _isAdmin = isAdmin;
 
             InitializeComponent();
             LoadLookups();
             LoadCurrentTerm();
             LoadConnectionSettings();
+            LoadBackupSettings();
+            LoadUserLogs();
         }
 
         private void InitializeComponent()
@@ -165,6 +204,8 @@ namespace School_Management_System.Presentation.UserControls
                 Padding = new Padding(10)
             };
 
+            host.Controls.Add(BuildLogGroup());
+            host.Controls.Add(BuildBackupGroup());
             host.Controls.Add(BuildConnectionGroup());
             page.Controls.Add(host);
             return page;
@@ -223,7 +264,7 @@ namespace School_Management_System.Presentation.UserControls
             {
                 Text = "Database Connection Profiles",
                 Dock = DockStyle.Top,
-                Height = 340,
+                Height = 382,
                 Font = ThemeFonts.SubHeader,
                 ForeColor = ThemeColors.Text,
                 Padding = new Padding(12, 18, 12, 12),
@@ -235,7 +276,7 @@ namespace School_Management_System.Presentation.UserControls
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 6,
-                RowCount = 9,
+                RowCount = 10,
                 Padding = new Padding(8, 6, 8, 6)
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
@@ -246,6 +287,7 @@ namespace School_Management_System.Presentation.UserControls
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22));
 
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
@@ -280,18 +322,26 @@ namespace School_Management_System.Presentation.UserControls
             _txtWirelessUsername = MakeTextBox();
             _txtWirelessPassword = MakeTextBox(true);
 
+            _txtOnlineHost = MakeTextBox();
+            _txtOnlinePort = MakeTextBox();
+            _txtOnlineDbName = MakeTextBox();
+            _txtOnlineUsername = MakeTextBox();
+            _txtOnlinePassword = MakeTextBox(true);
+
             AddProfileRow(layout, 1, "Local", _txtLocalHost, _txtLocalPort, _txtLocalDbName, _txtLocalUsername, _txtLocalPassword);
             AddProfileRow(layout, 2, "Wired", _txtWiredHost, _txtWiredPort, _txtWiredDbName, _txtWiredUsername, _txtWiredPassword);
             AddProfileRow(layout, 3, "Wireless", _txtWirelessHost, _txtWirelessPort, _txtWirelessDbName, _txtWirelessUsername, _txtWirelessPassword);
+            AddProfileRow(layout, 4, "Online", _txtOnlineHost, _txtOnlinePort, _txtOnlineDbName, _txtOnlineUsername, _txtOnlinePassword);
 
             _cmbConnectionMode = new ComboBox { Dock = DockStyle.Left, Width = 180, Font = ThemeFonts.Input, DropDownStyle = ComboBoxStyle.DropDownList };
             ThemeManager.StyleComboBox(_cmbConnectionMode);
             _cmbConnectionMode.Items.Add("Local");
             _cmbConnectionMode.Items.Add("Wired");
             _cmbConnectionMode.Items.Add("Wireless");
+            _cmbConnectionMode.Items.Add("Online");
 
-            layout.Controls.Add(MakeLabel("Active Mode"), 0, 4);
-            layout.Controls.Add(_cmbConnectionMode, 1, 4);
+            layout.Controls.Add(MakeLabel("Active Mode"), 0, 5);
+            layout.Controls.Add(_cmbConnectionMode, 1, 5);
             layout.SetColumnSpan(_cmbConnectionMode, 2);
 
             var buttonHost = new FlowLayoutPanel
@@ -318,7 +368,7 @@ namespace School_Management_System.Presentation.UserControls
             buttonHost.Controls.Add(_btnTestConnection);
             buttonHost.Controls.Add(_btnApplyRuntime);
 
-            layout.Controls.Add(buttonHost, 1, 5);
+            layout.Controls.Add(buttonHost, 1, 6);
             layout.SetColumnSpan(buttonHost, 5);
 
             _lblConnectionStatus = new Label
@@ -329,21 +379,290 @@ namespace School_Management_System.Presentation.UserControls
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            layout.Controls.Add(_lblConnectionStatus, 0, 6);
+            layout.Controls.Add(_lblConnectionStatus, 0, 7);
             layout.SetColumnSpan(_lblConnectionStatus, 6);
 
             var note = new Label
             {
-                Text = "Tip: use Local on same PC, Wired for LAN cable, Wireless for Wi-Fi. You can also start with --db-mode=Local|Wired|Wireless.",
+                Text = "Tip: use Local on same PC, Wired/Wireless for LAN/Wi-Fi, and Online for Hostinger internet DB. CLI: --db-mode=Local|Wired|Wireless|Online.",
                 Dock = DockStyle.Fill,
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            layout.Controls.Add(note, 0, 7);
+            layout.Controls.Add(note, 0, 8);
             layout.SetColumnSpan(note, 6);
 
             gb.Controls.Add(layout);
+            return gb;
+        }
+
+        private GroupBox BuildBackupGroup()
+        {
+            var gb = new GroupBox
+            {
+                Text = "Backup and Restore",
+                Dock = DockStyle.Top,
+                Height = 230,
+                Font = ThemeFonts.SubHeader,
+                ForeColor = ThemeColors.Text,
+                Padding = new Padding(12, 18, 12, 12),
+                BackColor = ThemeColors.CardBackground
+            };
+            ThemeManager.StyleGroupBox(gb);
+
+            var layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 5,
+                RowCount = 6,
+                Padding = new Padding(8, 6, 8, 6)
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
+
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            _cmbBackupType = new ComboBox { Dock = DockStyle.Left, Width = 190, Font = ThemeFonts.Input, DropDownStyle = ComboBoxStyle.DropDownList };
+            ThemeManager.StyleComboBox(_cmbBackupType);
+            _cmbBackupType.Items.Add("Full");
+            _cmbBackupType.Items.Add("Incremental");
+            _cmbBackupType.Items.Add("Differential");
+            _cmbBackupType.SelectedIndex = 0;
+
+            _txtBackupDirectory = MakeTextBox();
+
+            _btnBrowseBackupDirectory = new Button { Text = "Browse", Width = 96, Height = 30 };
+            ThemeManager.StyleButtonNeutral(_btnBrowseBackupDirectory);
+            _btnBrowseBackupDirectory.Click += (s, e) => ChooseBackupDirectory();
+
+            _btnOpenBackupDirectory = new Button { Text = "Open", Width = 96, Height = 30 };
+            ThemeManager.StyleButtonNeutral(_btnOpenBackupDirectory);
+            _btnOpenBackupDirectory.Click += (s, e) => OpenBackupDirectory();
+
+            _btnSaveBackupSettings = new Button { Text = "Save Backup Settings", Width = 178, Height = 32, Margin = new Padding(0, 0, 10, 0) };
+            ThemeManager.StyleButtonPrimary(_btnSaveBackupSettings);
+            _btnSaveBackupSettings.Click += (s, e) => SaveBackupSettings();
+
+            _btnCreateBackup = new Button { Text = "Create Backup", Width = 148, Height = 32, Margin = new Padding(0, 0, 10, 0) };
+            ThemeManager.StyleButtonPrimary(_btnCreateBackup);
+            _btnCreateBackup.Click += (s, e) => CreateBackupNow();
+
+            _btnRestoreBackup = new Button { Text = "Restore Backup", Width = 148, Height = 32, Margin = new Padding(0) };
+            ThemeManager.StyleButtonDanger(_btnRestoreBackup);
+            _btnRestoreBackup.Click += (s, e) => RestoreBackupFromFile();
+
+            var actionHost = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Margin = new Padding(0)
+            };
+            actionHost.Controls.Add(_btnSaveBackupSettings);
+            actionHost.Controls.Add(_btnCreateBackup);
+            actionHost.Controls.Add(_btnRestoreBackup);
+
+            _lblBackupStatus = new Label
+            {
+                Text = "Status: Backup system ready.",
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.MutedText,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            var note = new Label
+            {
+                Text = "Incremental uses the latest backup as baseline. Differential uses the latest full backup baseline.",
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.MutedText,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            layout.Controls.Add(MakeLabel("Backup Type"), 0, 0);
+            layout.Controls.Add(_cmbBackupType, 1, 0);
+            layout.SetColumnSpan(_cmbBackupType, 2);
+
+            layout.Controls.Add(MakeLabel("Backup Folder"), 0, 1);
+            layout.Controls.Add(_txtBackupDirectory, 1, 1);
+            layout.SetColumnSpan(_txtBackupDirectory, 2);
+            layout.Controls.Add(_btnBrowseBackupDirectory, 3, 1);
+            layout.Controls.Add(_btnOpenBackupDirectory, 4, 1);
+
+            layout.Controls.Add(actionHost, 1, 2);
+            layout.SetColumnSpan(actionHost, 4);
+
+            layout.Controls.Add(_lblBackupStatus, 0, 3);
+            layout.SetColumnSpan(_lblBackupStatus, 5);
+
+            layout.Controls.Add(note, 0, 4);
+            layout.SetColumnSpan(note, 5);
+
+            gb.Controls.Add(layout);
+            return gb;
+        }
+
+        private GroupBox BuildLogGroup()
+        {
+            var gb = new GroupBox
+            {
+                Text = "User Logs",
+                Dock = DockStyle.Top,
+                Height = 420,
+                Font = ThemeFonts.SubHeader,
+                ForeColor = ThemeColors.Text,
+                Padding = new Padding(12, 18, 12, 12),
+                BackColor = ThemeColors.CardBackground
+            };
+            ThemeManager.StyleGroupBox(gb);
+
+            var host = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = ThemeColors.CardBackground
+            };
+
+            var filters = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 74,
+                ColumnCount = 10,
+                RowCount = 2,
+                Padding = new Padding(8, 6, 8, 6)
+            };
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 46));
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 26));
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48));
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40));
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 92));
+            filters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 94));
+            filters.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            filters.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+
+            _dtLogFrom = new DateTimePicker { Dock = DockStyle.Fill, Font = ThemeFonts.Input, Format = DateTimePickerFormat.Short };
+            ThemeManager.StyleDatePicker(_dtLogFrom);
+            _dtLogFrom.Value = DateTime.Today.AddDays(-30);
+
+            _dtLogTo = new DateTimePicker { Dock = DockStyle.Fill, Font = ThemeFonts.Input, Format = DateTimePickerFormat.Short };
+            ThemeManager.StyleDatePicker(_dtLogTo);
+            _dtLogTo.Value = DateTime.Today;
+
+            _cmbLogAction = new ComboBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input, DropDownStyle = ComboBoxStyle.DropDownList };
+            ThemeManager.StyleComboBox(_cmbLogAction);
+            _cmbLogAction.Items.Add("All");
+            _cmbLogAction.Items.Add(AppConstants.ActivityActions.LoginSuccess);
+            _cmbLogAction.Items.Add(AppConstants.ActivityActions.LoginFailed);
+            _cmbLogAction.Items.Add(AppConstants.ActivityActions.Logout);
+            _cmbLogAction.Items.Add(AppConstants.ActivityActions.BackupFull);
+            _cmbLogAction.Items.Add(AppConstants.ActivityActions.BackupIncremental);
+            _cmbLogAction.Items.Add(AppConstants.ActivityActions.BackupDifferential);
+            _cmbLogAction.Items.Add(AppConstants.ActivityActions.RestoreDatabase);
+            _cmbLogAction.Items.Add(AppConstants.ActivityActions.BackupError);
+            _cmbLogAction.Items.Add(AppConstants.ActivityActions.RestoreError);
+            _cmbLogAction.SelectedIndex = 0;
+
+            _txtLogUser = MakeTextBox();
+
+            _numLogLimit = new NumericUpDown
+            {
+                Dock = DockStyle.Left,
+                Width = 70,
+                Minimum = 10,
+                Maximum = 5000,
+                Value = 300
+            };
+            ThemeManager.StyleInput(_numLogLimit);
+
+            _btnRefreshLogs = new Button { Text = "Refresh", Width = 86, Height = 30 };
+            ThemeManager.StyleButtonPrimary(_btnRefreshLogs);
+            _btnRefreshLogs.Click += (s, e) => LoadUserLogs();
+
+            _btnExportLogs = new Button { Text = "Export", Width = 86, Height = 30 };
+            ThemeManager.StyleButtonNeutral(_btnExportLogs);
+            _btnExportLogs.Click += (s, e) => ExportLogsToCsv();
+
+            filters.Controls.Add(MakeLabel("From"), 0, 0);
+            filters.Controls.Add(_dtLogFrom, 1, 0);
+            filters.Controls.Add(MakeLabel("To"), 2, 0);
+            filters.Controls.Add(_dtLogTo, 3, 0);
+            filters.Controls.Add(MakeLabel("Action"), 4, 0);
+            filters.Controls.Add(_cmbLogAction, 5, 0);
+            filters.Controls.Add(MakeLabel("Max"), 6, 0);
+            filters.Controls.Add(_numLogLimit, 7, 0);
+            filters.Controls.Add(_btnRefreshLogs, 8, 0);
+            filters.Controls.Add(_btnExportLogs, 9, 0);
+
+            filters.Controls.Add(MakeLabel("User"), 0, 1);
+            filters.Controls.Add(_txtLogUser, 1, 1);
+            filters.SetColumnSpan(_txtLogUser, 7);
+
+            _gridUserLogs = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoGenerateColumns = false
+            };
+            ThemeManager.StyleDataGrid(_gridUserLogs);
+
+            _gridUserLogs.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "CreatedAt",
+                HeaderText = "Timestamp",
+                DataPropertyName = "CreatedAt",
+                FillWeight = 22
+            });
+            _gridUserLogs.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "User",
+                HeaderText = "User",
+                DataPropertyName = "UserDisplay",
+                FillWeight = 18
+            });
+            _gridUserLogs.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Action",
+                HeaderText = "Action",
+                DataPropertyName = "Action",
+                FillWeight = 14
+            });
+            _gridUserLogs.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Entity",
+                HeaderText = "Entity",
+                DataPropertyName = "Entity",
+                FillWeight = 12
+            });
+            _gridUserLogs.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "MachineName",
+                HeaderText = "Machine",
+                DataPropertyName = "MachineName",
+                FillWeight = 12
+            });
+            _gridUserLogs.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Details",
+                HeaderText = "Details",
+                DataPropertyName = "Details",
+                FillWeight = 32
+            });
+
+            host.Controls.Add(_gridUserLogs);
+            host.Controls.Add(filters);
+            gb.Controls.Add(host);
             return gb;
         }
         private static void AddProfileRow(
@@ -529,6 +848,7 @@ namespace School_Management_System.Presentation.UserControls
                     var local = _settingsService.GetDbProfile("Local");
                     var wired = _settingsService.GetDbProfile("Wired");
                     var wireless = _settingsService.GetDbProfile("Wireless");
+                    var online = _settingsService.GetDbProfile("Online");
                     var mode = _settingsService.GetDbConnectionMode();
 
                     SetProfileInputs(
@@ -555,6 +875,14 @@ namespace School_Management_System.Presentation.UserControls
                         string.IsNullOrWhiteSpace(wireless.Username) ? fallbackUser : wireless.Username,
                         string.IsNullOrWhiteSpace(wireless.Password) ? fallbackPassword : wireless.Password);
 
+                    SetProfileInputs(
+                        "Online",
+                        string.IsNullOrWhiteSpace(online.Host) ? fallbackHost : online.Host,
+                        string.IsNullOrWhiteSpace(online.Port) ? fallbackPort : online.Port,
+                        string.IsNullOrWhiteSpace(online.Database) ? fallbackDbName : online.Database,
+                        string.IsNullOrWhiteSpace(online.Username) ? fallbackUser : online.Username,
+                        string.IsNullOrWhiteSpace(online.Password) ? fallbackPassword : online.Password);
+
                     var selectedMode = NormalizeMode(string.IsNullOrWhiteSpace(mode) ? fallbackMode : mode);
                     _cmbConnectionMode.SelectedItem = selectedMode;
                     if (_cmbConnectionMode.SelectedIndex < 0)
@@ -573,6 +901,7 @@ namespace School_Management_System.Presentation.UserControls
             SetProfileInputs("Local", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
             SetProfileInputs("Wired", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
             SetProfileInputs("Wireless", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
+            SetProfileInputs("Online", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
 
             _cmbConnectionMode.SelectedItem = NormalizeMode(fallbackMode);
             if (_cmbConnectionMode.SelectedIndex < 0)
@@ -621,10 +950,12 @@ namespace School_Management_System.Presentation.UserControls
                 ValidateProfileInput("Local");
                 ValidateProfileInput("Wired");
                 ValidateProfileInput("Wireless");
+                ValidateProfileInput("Online");
 
                 SaveProfile("Local");
                 SaveProfile("Wired");
                 SaveProfile("Wireless");
+                SaveProfile("Online");
 
                 var mode = NormalizeMode(_cmbConnectionMode.SelectedItem == null ? null : _cmbConnectionMode.SelectedItem.ToString());
                 _settingsService.SetDbConnectionMode(mode);
@@ -699,6 +1030,410 @@ namespace School_Management_System.Presentation.UserControls
             ThemedMessageBox.ShowInfo(this, "Runtime DB mode applied: " + mode + ".", "Database");
         }
 
+        private void LoadBackupSettings()
+        {
+            var fallbackDirectory = _databaseBackupService == null
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SchoolManagementSystem", "Backups")
+                : _databaseBackupService.GetDefaultBackupDirectory();
+
+            if (_txtBackupDirectory != null)
+            {
+                _txtBackupDirectory.Text = fallbackDirectory;
+            }
+
+            if (_cmbBackupType != null && _cmbBackupType.SelectedIndex < 0)
+            {
+                _cmbBackupType.SelectedItem = "Full";
+            }
+
+            if (_settingsService == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var directory = _settingsService.Get(AppConstants.SettingKeys.BackupDirectory);
+                var backupType = _settingsService.Get(AppConstants.SettingKeys.BackupPreferredType);
+
+                if (_txtBackupDirectory != null && !string.IsNullOrWhiteSpace(directory))
+                {
+                    _txtBackupDirectory.Text = directory.Trim();
+                }
+
+                if (_cmbBackupType != null)
+                {
+                    var normalizedType = NormalizeBackupType(backupType);
+                    _cmbBackupType.SelectedItem = normalizedType;
+                    if (_cmbBackupType.SelectedIndex < 0)
+                    {
+                        _cmbBackupType.SelectedItem = "Full";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.LoadBackupSettings", ex);
+            }
+        }
+
+        private void SaveBackupSettings(bool showConfirmation = true)
+        {
+            var directory = (_txtBackupDirectory == null ? string.Empty : _txtBackupDirectory.Text) ?? string.Empty;
+            var selectedType = NormalizeBackupType(_cmbBackupType == null || _cmbBackupType.SelectedItem == null ? null : _cmbBackupType.SelectedItem.ToString());
+
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                directory = _databaseBackupService == null
+                    ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SchoolManagementSystem", "Backups")
+                    : _databaseBackupService.GetDefaultBackupDirectory();
+            }
+
+            directory = directory.Trim();
+            Directory.CreateDirectory(directory);
+
+            if (_txtBackupDirectory != null)
+            {
+                _txtBackupDirectory.Text = directory;
+            }
+
+            if (_settingsService != null)
+            {
+                _settingsService.Set(AppConstants.SettingKeys.BackupDirectory, directory);
+                _settingsService.Set(AppConstants.SettingKeys.BackupPreferredType, selectedType);
+            }
+
+            _lblBackupStatus.Text = "Status: Backup settings saved.";
+            _lblBackupStatus.ForeColor = ThemeColors.Success;
+            if (showConfirmation)
+            {
+                ThemedMessageBox.ShowInfo(this, "Backup settings saved.", "Backup");
+            }
+        }
+
+        private void ChooseBackupDirectory()
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = "Choose backup output folder";
+                dialog.SelectedPath = _txtBackupDirectory == null ? string.Empty : (_txtBackupDirectory.Text ?? string.Empty).Trim();
+
+                if (dialog.ShowDialog(this) == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.SelectedPath))
+                {
+                    _txtBackupDirectory.Text = dialog.SelectedPath.Trim();
+                }
+            }
+        }
+
+        private void OpenBackupDirectory()
+        {
+            try
+            {
+                var path = _txtBackupDirectory == null ? string.Empty : (_txtBackupDirectory.Text ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    path = _databaseBackupService == null
+                        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SchoolManagementSystem", "Backups")
+                        : _databaseBackupService.GetDefaultBackupDirectory();
+                }
+
+                Directory.CreateDirectory(path);
+                Process.Start("explorer.exe", path);
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.OpenBackupDirectory", ex);
+                ThemedMessageBox.ShowError(this, "Unable to open backup directory.", "Backup");
+            }
+        }
+
+        private void CreateBackupNow()
+        {
+            if (_databaseBackupService == null)
+            {
+                ThemedMessageBox.ShowError(this, "Backup service is unavailable.", "Backup");
+                return;
+            }
+
+            try
+            {
+                SaveBackupSettings(false);
+
+                var selectedType = NormalizeBackupType(_cmbBackupType == null || _cmbBackupType.SelectedItem == null ? null : _cmbBackupType.SelectedItem.ToString());
+                var outputDirectory = _txtBackupDirectory == null ? null : _txtBackupDirectory.Text;
+                var currentUser = UserSession.CurrentUser;
+
+                UseWaitCursor = true;
+                if (_btnCreateBackup != null) _btnCreateBackup.Enabled = false;
+                if (_btnRestoreBackup != null) _btnRestoreBackup.Enabled = false;
+
+                var result = _databaseBackupService.CreateBackup(
+                    selectedType,
+                    outputDirectory,
+                    currentUser == null ? (int?)null : currentUser.UserId,
+                    currentUser == null ? null : currentUser.Username);
+
+                _lblBackupStatus.Text = "Status: " + result.EffectiveType + " backup saved (" + result.RowCount + " rows changed).";
+                _lblBackupStatus.ForeColor = ThemeColors.Success;
+                ThemedMessageBox.ShowInfo(
+                    this,
+                    "Backup complete.\nType: " + result.EffectiveType + "\nFile: " + result.OutputFilePath,
+                    "Backup");
+
+                LoadUserLogs();
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.CreateBackupNow", ex);
+                _lblBackupStatus.Text = "Status: Backup failed.";
+                _lblBackupStatus.ForeColor = ThemeColors.AccentDanger;
+                ThemedMessageBox.ShowError(this, "Backup failed.\n" + BuildConnectionHint(ex.Message), "Backup");
+            }
+            finally
+            {
+                UseWaitCursor = false;
+                if (_btnCreateBackup != null) _btnCreateBackup.Enabled = true;
+                if (_btnRestoreBackup != null) _btnRestoreBackup.Enabled = true;
+            }
+        }
+
+        private void RestoreBackupFromFile()
+        {
+            if (_databaseBackupService == null)
+            {
+                ThemedMessageBox.ShowError(this, "Backup service is unavailable.", "Restore");
+                return;
+            }
+
+            try
+            {
+                var initialDirectory = _txtBackupDirectory == null ? string.Empty : (_txtBackupDirectory.Text ?? string.Empty).Trim();
+                if (!Directory.Exists(initialDirectory))
+                {
+                    initialDirectory = _databaseBackupService.GetDefaultBackupDirectory();
+                }
+
+                using (var dialog = new OpenFileDialog())
+                {
+                    dialog.Filter = "School backup (*.smsbak)|*.smsbak|All files (*.*)|*.*";
+                    dialog.Title = "Select backup file to restore";
+                    dialog.InitialDirectory = Directory.Exists(initialDirectory) ? initialDirectory : string.Empty;
+
+                    if (dialog.ShowDialog(this) != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.FileName))
+                    {
+                        return;
+                    }
+
+                    var confirm = ThemedMessageBox.ShowConfirm(
+                        this,
+                        "Restore will overwrite current database data.\nContinue restore?",
+                        "Restore Backup");
+                    if (confirm != DialogResult.OK)
+                    {
+                        return;
+                    }
+
+                    var currentUser = UserSession.CurrentUser;
+                    UseWaitCursor = true;
+                    if (_btnCreateBackup != null) _btnCreateBackup.Enabled = false;
+                    if (_btnRestoreBackup != null) _btnRestoreBackup.Enabled = false;
+
+                    var result = _databaseBackupService.RestoreBackup(
+                        dialog.FileName,
+                        currentUser == null ? (int?)null : currentUser.UserId,
+                        currentUser == null ? null : currentUser.Username);
+
+                    ConnectionStringProvider.ResetDatabaseProfileCache();
+                    _lblBackupStatus.Text = "Status: Restore complete (" + result.RestoredRows + " rows).";
+                    _lblBackupStatus.ForeColor = ThemeColors.Success;
+
+                    LoadConnectionSettings();
+                    LoadUserLogs();
+
+                    ThemedMessageBox.ShowInfo(
+                        this,
+                        "Restore complete.\nApplied packages: " + result.AppliedBackupPackages + "\nRows restored: " + result.RestoredRows + ".",
+                        "Restore Backup");
+                }
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.RestoreBackupFromFile", ex);
+                _lblBackupStatus.Text = "Status: Restore failed.";
+                _lblBackupStatus.ForeColor = ThemeColors.AccentDanger;
+                ThemedMessageBox.ShowError(this, "Restore failed.\n" + BuildConnectionHint(ex.Message), "Restore");
+            }
+            finally
+            {
+                UseWaitCursor = false;
+                if (_btnCreateBackup != null) _btnCreateBackup.Enabled = true;
+                if (_btnRestoreBackup != null) _btnRestoreBackup.Enabled = true;
+            }
+        }
+
+        private void LoadUserLogs()
+        {
+            if (_gridUserLogs == null)
+            {
+                return;
+            }
+
+            if (_activityLogService == null)
+            {
+                _currentLogs = new List<School_Management_System.Models.ActivityLog>();
+                _gridUserLogs.DataSource = new List<UserLogViewRow>();
+                return;
+            }
+
+            try
+            {
+                var fromDate = _dtLogFrom == null ? DateTime.Today.AddDays(-30) : _dtLogFrom.Value.Date;
+                var toDateExclusive = (_dtLogTo == null ? DateTime.Today : _dtLogTo.Value.Date).AddDays(1);
+                var action = _cmbLogAction == null || _cmbLogAction.SelectedItem == null ? null : _cmbLogAction.SelectedItem.ToString();
+                if (string.Equals(action, "All", StringComparison.OrdinalIgnoreCase))
+                {
+                    action = null;
+                }
+
+                var userLike = _txtLogUser == null ? null : _txtLogUser.Text;
+                var maxRows = _numLogLimit == null ? 300 : Decimal.ToInt32(_numLogLimit.Value);
+
+                _currentLogs = _activityLogService.Search(fromDate, toDateExclusive, userLike, action, maxRows);
+
+                var rows = _currentLogs
+                    .Select(log => new UserLogViewRow
+                    {
+                        CreatedAt = log.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+                        UserDisplay = BuildUserDisplay(log),
+                        Action = log.Action,
+                        Entity = string.IsNullOrWhiteSpace(log.Entity) ? "-" : log.Entity,
+                        MachineName = string.IsNullOrWhiteSpace(log.MachineName) ? "-" : log.MachineName,
+                        Details = string.IsNullOrWhiteSpace(log.Details) ? string.Empty : log.Details
+                    })
+                    .ToList();
+
+                _gridUserLogs.DataSource = rows;
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.LoadUserLogs", ex);
+                ThemedMessageBox.ShowError(this, "Unable to load user logs.", "User Logs");
+            }
+        }
+
+        private void ExportLogsToCsv()
+        {
+            try
+            {
+                if (_currentLogs == null || _currentLogs.Count == 0)
+                {
+                    ThemedMessageBox.ShowInfo(this, "No logs available to export.", "User Logs");
+                    return;
+                }
+
+                using (var dialog = new SaveFileDialog())
+                {
+                    dialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+                    dialog.Title = "Export user logs";
+                    dialog.FileName = "user-logs-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".csv";
+
+                    if (dialog.ShowDialog(this) != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.FileName))
+                    {
+                        return;
+                    }
+
+                    using (var writer = new StreamWriter(dialog.FileName, false, new UTF8Encoding(true)))
+                    {
+                        writer.WriteLine("Timestamp,Username,DisplayName,Action,Entity,EntityId,MachineName,Details");
+                        foreach (var log in _currentLogs)
+                        {
+                            var line = string.Join(",",
+                                EscapeCsvValue(log.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)),
+                                EscapeCsvValue(log.Username),
+                                EscapeCsvValue(log.DisplayName),
+                                EscapeCsvValue(log.Action),
+                                EscapeCsvValue(log.Entity),
+                                EscapeCsvValue(log.EntityId.HasValue ? log.EntityId.Value.ToString(CultureInfo.InvariantCulture) : string.Empty),
+                                EscapeCsvValue(log.MachineName),
+                                EscapeCsvValue(log.Details));
+                            writer.WriteLine(line);
+                        }
+                    }
+
+                    ThemedMessageBox.ShowInfo(this, "Logs exported successfully.", "User Logs");
+                }
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.ExportLogsToCsv", ex);
+                ThemedMessageBox.ShowError(this, "Unable to export logs.", "User Logs");
+            }
+        }
+
+        private static string BuildUserDisplay(School_Management_System.Models.ActivityLog log)
+        {
+            if (log == null)
+            {
+                return "-";
+            }
+
+            if (!string.IsNullOrWhiteSpace(log.DisplayName) && !string.IsNullOrWhiteSpace(log.Username))
+            {
+                return log.DisplayName.Trim() + " (" + log.Username.Trim() + ")";
+            }
+
+            if (!string.IsNullOrWhiteSpace(log.DisplayName))
+            {
+                return log.DisplayName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(log.Username))
+            {
+                return log.Username.Trim();
+            }
+
+            return log.UserId.HasValue ? "User #" + log.UserId.Value.ToString(CultureInfo.InvariantCulture) : "-";
+        }
+
+        private static string EscapeCsvValue(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            var safe = value.Replace("\"", "\"\"");
+            if (safe.Contains(",") || safe.Contains("\"") || safe.Contains("\r") || safe.Contains("\n"))
+            {
+                return "\"" + safe + "\"";
+            }
+
+            return safe;
+        }
+
+        private static string NormalizeBackupType(string backupType)
+        {
+            if (string.IsNullOrWhiteSpace(backupType))
+            {
+                return "Full";
+            }
+
+            var value = backupType.Trim();
+            if (string.Equals(value, "incremental", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(value, "inc", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Incremental";
+            }
+
+            if (string.Equals(value, "differential", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(value, "diff", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Differential";
+            }
+
+            return "Full";
+        }
+
         private void SaveProfile(string mode)
         {
             string host;
@@ -749,6 +1484,13 @@ namespace School_Management_System.Presentation.UserControls
                     _txtWiredUsername.Text = user ?? string.Empty;
                     _txtWiredPassword.Text = password ?? string.Empty;
                     break;
+                case "Online":
+                    _txtOnlineHost.Text = host ?? string.Empty;
+                    _txtOnlinePort.Text = port ?? string.Empty;
+                    _txtOnlineDbName.Text = db ?? string.Empty;
+                    _txtOnlineUsername.Text = user ?? string.Empty;
+                    _txtOnlinePassword.Text = password ?? string.Empty;
+                    break;
                 default:
                     _txtLocalHost.Text = host ?? string.Empty;
                     _txtLocalPort.Text = port ?? string.Empty;
@@ -777,6 +1519,13 @@ namespace School_Management_System.Presentation.UserControls
                     user = (_txtWiredUsername.Text ?? string.Empty).Trim();
                     password = _txtWiredPassword.Text ?? string.Empty;
                     return;
+                case "Online":
+                    host = (_txtOnlineHost.Text ?? string.Empty).Trim();
+                    port = (_txtOnlinePort.Text ?? string.Empty).Trim();
+                    db = (_txtOnlineDbName.Text ?? string.Empty).Trim();
+                    user = (_txtOnlineUsername.Text ?? string.Empty).Trim();
+                    password = _txtOnlinePassword.Text ?? string.Empty;
+                    return;
                 default:
                     host = (_txtLocalHost.Text ?? string.Empty).Trim();
                     port = (_txtLocalPort.Text ?? string.Empty).Trim();
@@ -785,6 +1534,16 @@ namespace School_Management_System.Presentation.UserControls
                     password = _txtLocalPassword.Text ?? string.Empty;
                     return;
             }
+        }
+
+        private sealed class UserLogViewRow
+        {
+            public string CreatedAt { get; set; }
+            public string UserDisplay { get; set; }
+            public string Action { get; set; }
+            public string Entity { get; set; }
+            public string MachineName { get; set; }
+            public string Details { get; set; }
         }
 
         private static string NormalizeMode(string mode)
@@ -810,6 +1569,14 @@ namespace School_Management_System.Presentation.UserControls
                 return "Wired";
             }
 
+            if (string.Equals(value, "online", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(value, "hostinger", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(value, "cloud", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(value, "internet", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Online";
+            }
+
             return "Local";
         }
 
@@ -823,7 +1590,7 @@ namespace School_Management_System.Presentation.UserControls
             var lower = error.ToLowerInvariant();
             if (lower.Contains("access denied"))
             {
-                return "Access denied. Verify username/password and grant remote host permission on Windows 10 MySQL.";
+                return "Access denied. Verify username/password and remote host grants. For Hostinger, ensure remote MySQL access is enabled for your client IP.";
             }
 
             if (lower.Contains("unable to connect") || lower.Contains("actively refused"))
@@ -840,3 +1607,4 @@ namespace School_Management_System.Presentation.UserControls
         }
     }
 }
+

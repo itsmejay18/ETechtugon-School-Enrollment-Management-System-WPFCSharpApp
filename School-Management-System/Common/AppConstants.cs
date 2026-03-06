@@ -23,6 +23,8 @@ namespace School_Management_System.Common
             public const string Subject = "Subject";
             public const string Curriculum = "Curriculum";
             public const string Enrollment = "Enrollment";
+            public const string Database = "Database";
+            public const string SystemSetting = "SystemSetting";
         }
 
         public static class SettingKeys
@@ -50,10 +52,32 @@ namespace School_Management_System.Common
             public const string DbUserWireless = "DbUser.Wireless";
             public const string DbPasswordWireless = "DbPassword.Wireless";
 
+            public const string DbHostOnline = "DbHost.Online";
+            public const string DbPortOnline = "DbPort.Online";
+            public const string DbNameOnline = "DbName.Online";
+            public const string DbUserOnline = "DbUser.Online";
+            public const string DbPasswordOnline = "DbPassword.Online";
+
             // Legacy key names kept for backward compatibility.
             public const string DbHostNetwork = "DbHost.Network";
             public const string DbPortNetwork = "DbPort.Network";
             public const string DbNameNetwork = "DbName.Network";
+
+            public const string BackupDirectory = "Backup.Directory";
+            public const string BackupPreferredType = "Backup.PreferredType";
+        }
+
+        public static class ActivityActions
+        {
+            public const string LoginSuccess = "LoginSuccess";
+            public const string LoginFailed = "LoginFailed";
+            public const string Logout = "Logout";
+            public const string BackupFull = "BackupFull";
+            public const string BackupIncremental = "BackupIncremental";
+            public const string BackupDifferential = "BackupDifferential";
+            public const string RestoreDatabase = "RestoreDatabase";
+            public const string BackupError = "BackupError";
+            public const string RestoreError = "RestoreError";
         }
     }
 }

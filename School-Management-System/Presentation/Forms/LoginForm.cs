@@ -31,6 +31,7 @@ namespace School_Management_System.Presentation.Forms
 
         private DatabaseHelper _db;
         private AuthService _authService;
+        private ActivityLogService _activityLogService;
 
         public LoginForm()
         {
@@ -94,13 +95,16 @@ namespace School_Management_System.Presentation.Forms
                 else
                 {
                     IUserData userData = new UserData(_db);
-                    _authService = new AuthService(userData);
+                    IActivityLogData activityLogData = new ActivityLogData(_db);
+                    _activityLogService = new ActivityLogService(activityLogData);
+                    _authService = new AuthService(userData, _activityLogService);
                     SetConnectionState(true, null);
                 }
             }
             catch (Exception ex)
             {
                 _authService = null;
+                _activityLogService = null;
                 SetConnectionState(false, BuildConnectionStateMessage(ex.Message));
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("LoginForm.TryInitServices", ex);
             }
