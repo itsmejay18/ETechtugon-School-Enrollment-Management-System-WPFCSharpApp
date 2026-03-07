@@ -219,11 +219,11 @@ VALUES ('DbName.Local', 'schoolmanagementsystem')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
-VALUES ('DbUser.Local', 'root')
+VALUES ('DbUser.Local', '')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
-VALUES ('DbPassword.Local', 'root')
+VALUES ('DbPassword.Local', '')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
@@ -239,11 +239,11 @@ VALUES ('DbName.Wired', 'schoolmanagementsystem')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
-VALUES ('DbUser.Wired', 'root')
+VALUES ('DbUser.Wired', '')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
-VALUES ('DbPassword.Wired', 'root')
+VALUES ('DbPassword.Wired', '')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
@@ -259,11 +259,11 @@ VALUES ('DbName.Wireless', 'schoolmanagementsystem')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
-VALUES ('DbUser.Wireless', 'root')
+VALUES ('DbUser.Wireless', '')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
-VALUES ('DbPassword.Wireless', 'root')
+VALUES ('DbPassword.Wireless', '')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
@@ -279,12 +279,20 @@ VALUES ('DbName.Online', 'schoolmanagementsystem')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
-VALUES ('DbUser.Online', 'root')
+VALUES ('DbUser.Online', '')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
-VALUES ('DbPassword.Online', 'root')
+VALUES ('DbPassword.Online', '')
 ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbSslMode.Online', 'Required')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(NULLIF(`SettingValue`, ''), VALUES(`SettingValue`));
+
+INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
+VALUES ('DbSslCaPath.Online', '')
+ON DUPLICATE KEY UPDATE `SettingValue` = IFNULL(`SettingValue`, VALUES(`SettingValue`));
 
 INSERT INTO `systemsetting` (`SettingKey`, `SettingValue`)
 VALUES ('DbHost.Network', 'localhost')

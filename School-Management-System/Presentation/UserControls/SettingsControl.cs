@@ -7,6 +7,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
 using School_Management_System.BusinessLayer.Services;
@@ -60,6 +62,9 @@ namespace School_Management_System.Presentation.UserControls
         private TextBox _txtOnlineDbName;
         private TextBox _txtOnlineUsername;
         private TextBox _txtOnlinePassword;
+        private ComboBox _cmbOnlineSslMode;
+        private TextBox _txtOnlineSslCaPath;
+        private Button _btnBrowseOnlineSslCaPath;
 
         private Button _btnSaveConnection;
         private Button _btnTestConnection;
@@ -73,7 +78,9 @@ namespace School_Management_System.Presentation.UserControls
         private Button _btnSaveBackupSettings;
         private Button _btnCreateBackup;
         private Button _btnRestoreBackup;
+        private Button _btnCancelBackupOperation;
         private Label _lblBackupStatus;
+        private CancellationTokenSource _backupOperationCts;
 
         private DateTimePicker _dtLogFrom;
         private DateTimePicker _dtLogTo;
@@ -264,7 +271,7 @@ namespace School_Management_System.Presentation.UserControls
             {
                 Text = "Database Connection Profiles",
                 Dock = DockStyle.Top,
-                Height = 382,
+                Height = 434,
                 Font = ThemeFonts.SubHeader,
                 ForeColor = ThemeColors.Text,
                 Padding = new Padding(12, 18, 12, 12),
@@ -276,7 +283,7 @@ namespace School_Management_System.Presentation.UserControls
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 6,
-                RowCount = 10,
+                RowCount = 11,
                 Padding = new Padding(8, 6, 8, 6)
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90));
@@ -287,6 +294,7 @@ namespace School_Management_System.Presentation.UserControls
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 22));
 
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
@@ -344,6 +352,26 @@ namespace School_Management_System.Presentation.UserControls
             layout.Controls.Add(_cmbConnectionMode, 1, 5);
             layout.SetColumnSpan(_cmbConnectionMode, 2);
 
+            _cmbOnlineSslMode = new ComboBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input, DropDownStyle = ComboBoxStyle.DropDownList };
+            ThemeManager.StyleComboBox(_cmbOnlineSslMode);
+            _cmbOnlineSslMode.Items.Add("Required");
+            _cmbOnlineSslMode.Items.Add("VerifyCA");
+            _cmbOnlineSslMode.Items.Add("VerifyFull");
+            _cmbOnlineSslMode.Items.Add("Preferred");
+            _cmbOnlineSslMode.SelectedItem = "Required";
+
+            _txtOnlineSslCaPath = MakeTextBox();
+
+            _btnBrowseOnlineSslCaPath = new Button { Text = "Browse CA", Width = 96, Height = 30, Margin = new Padding(0) };
+            ThemeManager.StyleButtonNeutral(_btnBrowseOnlineSslCaPath);
+            _btnBrowseOnlineSslCaPath.Click += (s, e) => ChooseOnlineSslCaPath();
+
+            layout.Controls.Add(MakeLabel("Online TLS"), 0, 6);
+            layout.Controls.Add(_cmbOnlineSslMode, 1, 6);
+            layout.Controls.Add(_txtOnlineSslCaPath, 3, 6);
+            layout.SetColumnSpan(_txtOnlineSslCaPath, 2);
+            layout.Controls.Add(_btnBrowseOnlineSslCaPath, 5, 6);
+
             var buttonHost = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -368,7 +396,7 @@ namespace School_Management_System.Presentation.UserControls
             buttonHost.Controls.Add(_btnTestConnection);
             buttonHost.Controls.Add(_btnApplyRuntime);
 
-            layout.Controls.Add(buttonHost, 1, 6);
+            layout.Controls.Add(buttonHost, 1, 7);
             layout.SetColumnSpan(buttonHost, 5);
 
             _lblConnectionStatus = new Label
@@ -379,7 +407,7 @@ namespace School_Management_System.Presentation.UserControls
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            layout.Controls.Add(_lblConnectionStatus, 0, 7);
+            layout.Controls.Add(_lblConnectionStatus, 0, 8);
             layout.SetColumnSpan(_lblConnectionStatus, 6);
 
             var note = new Label
@@ -390,7 +418,7 @@ namespace School_Management_System.Presentation.UserControls
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            layout.Controls.Add(note, 0, 8);
+            layout.Controls.Add(note, 0, 9);
             layout.SetColumnSpan(note, 6);
 
             gb.Controls.Add(layout);
@@ -454,11 +482,15 @@ namespace School_Management_System.Presentation.UserControls
 
             _btnCreateBackup = new Button { Text = "Create Backup", Width = 148, Height = 32, Margin = new Padding(0, 0, 10, 0) };
             ThemeManager.StyleButtonPrimary(_btnCreateBackup);
-            _btnCreateBackup.Click += (s, e) => CreateBackupNow();
+            _btnCreateBackup.Click += async (s, e) => await CreateBackupNowAsync();
 
             _btnRestoreBackup = new Button { Text = "Restore Backup", Width = 148, Height = 32, Margin = new Padding(0) };
             ThemeManager.StyleButtonDanger(_btnRestoreBackup);
-            _btnRestoreBackup.Click += (s, e) => RestoreBackupFromFile();
+            _btnRestoreBackup.Click += async (s, e) => await RestoreBackupFromFileAsync();
+
+            _btnCancelBackupOperation = new Button { Text = "Cancel", Width = 108, Height = 32, Margin = new Padding(10, 0, 0, 0), Enabled = false };
+            ThemeManager.StyleButtonNeutral(_btnCancelBackupOperation);
+            _btnCancelBackupOperation.Click += (s, e) => CancelActiveBackupOperation();
 
             var actionHost = new FlowLayoutPanel
             {
@@ -470,6 +502,7 @@ namespace School_Management_System.Presentation.UserControls
             actionHost.Controls.Add(_btnSaveBackupSettings);
             actionHost.Controls.Add(_btnCreateBackup);
             actionHost.Controls.Add(_btnRestoreBackup);
+            actionHost.Controls.Add(_btnCancelBackupOperation);
 
             _lblBackupStatus = new Label
             {
@@ -837,9 +870,15 @@ namespace School_Management_System.Presentation.UserControls
             var fallbackHost = ConfigurationManager.AppSettings["DbHost"] ?? "localhost";
             var fallbackPort = ConfigurationManager.AppSettings["DbPort"] ?? "3306";
             var fallbackDbName = ConfigurationManager.AppSettings["DbName"] ?? "schoolmanagementsystem";
-            var fallbackUser = ConfigurationManager.AppSettings["DbUser"] ?? "root";
+            var fallbackUser = ConfigurationManager.AppSettings["DbUser"] ?? string.Empty;
             var fallbackPassword = ConfigurationManager.AppSettings["DbPassword"] ?? string.Empty;
             var fallbackMode = ConfigurationManager.AppSettings["DbMode"] ?? "Local";
+            var fallbackOnlineSslMode = ConfigurationManager.AppSettings["DbSslModeOnline"]
+                                        ?? ConfigurationManager.AppSettings["DbSslMode"]
+                                        ?? "Required";
+            var fallbackOnlineSslCaPath = ConfigurationManager.AppSettings["DbSslCaPathOnline"]
+                                          ?? ConfigurationManager.AppSettings["DbSslCaPath"]
+                                          ?? string.Empty;
 
             try
             {
@@ -850,6 +889,8 @@ namespace School_Management_System.Presentation.UserControls
                     var wireless = _settingsService.GetDbProfile("Wireless");
                     var online = _settingsService.GetDbProfile("Online");
                     var mode = _settingsService.GetDbConnectionMode();
+                    var onlineSslMode = _settingsService.Get(AppConstants.SettingKeys.DbSslModeOnline);
+                    var onlineSslCaPath = _settingsService.Get(AppConstants.SettingKeys.DbSslCaPathOnline);
 
                     SetProfileInputs(
                         "Local",
@@ -890,6 +931,10 @@ namespace School_Management_System.Presentation.UserControls
                         _cmbConnectionMode.SelectedItem = "Local";
                     }
 
+                    SetOnlineSecurityInputs(
+                        string.IsNullOrWhiteSpace(onlineSslMode) ? fallbackOnlineSslMode : onlineSslMode,
+                        string.IsNullOrWhiteSpace(onlineSslCaPath) ? fallbackOnlineSslCaPath : onlineSslCaPath);
+
                     return;
                 }
             }
@@ -902,6 +947,7 @@ namespace School_Management_System.Presentation.UserControls
             SetProfileInputs("Wired", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
             SetProfileInputs("Wireless", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
             SetProfileInputs("Online", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
+            SetOnlineSecurityInputs(fallbackOnlineSslMode, fallbackOnlineSslCaPath);
 
             _cmbConnectionMode.SelectedItem = NormalizeMode(fallbackMode);
             if (_cmbConnectionMode.SelectedIndex < 0)
@@ -959,6 +1005,8 @@ namespace School_Management_System.Presentation.UserControls
 
                 var mode = NormalizeMode(_cmbConnectionMode.SelectedItem == null ? null : _cmbConnectionMode.SelectedItem.ToString());
                 _settingsService.SetDbConnectionMode(mode);
+                _settingsService.Set(AppConstants.SettingKeys.DbSslModeOnline, GetOnlineSslModeInput());
+                _settingsService.Set(AppConstants.SettingKeys.DbSslCaPathOnline, GetOnlineSslCaPathInput());
                 ConnectionStringProvider.ResetDatabaseProfileCache();
 
                 Environment.SetEnvironmentVariable("SMS_DB_MODE", mode, EnvironmentVariableTarget.Process);
@@ -1000,6 +1048,11 @@ namespace School_Management_System.Presentation.UserControls
                 if (uint.TryParse(port, out parsedPort) && parsedPort > 0)
                 {
                     builder.Port = parsedPort;
+                }
+
+                if (string.Equals(mode, "Online", StringComparison.OrdinalIgnoreCase))
+                {
+                    ApplyOnlineSslInputs(builder);
                 }
 
                 using (var conn = new MySqlConnection(builder.ConnectionString))
@@ -1147,13 +1200,22 @@ namespace School_Management_System.Presentation.UserControls
             }
         }
 
-        private void CreateBackupNow()
+        private async Task CreateBackupNowAsync()
         {
             if (_databaseBackupService == null)
             {
                 ThemedMessageBox.ShowError(this, "Backup service is unavailable.", "Backup");
                 return;
             }
+
+            if (_backupOperationCts != null)
+            {
+                ThemedMessageBox.ShowInfo(this, "A backup/restore operation is already running.", "Backup");
+                return;
+            }
+
+            var cts = new CancellationTokenSource();
+            _backupOperationCts = cts;
 
             try
             {
@@ -1164,14 +1226,18 @@ namespace School_Management_System.Presentation.UserControls
                 var currentUser = UserSession.CurrentUser;
 
                 UseWaitCursor = true;
-                if (_btnCreateBackup != null) _btnCreateBackup.Enabled = false;
-                if (_btnRestoreBackup != null) _btnRestoreBackup.Enabled = false;
+                SetBackupOperationUiState(true);
+                _lblBackupStatus.Text = "Status: Creating " + selectedType + " backup...";
+                _lblBackupStatus.ForeColor = ThemeColors.Secondary;
 
-                var result = _databaseBackupService.CreateBackup(
-                    selectedType,
-                    outputDirectory,
-                    currentUser == null ? (int?)null : currentUser.UserId,
-                    currentUser == null ? null : currentUser.Username);
+                var result = await Task.Run(
+                    () => _databaseBackupService.CreateBackup(
+                        selectedType,
+                        outputDirectory,
+                        currentUser == null ? (int?)null : currentUser.UserId,
+                        currentUser == null ? null : currentUser.Username,
+                        cts.Token),
+                    cts.Token);
 
                 _lblBackupStatus.Text = "Status: " + result.EffectiveType + " backup saved (" + result.RowCount + " rows changed).";
                 _lblBackupStatus.ForeColor = ThemeColors.Success;
@@ -1182,22 +1248,32 @@ namespace School_Management_System.Presentation.UserControls
 
                 LoadUserLogs();
             }
+            catch (OperationCanceledException)
+            {
+                _lblBackupStatus.Text = "Status: Backup cancelled.";
+                _lblBackupStatus.ForeColor = ThemeColors.Secondary;
+            }
             catch (Exception ex)
             {
-                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.CreateBackupNow", ex);
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.CreateBackupNowAsync", ex);
                 _lblBackupStatus.Text = "Status: Backup failed.";
                 _lblBackupStatus.ForeColor = ThemeColors.AccentDanger;
                 ThemedMessageBox.ShowError(this, "Backup failed.\n" + BuildConnectionHint(ex.Message), "Backup");
             }
             finally
             {
+                if (_backupOperationCts == cts)
+                {
+                    _backupOperationCts = null;
+                }
+
+                cts.Dispose();
                 UseWaitCursor = false;
-                if (_btnCreateBackup != null) _btnCreateBackup.Enabled = true;
-                if (_btnRestoreBackup != null) _btnRestoreBackup.Enabled = true;
+                SetBackupOperationUiState(false);
             }
         }
 
-        private void RestoreBackupFromFile()
+        private async Task RestoreBackupFromFileAsync()
         {
             if (_databaseBackupService == null)
             {
@@ -1205,70 +1281,142 @@ namespace School_Management_System.Presentation.UserControls
                 return;
             }
 
+            if (_backupOperationCts != null)
+            {
+                ThemedMessageBox.ShowInfo(this, "A backup/restore operation is already running.", "Restore");
+                return;
+            }
+
+            var initialDirectory = _txtBackupDirectory == null ? string.Empty : (_txtBackupDirectory.Text ?? string.Empty).Trim();
+            if (!Directory.Exists(initialDirectory))
+            {
+                initialDirectory = _databaseBackupService.GetDefaultBackupDirectory();
+            }
+
+            string selectedBackupPath = null;
+            using (var dialog = new OpenFileDialog())
+            {
+                dialog.Filter = "School backup (*.smsbak)|*.smsbak|All files (*.*)|*.*";
+                dialog.Title = "Select backup file to restore";
+                dialog.InitialDirectory = Directory.Exists(initialDirectory) ? initialDirectory : string.Empty;
+
+                if (dialog.ShowDialog(this) != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.FileName))
+                {
+                    return;
+                }
+
+                selectedBackupPath = dialog.FileName.Trim();
+            }
+
+            var confirm = ThemedMessageBox.ShowConfirm(
+                this,
+                "Restore will overwrite current database data.\nA safety Full backup will be created first.\nContinue restore?",
+                "Restore Backup");
+            if (confirm != DialogResult.OK)
+            {
+                return;
+            }
+
+            var cts = new CancellationTokenSource();
+            _backupOperationCts = cts;
+
             try
             {
-                var initialDirectory = _txtBackupDirectory == null ? string.Empty : (_txtBackupDirectory.Text ?? string.Empty).Trim();
-                if (!Directory.Exists(initialDirectory))
+                SaveBackupSettings(false);
+
+                var backupDirectory = _txtBackupDirectory == null ? string.Empty : (_txtBackupDirectory.Text ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(backupDirectory))
                 {
-                    initialDirectory = _databaseBackupService.GetDefaultBackupDirectory();
+                    backupDirectory = _databaseBackupService.GetDefaultBackupDirectory();
                 }
 
-                using (var dialog = new OpenFileDialog())
-                {
-                    dialog.Filter = "School backup (*.smsbak)|*.smsbak|All files (*.*)|*.*";
-                    dialog.Title = "Select backup file to restore";
-                    dialog.InitialDirectory = Directory.Exists(initialDirectory) ? initialDirectory : string.Empty;
+                var currentUser = UserSession.CurrentUser;
+                UseWaitCursor = true;
+                SetBackupOperationUiState(true);
 
-                    if (dialog.ShowDialog(this) != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.FileName))
-                    {
-                        return;
-                    }
+                _lblBackupStatus.Text = "Status: Creating safety full backup before restore...";
+                _lblBackupStatus.ForeColor = ThemeColors.Secondary;
 
-                    var confirm = ThemedMessageBox.ShowConfirm(
-                        this,
-                        "Restore will overwrite current database data.\nContinue restore?",
-                        "Restore Backup");
-                    if (confirm != DialogResult.OK)
-                    {
-                        return;
-                    }
-
-                    var currentUser = UserSession.CurrentUser;
-                    UseWaitCursor = true;
-                    if (_btnCreateBackup != null) _btnCreateBackup.Enabled = false;
-                    if (_btnRestoreBackup != null) _btnRestoreBackup.Enabled = false;
-
-                    var result = _databaseBackupService.RestoreBackup(
-                        dialog.FileName,
+                var safetyBackup = await Task.Run(
+                    () => _databaseBackupService.CreateBackup(
+                        "Full",
+                        backupDirectory,
                         currentUser == null ? (int?)null : currentUser.UserId,
-                        currentUser == null ? null : currentUser.Username);
+                        currentUser == null ? null : currentUser.Username,
+                        cts.Token),
+                    cts.Token);
 
-                    ConnectionStringProvider.ResetDatabaseProfileCache();
-                    _lblBackupStatus.Text = "Status: Restore complete (" + result.RestoredRows + " rows).";
-                    _lblBackupStatus.ForeColor = ThemeColors.Success;
+                _lblBackupStatus.Text = "Status: Safety backup created. Restoring selected backup...";
+                _lblBackupStatus.ForeColor = ThemeColors.Secondary;
 
-                    LoadConnectionSettings();
-                    LoadUserLogs();
+                var result = await Task.Run(
+                    () => _databaseBackupService.RestoreBackup(
+                        selectedBackupPath,
+                        currentUser == null ? (int?)null : currentUser.UserId,
+                        currentUser == null ? null : currentUser.Username,
+                        cts.Token),
+                    cts.Token);
 
-                    ThemedMessageBox.ShowInfo(
-                        this,
-                        "Restore complete.\nApplied packages: " + result.AppliedBackupPackages + "\nRows restored: " + result.RestoredRows + ".",
-                        "Restore Backup");
-                }
+                ConnectionStringProvider.ResetDatabaseProfileCache();
+                _lblBackupStatus.Text = "Status: Restore complete (" + result.RestoredRows + " rows).";
+                _lblBackupStatus.ForeColor = ThemeColors.Success;
+
+                LoadConnectionSettings();
+                LoadUserLogs();
+
+                ThemedMessageBox.ShowInfo(
+                    this,
+                    "Restore complete.\nSafety backup: " + safetyBackup.OutputFilePath + "\nApplied packages: " + result.AppliedBackupPackages + "\nRows restored: " + result.RestoredRows + ".",
+                    "Restore Backup");
+            }
+            catch (OperationCanceledException)
+            {
+                _lblBackupStatus.Text = "Status: Restore cancelled.";
+                _lblBackupStatus.ForeColor = ThemeColors.Secondary;
             }
             catch (Exception ex)
             {
-                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.RestoreBackupFromFile", ex);
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.RestoreBackupFromFileAsync", ex);
                 _lblBackupStatus.Text = "Status: Restore failed.";
                 _lblBackupStatus.ForeColor = ThemeColors.AccentDanger;
                 ThemedMessageBox.ShowError(this, "Restore failed.\n" + BuildConnectionHint(ex.Message), "Restore");
             }
             finally
             {
+                if (_backupOperationCts == cts)
+                {
+                    _backupOperationCts = null;
+                }
+
+                cts.Dispose();
                 UseWaitCursor = false;
-                if (_btnCreateBackup != null) _btnCreateBackup.Enabled = true;
-                if (_btnRestoreBackup != null) _btnRestoreBackup.Enabled = true;
+                SetBackupOperationUiState(false);
             }
+        }
+
+        private void CancelActiveBackupOperation()
+        {
+            var cts = _backupOperationCts;
+            if (cts == null || cts.IsCancellationRequested)
+            {
+                return;
+            }
+
+            cts.Cancel();
+            _lblBackupStatus.Text = "Status: Cancellation requested. Waiting for current step to finish...";
+            _lblBackupStatus.ForeColor = ThemeColors.Secondary;
+        }
+
+        private void SetBackupOperationUiState(bool isRunning)
+        {
+            if (_btnSaveBackupSettings != null) _btnSaveBackupSettings.Enabled = !isRunning;
+            if (_btnCreateBackup != null) _btnCreateBackup.Enabled = !isRunning;
+            if (_btnRestoreBackup != null) _btnRestoreBackup.Enabled = !isRunning;
+            if (_btnBrowseBackupDirectory != null) _btnBrowseBackupDirectory.Enabled = !isRunning;
+            if (_btnOpenBackupDirectory != null) _btnOpenBackupDirectory.Enabled = !isRunning;
+            if (_cmbBackupType != null) _cmbBackupType.Enabled = !isRunning;
+            if (_txtBackupDirectory != null) _txtBackupDirectory.ReadOnly = isRunning;
+            if (_btnCancelBackupOperation != null) _btnCancelBackupOperation.Enabled = isRunning;
         }
 
         private void LoadUserLogs()
@@ -1466,6 +1614,110 @@ namespace School_Management_System.Presentation.UserControls
             }
         }
 
+        private void SetOnlineSecurityInputs(string sslMode, string sslCaPath)
+        {
+            if (_cmbOnlineSslMode != null)
+            {
+                var normalizedMode = NormalizeOnlineSslMode(sslMode);
+                _cmbOnlineSslMode.SelectedItem = normalizedMode;
+                if (_cmbOnlineSslMode.SelectedIndex < 0)
+                {
+                    _cmbOnlineSslMode.SelectedItem = "Required";
+                }
+            }
+
+            if (_txtOnlineSslCaPath != null)
+            {
+                _txtOnlineSslCaPath.Text = sslCaPath ?? string.Empty;
+            }
+        }
+
+        private string GetOnlineSslModeInput()
+        {
+            var mode = _cmbOnlineSslMode == null || _cmbOnlineSslMode.SelectedItem == null
+                ? "Required"
+                : _cmbOnlineSslMode.SelectedItem.ToString();
+
+            return NormalizeOnlineSslMode(mode);
+        }
+
+        private string GetOnlineSslCaPathInput()
+        {
+            return _txtOnlineSslCaPath == null ? string.Empty : (_txtOnlineSslCaPath.Text ?? string.Empty).Trim();
+        }
+
+        private void ApplyOnlineSslInputs(MySqlConnectionStringBuilder builder)
+        {
+            if (builder == null)
+            {
+                return;
+            }
+
+            var sslMode = GetOnlineSslModeInput();
+            MySqlSslMode parsedMode;
+            if (!Enum.TryParse(sslMode, true, out parsedMode))
+            {
+                parsedMode = MySqlSslMode.Required;
+            }
+
+            if (string.Equals(parsedMode.ToString(), "None", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(parsedMode.ToString(), "Disabled", StringComparison.OrdinalIgnoreCase))
+            {
+                parsedMode = MySqlSslMode.Required;
+            }
+
+            builder.SslMode = parsedMode;
+
+            var caPath = GetOnlineSslCaPathInput();
+            if (!string.IsNullOrWhiteSpace(caPath))
+            {
+                builder.SslCa = caPath;
+            }
+        }
+
+        private void ChooseOnlineSslCaPath()
+        {
+            using (var dialog = new OpenFileDialog())
+            {
+                dialog.Title = "Select SSL CA certificate file";
+                dialog.Filter = "Certificate files (*.pem;*.crt;*.cer)|*.pem;*.crt;*.cer|All files (*.*)|*.*";
+                dialog.CheckFileExists = true;
+                dialog.Multiselect = false;
+                dialog.FileName = GetOnlineSslCaPathInput();
+
+                if (dialog.ShowDialog(this) == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.FileName))
+                {
+                    _txtOnlineSslCaPath.Text = dialog.FileName.Trim();
+                }
+            }
+        }
+
+        private static string NormalizeOnlineSslMode(string mode)
+        {
+            if (string.IsNullOrWhiteSpace(mode))
+            {
+                return "Required";
+            }
+
+            var value = mode.Trim();
+            if (string.Equals(value, "verifyca", StringComparison.OrdinalIgnoreCase))
+            {
+                return "VerifyCA";
+            }
+
+            if (string.Equals(value, "verifyfull", StringComparison.OrdinalIgnoreCase))
+            {
+                return "VerifyFull";
+            }
+
+            if (string.Equals(value, "preferred", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Preferred";
+            }
+
+            return "Required";
+        }
+
         private void SetProfileInputs(string mode, string host, string port, string db, string user, string password)
         {
             switch (NormalizeMode(mode))
@@ -1534,6 +1786,28 @@ namespace School_Management_System.Presentation.UserControls
                     password = _txtLocalPassword.Text ?? string.Empty;
                     return;
             }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_backupOperationCts != null)
+                {
+                    try
+                    {
+                        _backupOperationCts.Cancel();
+                    }
+                    catch
+                    {
+                    }
+
+                    _backupOperationCts.Dispose();
+                    _backupOperationCts = null;
+                }
+            }
+
+            base.Dispose(disposing);
         }
 
         private sealed class UserLogViewRow

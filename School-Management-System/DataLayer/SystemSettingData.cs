@@ -18,7 +18,7 @@ namespace School_Management_System.DataLayer
 
         public SystemSetting Get(string key)
         {
-            const string sql = @"SELECT SettingKey, SettingValue FROM SystemSetting WHERE SettingKey = @Key LIMIT 1;";
+            const string sql = @"SELECT SettingKey, SettingValue FROM `systemsetting` WHERE SettingKey = @Key LIMIT 1;";
             var dt = _db.ExecuteDataTable(sql, CommandType.Text, new[] { new MySqlParameter("@Key", key) });
             if (dt.Rows.Count == 0) return null;
 
@@ -32,7 +32,7 @@ namespace School_Management_System.DataLayer
 
         public IDictionary<string, string> GetAll()
         {
-            const string sql = @"SELECT SettingKey, SettingValue FROM SystemSetting;";
+            const string sql = @"SELECT SettingKey, SettingValue FROM `systemsetting`;";
             var dt = _db.ExecuteDataTable(sql, CommandType.Text, null);
             var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (DataRow row in dt.Rows)
@@ -49,7 +49,7 @@ namespace School_Management_System.DataLayer
         public void Set(string key, string value)
         {
             const string sql = @"
-INSERT INTO SystemSetting (SettingKey, SettingValue)
+INSERT INTO `systemsetting` (SettingKey, SettingValue)
 VALUES (@Key, @Value)
 ON DUPLICATE KEY UPDATE SettingValue = @Value;";
 

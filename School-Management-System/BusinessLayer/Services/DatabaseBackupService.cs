@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Xml.Serialization;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -15,7 +16,7 @@ using School_Management_System.Models;
 
 namespace School_Management_System.BusinessLayer.Services
 {
-    public sealed class DatabaseBackupService
+    public sealed partial class DatabaseBackupService
     {
         private const string BackupTypeFull = "Full";
         private const string BackupTypeIncremental = "Incremental";
@@ -42,6 +43,12 @@ namespace School_Management_System.BusinessLayer.Services
 
         public DatabaseBackupResult CreateBackup(string requestedType, string outputDirectory, int? userId, string username)
         {
+            return CreateBackup(requestedType, outputDirectory, userId, username, CancellationToken.None);
+        }
+
+        public DatabaseBackupResult CreateBackup(string requestedType, string outputDirectory, int? userId, string username, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             var normalizedRequestedType = NormalizeBackupType(requestedType);
             var effectiveType = normalizedRequestedType;
             var notes = new List<string>();
@@ -51,7 +58,7 @@ namespace School_Management_System.BusinessLayer.Services
                 var targetDirectory = NormalizeOutputDirectory(outputDirectory);
                 Directory.CreateDirectory(targetDirectory);
 
-                var currentSnapshot = CaptureCurrentSnapshot();
+                var currentSnapshot = CaptureCurrentSnapshot(cancellationToken);
                 var latestSnapshot = LoadSnapshotState(GetLatestSnapshotPath());
                 var lastFullSnapshot = LoadSnapshotState(GetLastFullSnapshotPath());
 
@@ -93,11 +100,12 @@ namespace School_Management_System.BusinessLayer.Services
                     rootFullBackupId,
                     userId,
                     username,
-                    notes);
+                    notes,
+                    cancellationToken);
 
                 var fileName = BuildBackupFileName(package.Metadata.CreatedAtUtc, effectiveType, backupId);
                 var outputFilePath = Path.Combine(targetDirectory, fileName);
-                SaveXml(outputFilePath, package);
+                SaveBackupPackage(outputFilePath, package);
 
                 SaveSnapshotState(
                     new DatabaseBackupSnapshotState
@@ -159,6 +167,12 @@ namespace School_Management_System.BusinessLayer.Services
 
         public DatabaseRestoreResult RestoreBackup(string backupFilePath, int? userId, string username)
         {
+            return RestoreBackup(backupFilePath, userId, username, CancellationToken.None);
+        }
+
+        public DatabaseRestoreResult RestoreBackup(string backupFilePath, int? userId, string username, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             if (string.IsNullOrWhiteSpace(backupFilePath))
             {
                 throw new ArgumentException("Backup file path is required.", nameof(backupFilePath));
@@ -173,9 +187,9 @@ namespace School_Management_System.BusinessLayer.Services
             try
             {
                 var selectedPackage = LoadBackupPackage(filePath);
-                var chain = ResolveRestoreChain(selectedPackage, filePath);
-                var snapshot = BuildSnapshotFromRestoreChain(chain);
-                ApplySnapshotToDatabase(snapshot);
+                var chain = ResolveRestoreChain(selectedPackage, filePath, cancellationToken);
+                var snapshot = BuildSnapshotFromRestoreChain(chain, cancellationToken);
+                ApplySnapshotToDatabase(snapshot, cancellationToken);
 
                 var latestPackage = chain[chain.Count - 1];
                 SaveSnapshotState(
@@ -243,8 +257,10 @@ namespace School_Management_System.BusinessLayer.Services
             string rootFullBackupId,
             int? userId,
             string username,
-            IList<string> notes)
+            IList<string> notes,
+            CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var builder = new MySqlConnectionStringBuilder(ConnectionStringProvider.GetDefault());
             var package = new DatabaseBackupPackage
             {
@@ -270,11 +286,14 @@ namespace School_Management_System.BusinessLayer.Services
                 return package;
             }
 
-            package.Tables = BuildDeltaTables(currentSnapshot.Tables, baselineSnapshot == null ? null : baselineSnapshot.Tables);
+            package.Tables = BuildDeltaTables(
+                currentSnapshot.Tables,
+                baselineSnapshot == null ? null : baselineSnapshot.Tables,
+                cancellationToken);
             return package;
         }
 
-        private DatabaseBackupSnapshotState CaptureCurrentSnapshot()
+        private DatabaseBackupSnapshotState CaptureCurrentSnapshot(CancellationToken cancellationToken)
         {
             var snapshot = new DatabaseBackupSnapshotState
             {
@@ -284,7 +303,8 @@ namespace School_Management_System.BusinessLayer.Services
 
             foreach (var tableName in GetDatabaseTableNames())
             {
-                snapshot.Tables.Add(CaptureTableSnapshot(tableName));
+                cancellationToken.ThrowIfCancellationRequested();
+                snapshot.Tables.Add(CaptureTableSnapshot(tableName, cancellationToken));
             }
 
             return snapshot;
@@ -320,8 +340,9 @@ ORDER BY table_name;";
             return list;
         }
 
-        private DatabaseBackupTableData CaptureTableSnapshot(string tableName)
+        private DatabaseBackupTableData CaptureTableSnapshot(string tableName, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var tableData = new DatabaseBackupTableData
             {
                 TableName = tableName,
@@ -343,6 +364,7 @@ ORDER BY table_name;";
 
             foreach (DataRow row in dt.Rows)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (row == null)
                 {
                     continue;
@@ -460,7 +482,8 @@ ORDER BY k.ORDINAL_POSITION;";
 
         private static List<DatabaseBackupTableData> BuildDeltaTables(
             IList<DatabaseBackupTableData> currentTables,
-            IList<DatabaseBackupTableData> baselineTables)
+            IList<DatabaseBackupTableData> baselineTables,
+            CancellationToken cancellationToken)
         {
             var baselineByName = new Dictionary<string, DatabaseBackupTableData>(StringComparer.OrdinalIgnoreCase);
             if (baselineTables != null)
@@ -479,6 +502,7 @@ ORDER BY k.ORDINAL_POSITION;";
             var deltaTables = new List<DatabaseBackupTableData>();
             foreach (var currentTable in currentTables ?? new List<DatabaseBackupTableData>())
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 if (currentTable == null || string.IsNullOrWhiteSpace(currentTable.TableName))
                 {
                     continue;
@@ -1000,7 +1024,7 @@ ORDER BY k.ORDINAL_POSITION;";
 
         private static DatabaseBackupPackage LoadBackupPackage(string path)
         {
-            var package = LoadXml<DatabaseBackupPackage>(path);
+            var package = ReadBackupPackage(path);
             if (package == null || package.Metadata == null || string.IsNullOrWhiteSpace(package.Metadata.BackupId))
             {
                 throw new InvalidOperationException("Invalid backup file: " + path);
@@ -1015,8 +1039,9 @@ ORDER BY k.ORDINAL_POSITION;";
             return package;
         }
 
-        private static List<DatabaseBackupPackage> ResolveRestoreChain(DatabaseBackupPackage selectedPackage, string selectedFilePath)
+        private static List<DatabaseBackupPackage> ResolveRestoreChain(DatabaseBackupPackage selectedPackage, string selectedFilePath, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var selectedType = NormalizeBackupType(selectedPackage.Metadata.BackupType);
             if (string.Equals(selectedType, BackupTypeFull, StringComparison.OrdinalIgnoreCase))
             {
@@ -1024,7 +1049,7 @@ ORDER BY k.ORDINAL_POSITION;";
             }
 
             var directory = Path.GetDirectoryName(selectedFilePath);
-            var packageById = LoadBackupPackagesInDirectory(directory);
+            var packageById = LoadBackupPackagesInDirectory(directory, cancellationToken);
             packageById[selectedPackage.Metadata.BackupId] = selectedPackage;
 
             if (string.Equals(selectedType, BackupTypeDifferential, StringComparison.OrdinalIgnoreCase))
@@ -1052,6 +1077,7 @@ ORDER BY k.ORDINAL_POSITION;";
             var current = selectedPackage;
             while (!string.Equals(NormalizeBackupType(current.Metadata.BackupType), BackupTypeFull, StringComparison.OrdinalIgnoreCase))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var parent = ResolveParentPackage(current, packageById);
                 if (parent == null || parent.Metadata == null || string.IsNullOrWhiteSpace(parent.Metadata.BackupId))
                 {
@@ -1071,7 +1097,7 @@ ORDER BY k.ORDINAL_POSITION;";
             return chainReversed;
         }
 
-        private static Dictionary<string, DatabaseBackupPackage> LoadBackupPackagesInDirectory(string directory)
+        private static Dictionary<string, DatabaseBackupPackage> LoadBackupPackagesInDirectory(string directory, CancellationToken cancellationToken)
         {
             var map = new Dictionary<string, DatabaseBackupPackage>(StringComparer.OrdinalIgnoreCase);
             if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
@@ -1081,6 +1107,7 @@ ORDER BY k.ORDINAL_POSITION;";
 
             foreach (var path in Directory.GetFiles(directory, BackupFileSearchPattern, SearchOption.TopDirectoryOnly))
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 try
                 {
                     var package = LoadBackupPackage(path);
@@ -1117,8 +1144,9 @@ ORDER BY k.ORDINAL_POSITION;";
             return parent;
         }
 
-        private static DatabaseBackupSnapshotState BuildSnapshotFromRestoreChain(IList<DatabaseBackupPackage> chain)
+        private static DatabaseBackupSnapshotState BuildSnapshotFromRestoreChain(IList<DatabaseBackupPackage> chain, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (chain == null || chain.Count == 0)
             {
                 throw new InvalidOperationException("No backup chain available for restore.");
@@ -1151,9 +1179,11 @@ ORDER BY k.ORDINAL_POSITION;";
 
             for (var i = 1; i < chain.Count; i++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var package = chain[i];
                 foreach (var deltaTable in package.Tables ?? new List<DatabaseBackupTableData>())
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (deltaTable == null || string.IsNullOrWhiteSpace(deltaTable.TableName))
                     {
                         continue;
@@ -1188,12 +1218,14 @@ ORDER BY k.ORDINAL_POSITION;";
 
                     foreach (var deleteRow in deltaTable.DeletedKeys ?? new List<DatabaseBackupRowData>())
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         var deleteKey = BuildRowIdentity(deleteRow, keyColumns);
                         rowMap.Remove(deleteKey);
                     }
 
                     foreach (var upsertRow in deltaTable.Rows ?? new List<DatabaseBackupRowData>())
                     {
+                        cancellationToken.ThrowIfCancellationRequested();
                         var upsertKey = BuildRowIdentity(upsertRow, keyColumns);
                         rowMap[upsertKey] = CloneRow(upsertRow);
                     }
@@ -1299,8 +1331,9 @@ ORDER BY k.ORDINAL_POSITION;";
             return list;
         }
 
-        private void ApplySnapshotToDatabase(DatabaseBackupSnapshotState snapshot)
+        private void ApplySnapshotToDatabase(DatabaseBackupSnapshotState snapshot, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (snapshot == null || snapshot.Tables == null)
             {
                 throw new InvalidOperationException("Backup snapshot is empty.");
@@ -1319,6 +1352,7 @@ ORDER BY k.ORDINAL_POSITION;";
 
                         foreach (var table in snapshot.Tables)
                         {
+                            cancellationToken.ThrowIfCancellationRequested();
                             if (table == null || string.IsNullOrWhiteSpace(table.TableName))
                             {
                                 continue;
@@ -1329,7 +1363,8 @@ ORDER BY k.ORDINAL_POSITION;";
 
                         foreach (var table in snapshot.Tables)
                         {
-                            InsertTableRows(conn, tx, table);
+                            cancellationToken.ThrowIfCancellationRequested();
+                            InsertTableRows(conn, tx, table, cancellationToken);
                         }
 
                         ExecuteCommand(conn, tx, "SET FOREIGN_KEY_CHECKS = 1;");
@@ -1366,8 +1401,9 @@ ORDER BY k.ORDINAL_POSITION;";
             }
         }
 
-        private static void InsertTableRows(MySqlConnection conn, MySqlTransaction tx, DatabaseBackupTableData table)
+        private static void InsertTableRows(MySqlConnection conn, MySqlTransaction tx, DatabaseBackupTableData table, CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             if (table == null || string.IsNullOrWhiteSpace(table.TableName) || table.Rows == null || table.Rows.Count == 0)
             {
                 return;
@@ -1396,6 +1432,7 @@ ORDER BY k.ORDINAL_POSITION;";
 
                 foreach (var row in table.Rows)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     cmd.Parameters.Clear();
                     for (var i = 0; i < columns.Count; i++)
                     {

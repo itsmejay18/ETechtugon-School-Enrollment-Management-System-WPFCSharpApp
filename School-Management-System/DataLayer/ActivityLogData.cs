@@ -28,7 +28,7 @@ namespace School_Management_System.DataLayer
             EnsureSchema();
 
             const string sql = @"
-INSERT INTO ActivityLog
+INSERT INTO `activitylog`
 (UserId, Action, Entity, EntityId, Details, MachineName, CreatedAt)
 VALUES
 (@UserId, @Action, @Entity, @EntityId, @Details, @MachineName, UTC_TIMESTAMP());";
@@ -73,8 +73,8 @@ SELECT
     a.CreatedAt,
     u.Username,
     u.DisplayName
-FROM ActivityLog a
-LEFT JOIN Users u ON u.UserId = a.UserId
+FROM `activitylog` a
+LEFT JOIN `users` u ON u.UserId = a.UserId
 WHERE (@FromUtc IS NULL OR a.CreatedAt >= @FromUtc)
   AND (@ToUtc IS NULL OR a.CreatedAt < @ToUtc)
   AND (@Action IS NULL OR @Action = '' OR a.Action = @Action)
@@ -150,23 +150,7 @@ WHERE table_schema = DATABASE()
                 var exists = Convert.ToInt32(_db.ExecuteScalar(existsSql, CommandType.Text, null)) > 0;
                 if (!exists)
                 {
-                    const string createSql = @"
-CREATE TABLE IF NOT EXISTS `activitylog` (
-  `ActivityLogId` int NOT NULL AUTO_INCREMENT,
-  `UserId` int DEFAULT NULL,
-  `Action` varchar(50) NOT NULL,
-  `Entity` varchar(50) DEFAULT NULL,
-  `EntityId` int DEFAULT NULL,
-  `Details` varchar(4000) DEFAULT NULL,
-  `MachineName` varchar(100) DEFAULT NULL,
-  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
-  PRIMARY KEY (`ActivityLogId`),
-  KEY `IX_ActivityLog_CreatedAt` (`CreatedAt`),
-  KEY `FK_ActivityLog_Users` (`UserId`),
-  CONSTRAINT `FK_ActivityLog_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
-
-                    _db.ExecuteNonQuery(createSql, CommandType.Text, null);
+                    throw new InvalidOperationException("Missing required table 'activitylog'. Run schema migrations before using user activity logs.");
                 }
                 else
                 {
@@ -180,8 +164,7 @@ WHERE table_schema = DATABASE()
                     var hasMachineName = Convert.ToInt32(_db.ExecuteScalar(machineColumnSql, CommandType.Text, null)) > 0;
                     if (!hasMachineName)
                     {
-                        const string alterSql = @"ALTER TABLE `activitylog` ADD COLUMN `MachineName` varchar(100) DEFAULT NULL AFTER `Details`;";
-                        _db.ExecuteNonQuery(alterSql, CommandType.Text, null);
+                        throw new InvalidOperationException("Missing required column 'activitylog.MachineName'. Run schema migrations before using user activity logs.");
                     }
                 }
 

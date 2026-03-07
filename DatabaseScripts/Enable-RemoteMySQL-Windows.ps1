@@ -4,7 +4,8 @@ param(
     [string]$AdminUser = 'root',
     [string]$AdminPassword = '',
     [string]$ClientHost = '%',
-    [string]$RootPasswordForClient = '',
+    [string]$AppUser = 'sms_app',
+    [string]$AppPassword = '',
     [string]$Database = 'schoolmanagementsystem',
     [string]$MySqlServiceName = 'MySQL80',
     [string]$BindAddress = '0.0.0.0'
@@ -130,8 +131,8 @@ if ([string]::IsNullOrWhiteSpace($AdminPassword)) {
     throw "Admin password is required. Pass -AdminPassword <password>."
 }
 
-if ([string]::IsNullOrWhiteSpace($RootPasswordForClient)) {
-    throw "Remote root password is required. Pass -RootPasswordForClient <password>."
+if ([string]::IsNullOrWhiteSpace($AppPassword)) {
+    throw "Remote application password is required. Pass -AppPassword <password>."
 }
 
 $myIniPath = Get-MyIniPath -serviceName $MySqlServiceName
@@ -151,14 +152,15 @@ if (-not (Test-Path $allowRemoteScript)) {
     throw "Required script not found: $allowRemoteScript"
 }
 
-Write-Host "Applying remote root grants..."
+Write-Host "Applying remote least-privilege application grants..."
 & powershell -ExecutionPolicy Bypass -File $allowRemoteScript `
     -HostName $MySqlHostName `
     -Port $MySqlPort `
     -AdminUser $AdminUser `
     -AdminPassword $AdminPassword `
     -ClientHost $ClientHost `
-    -RootPasswordForClient $RootPasswordForClient `
+    -AppUser $AppUser `
+    -AppPassword $AppPassword `
     -Database $Database
 
 if ($LASTEXITCODE -ne 0) {

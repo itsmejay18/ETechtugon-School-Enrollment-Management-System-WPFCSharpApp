@@ -4,7 +4,8 @@ param(
     [string]$AdminUser = 'root',
     [string]$AdminPassword = '',
     [string]$ClientHost = '%',
-    [string]$RootPasswordForClient = '',
+    [string]$AppUser = 'sms_app',
+    [string]$AppPassword = '',
     [string]$Database = 'schoolmanagementsystem'
 )
 
@@ -17,8 +18,8 @@ if ([string]::IsNullOrWhiteSpace($AdminPassword)) {
     throw "Admin password is required. Pass -AdminPassword <password>."
 }
 
-if ([string]::IsNullOrWhiteSpace($RootPasswordForClient)) {
-    throw "Root password for remote client is required. Pass -RootPasswordForClient <password>."
+if ([string]::IsNullOrWhiteSpace($AppPassword)) {
+    throw "Application password is required. Pass -AppPassword <password>."
 }
 
 function Escape-Sql([string]$value) {
@@ -27,32 +28,34 @@ function Escape-Sql([string]$value) {
 }
 
 $safeClientHost = Escape-Sql $ClientHost
-$safeRootPasswordForClient = Escape-Sql $RootPasswordForClient
+$safeAppUser = Escape-Sql $AppUser
+$safeAppPassword = Escape-Sql $AppPassword
 $safeDatabase = Escape-Sql $Database
-
 $dbIdentifier = ([char]96 + $safeDatabase + [char]96 + ".*")
+
 $sql = @"
-CREATE USER IF NOT EXISTS 'root'@'$safeClientHost' IDENTIFIED WITH mysql_native_password BY '$safeRootPasswordForClient';
-ALTER USER 'root'@'$safeClientHost' IDENTIFIED WITH mysql_native_password BY '$safeRootPasswordForClient';
-GRANT ALL PRIVILEGES ON $dbIdentifier TO 'root'@'$safeClientHost';
+CREATE USER IF NOT EXISTS '$safeAppUser'@'$safeClientHost' IDENTIFIED BY '$safeAppPassword';
+ALTER USER '$safeAppUser'@'$safeClientHost' IDENTIFIED BY '$safeAppPassword';
+GRANT SELECT, INSERT, UPDATE, DELETE ON $dbIdentifier TO '$safeAppUser'@'$safeClientHost';
 FLUSH PRIVILEGES;
-SHOW GRANTS FOR 'root'@'$safeClientHost';
+SHOW GRANTS FOR '$safeAppUser'@'$safeClientHost';
 "@
 
-$tmpSql = Join-Path $env:TEMP ("sms-remote-root-" + [guid]::NewGuid().ToString("N") + ".sql")
+$tmpSql = Join-Path $env:TEMP ("sms-remote-app-user-" + [guid]::NewGuid().ToString("N") + ".sql")
 try {
     Set-Content -Path $tmpSql -Value $sql -Encoding UTF8
 
-    Write-Host ("Configuring remote MySQL access for root@{0} on {1}:{2}..." -f $ClientHost, $HostName, $Port)
+    Write-Host ("Configuring remote MySQL app user '{0}'@'{1}' on {2}:{3}..." -f $AppUser, $ClientHost, $HostName, $Port)
     & $mysqlExe --host=$HostName --port=$Port --user=$AdminUser --password=$AdminPassword --default-character-set=utf8mb4 --execute="source $tmpSql"
 
     if ($LASTEXITCODE -ne 0) {
         throw "MySQL command failed with exit code $LASTEXITCODE."
     }
 
-    Write-Host "Remote access configured successfully."
+    Write-Host "Remote least-privilege user configured successfully."
     Write-Host ("Client host allowed: {0}" -f $ClientHost)
     Write-Host ("Database granted: {0}" -f $Database)
+    Write-Host ("Application user: {0}" -f $AppUser)
 }
 finally {
     if (Test-Path $tmpSql) {

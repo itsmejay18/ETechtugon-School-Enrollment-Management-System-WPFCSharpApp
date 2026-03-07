@@ -57,6 +57,8 @@ namespace School_Management_System.Common
             public const string DbNameOnline = "DbName.Online";
             public const string DbUserOnline = "DbUser.Online";
             public const string DbPasswordOnline = "DbPassword.Online";
+            public const string DbSslModeOnline = "DbSslMode.Online";
+            public const string DbSslCaPathOnline = "DbSslCaPath.Online";
 
             // Legacy key names kept for backward compatibility.
             public const string DbHostNetwork = "DbHost.Network";

@@ -97,20 +97,6 @@ WHERE table_schema = DATABASE()
   AND column_name = 'PhotoPath';";
 
             _hasPhotoPathColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
-            if (!_hasPhotoPathColumn.Value)
-            {
-                try
-                {
-                    const string alterSql = @"ALTER TABLE `users` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `DisplayName`;";
-                    _db.ExecuteNonQuery(alterSql, CommandType.Text, null);
-                    _hasPhotoPathColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
-                }
-                catch
-                {
-                    // Ignore migration failure; login can continue without photo-path column.
-                }
-            }
-
             return _hasPhotoPathColumn.Value;
         }
     }

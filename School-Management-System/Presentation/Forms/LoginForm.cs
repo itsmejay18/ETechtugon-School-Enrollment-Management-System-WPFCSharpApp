@@ -7,6 +7,7 @@ using School_Management_System.BusinessLayer.Services;
 using School_Management_System.BusinessLayer.Session;
 using School_Management_System.Common;
 using School_Management_System.DataLayer;
+using School_Management_System.DataLayer.Configuration;
 using School_Management_System.DataLayer.Interfaces;
 using School_Management_System.Presentation.Base;
 using School_Management_System.Presentation.Helpers;
@@ -94,6 +95,7 @@ namespace School_Management_System.Presentation.Forms
                 }
                 else
                 {
+                    SchemaMigrationRunner.EnsureCurrent(_db);
                     IUserData userData = new UserData(_db);
                     IActivityLogData activityLogData = new ActivityLogData(_db);
                     _activityLogService = new ActivityLogService(activityLogData);
@@ -345,7 +347,7 @@ namespace School_Management_System.Presentation.Forms
 
             if (lower.Contains("access denied for user") || (lower.Contains("host") && lower.Contains("not allowed to connect")))
             {
-                return "Database access denied. Run DatabaseScripts\\Allow-RemoteRoot.ps1 on the MySQL server, then allow host '" +
+                return "Database access denied. Run DatabaseScripts\\Allow-RemoteRoot.ps1 on the MySQL server using an app user, then allow host '" +
                     Environment.MachineName + "' (or '%') and retry.";
             }
 

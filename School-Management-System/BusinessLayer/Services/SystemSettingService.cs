@@ -17,17 +17,40 @@ namespace School_Management_System.BusinessLayer.Services
         public string Get(string key)
         {
             var setting = _data.Get(key);
-            return setting == null ? null : setting.SettingValue;
+            if (setting == null)
+            {
+                return null;
+            }
+
+            return IsSensitiveSettingKey(key)
+                ? SensitiveDataProtector.Unprotect(setting.SettingValue)
+                : setting.SettingValue;
         }
 
         public IDictionary<string, string> GetAll()
         {
-            return _data.GetAll();
+            var all = _data.GetAll();
+            var normalized = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var pair in all)
+            {
+                var key = pair.Key;
+                var value = pair.Value;
+                normalized[key] = IsSensitiveSettingKey(key)
+                    ? SensitiveDataProtector.Unprotect(value)
+                    : value;
+            }
+
+            return normalized;
         }
 
         public void Set(string key, string value)
         {
-            _data.Set(key, value);
+            var storedValue = IsSensitiveSettingKey(key)
+                ? SensitiveDataProtector.Protect(value ?? string.Empty)
+                : (value ?? string.Empty);
+
+            _data.Set(key, storedValue);
         }
 
         public (int? AcademicYearId, int? SemesterId) GetActiveTerm()
@@ -94,7 +117,7 @@ namespace School_Management_System.BusinessLayer.Services
             _data.Set(portKey, port ?? string.Empty);
             _data.Set(dbKey, database ?? string.Empty);
             _data.Set(userKey, username ?? string.Empty);
-            _data.Set(passwordKey, password ?? string.Empty);
+            Set(passwordKey, password ?? string.Empty);
 
             if (string.Equals(normalizedMode, "Wired", StringComparison.OrdinalIgnoreCase))
             {
@@ -189,6 +212,19 @@ namespace School_Management_System.BusinessLayer.Services
             if (string.IsNullOrWhiteSpace(value)) return null;
             int parsed;
             return int.TryParse(value, out parsed) ? (int?)parsed : null;
+        }
+
+        private static bool IsSensitiveSettingKey(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            return string.Equals(key, AppConstants.SettingKeys.DbPasswordLocal, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(key, AppConstants.SettingKeys.DbPasswordWired, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(key, AppConstants.SettingKeys.DbPasswordWireless, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(key, AppConstants.SettingKeys.DbPasswordOnline, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

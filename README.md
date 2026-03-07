@@ -1,39 +1,63 @@
 # School Management System (WinForms, .NET Framework 4.7.2)
 
-## Setup
-1. Create the MySQL database by running `DatabaseScripts/SchoolManagementSystem.sql` in MySQL Workbench, or run `DatabaseScripts/Init-MySQL.ps1`.
-2. Set database values using `SMS_DB_HOST`, `SMS_DB_PORT`, `SMS_DB_NAME`, `SMS_DB_USER`, `SMS_DB_PASSWORD` environment variables (recommended), or update `School-Management-System/App.config` locally.
-3. Choose active connection mode using either:
-   - command line: `School-Management-System.exe --db-mode=Local|Wired|Wireless|Online`
-   - Settings module: `Settings > Database > Database Connection Profiles`
-4. Database settings also include:
-   - Full / Incremental / Differential backup creation
-   - Restore from `.smsbak` files
-   - User activity logs (filter + CSV export)
-5. Build and run the solution `School-Management-System.sln`.
+## What is implemented now
+- Database profiles: `Local`, `Wired`, `Wireless`, `Online (Hostinger)`
+- Full, Incremental, and Differential backups (`.smsbak`)
+- Restore flow with automatic safety Full backup before destructive restore
+- Backup files are now encrypted + integrity-signed (new format), with legacy backup compatibility
+- User activity logs (filter + CSV export)
+- Runtime schema migration runner on login
+- Database passwords in `SystemSetting` are stored protected (DPAPI)
 
-## Navigation Layout
-- Workflow menu: `Dashboard`, `Students`, `Faculty`, `Enrollment`, `Schedule`, `Calendar`, `Settings`
-- Administrative setup is consolidated under `Settings` tabs:
-  - `Departments`, `Courses`, `Year Levels`, `Sections`, `Subjects`, `Curriculum`, `User Management`
+## Quick setup
+1. Create database schema:
+   - Run `DatabaseScripts/SchoolManagementSystem.sql`
+2. Apply incremental migrations (recommended for existing DBs):
+   - `powershell -ExecutionPolicy Bypass -File .\DatabaseScripts\Apply-Migrations.ps1 -HostName <host> -Port 3306 -Username <user> -Password <password> -Database schoolmanagementsystem`
+3. Configure connection values using environment variables (preferred):
+   - `SMS_DB_HOST`, `SMS_DB_PORT`, `SMS_DB_NAME`, `SMS_DB_USER`, `SMS_DB_PASSWORD`
+   - Optional: `SMS_DB_MODE=Local|Wired|Wireless|Online`
+4. For Online/Hostinger TLS:
+   - Set profile values in `Settings > Database > Database Connection Profiles`
+   - Use `DbSslMode.Online` (`Required` recommended)
+   - Set `DbSslCaPath.Online` if your provider requires CA bundle validation
+5. Build and run `School-Management-System.sln`
 
-## Remote Client Access (Laptop -> Windows 10 MySQL Host)
-If login fails with `Access denied for user ...` from a remote host, run this on the **Windows 10 machine that hosts MySQL**:
+## Backup and restore behavior
+- Backup types:
+  - `Full`: complete snapshot
+  - `Incremental`: delta from latest backup
+  - `Differential`: delta from latest Full backup
+- Restore:
+  - Select target backup file
+  - System automatically creates a safety Full backup first
+  - Then applies restore chain (Full + dependent deltas)
+- Cancellation:
+  - Backup/Restore UI has a `Cancel` button
+  - Operations stop at safe checkpoints
+
+## Backup encryption key configuration
+- Optional override key for portable encrypted backups:
+  - Env var: `SMS_BACKUP_KEY`
+  - App.config key: `BackupEncryptionKey`
+- If not set, app generates a local protected secret in `%LOCALAPPDATA%\SchoolManagementSystem\backup-state\backup.secret`
+
+## Remote MySQL (Windows host) - least privilege app user
+Use this script on the MySQL host machine:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\DatabaseScripts\Allow-RemoteRoot.ps1 `
   -HostName localhost `
   -Port 3306 `
-  -AdminUser <ADMIN_USER> `
+  -AdminUser root `
   -AdminPassword <ADMIN_PASSWORD> `
-  -ClientHost <CLIENT_HOSTNAME_OR_%> `
-  -RootPasswordForClient <REMOTE_ROOT_PASSWORD> `
+  -ClientHost % `
+  -AppUser sms_app `
+  -AppPassword <APP_PASSWORD> `
   -Database schoolmanagementsystem
 ```
 
-Then keep `School-Management-System/App.config` host set to the server IP (example: `192.168.1.107`) and retry login from the laptop.
-
-If login/test fails with `Target host is unreachable/refused`, run this (as Administrator) on the Windows 10 MySQL host to configure bind address + firewall + grants in one step:
+All-in-one setup (bind address + firewall + grants):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\DatabaseScripts\Enable-RemoteMySQL-Windows.ps1 `
@@ -42,76 +66,46 @@ powershell -ExecutionPolicy Bypass -File .\DatabaseScripts\Enable-RemoteMySQL-Wi
   -AdminUser root `
   -AdminPassword <ADMIN_PASSWORD> `
   -ClientHost % `
-  -RootPasswordForClient <REMOTE_ROOT_PASSWORD> `
+  -AppUser sms_app `
+  -AppPassword <APP_PASSWORD> `
   -Database schoolmanagementsystem `
   -MySqlServiceName MySQL80
 ```
 
-If modules fail with errors like `Table '...systemsetting' doesn't exist`, run the remote schema/seed patch:
+## Patch remote schema (existing DB)
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\DatabaseScripts\Patch-RemoteMySQL.ps1 `
-  -HostName <DB_HOST_IP> `
+  -HostName <DB_HOST> `
   -Port 3306 `
   -Username <DB_USER> `
   -Password <DB_PASSWORD> `
   -Database schoolmanagementsystem
 ```
 
-## Security Note
-- Do not commit real database hostnames, usernames, or passwords to Git.
-- If credentials were already pushed, rotate them on MySQL and then push the sanitized config/docs.
+## Tests
+A baseline NUnit test project is included:
+- `School-Management-System.Tests`
 
-## Default Login (Seeded By SQL Script)
-- Username: `admin`
-- Password: `admin123`
-- Username: `registrar`
-- Password: `registrar123`
-- Username: `faculty1`
-- Password: `faculty123`
-
-## Publish Fix (Certificate Error)
-If Visual Studio shows:
-- `Default certificate could not be created. Publish aborting.`
-
-Use the included script to create a valid ClickOnce certificate and wire it into the project:
+Run tests (after NuGet restore):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\Installer\Fix-PublishCertificate.ps1
+dotnet test .\School-Management-System.Tests\School-Management-System.Tests.csproj
 ```
 
-Then publish again from Visual Studio, or run:
+## Security notes
+- Do not commit real DB credentials
+- Rotate DB credentials if previously exposed
+- Change seeded default users/passwords immediately in production
 
-```powershell
-& "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" `
-  .\School-Management-System.sln `
-  /t:Publish `
-  /p:Configuration=Release `
-  /p:Platform="Any CPU"
-```
-
-## Build Installer (.exe)
-Installer assets are under `Installer/`:
-- `Installer/SchoolManagementSystem.iss` (Inno Setup script)
-- `Installer/Build-Installer.ps1` (build + package automation)
-
-Build installer:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\Installer\Build-Installer.ps1 -Configuration Release
-```
-
-If Inno Setup is not installed:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\Installer\Build-Installer.ps1 -Configuration Release -InstallInnoSetup
-```
-
-Output:
-- `dist/installer/SchoolManagementSystemSetup.exe`
+## Default seeded users (for first local setup only)
+- `admin` / `admin123`
+- `registrar` / `registrar123`
+- `faculty1` / `faculty123`
 
 ## Architecture
-- `School-Management-System/Presentation`: WinForms Forms + UserControls (UI only)
-- `School-Management-System/BusinessLayer`: validation + business rules
-- `School-Management-System/DataLayer`: ADO.NET (MySqlConnection/MySqlCommand/MySqlDataAdapter)
-- `School-Management-System/Models`: OOP models (encapsulated properties)
+- `School-Management-System/Presentation`: WinForms UI
+- `School-Management-System/BusinessLayer`: business logic/services
+- `School-Management-System/DataLayer`: MySQL data access
+- `School-Management-System/Models`: domain models
+- `DatabaseScripts/`: bootstrap, patch, and migration scripts

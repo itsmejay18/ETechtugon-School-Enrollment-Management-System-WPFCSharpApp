@@ -3,6 +3,18 @@ using System.Collections.Generic;
 
 namespace School_Management_System.Models
 {
+    public sealed class DatabaseBackupEnvelope
+    {
+        public string FormatVersion { get; set; }
+        public DateTime CreatedAtUtc { get; set; }
+        public string CipherAlgorithm { get; set; }
+        public string SignatureAlgorithm { get; set; }
+        public string KeyFingerprint { get; set; }
+        public string InitializationVector { get; set; }
+        public string CipherText { get; set; }
+        public string Signature { get; set; }
+    }
+
     public sealed class DatabaseBackupPackage
     {
         public DatabaseBackupPackage()

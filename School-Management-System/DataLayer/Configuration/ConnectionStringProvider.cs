@@ -103,7 +103,16 @@ namespace School_Management_System.DataLayer.Configuration
             var password = ReadOverride("SMS_DB_PASSWORD", "DbPassword");
             if (!string.IsNullOrWhiteSpace(password))
             {
-                builder.Password = password;
+                builder.Password = SensitiveDataProtector.Unprotect(password);
+            }
+
+            var sslMode = ReadOverride("SMS_DB_SSL_MODE", "DbSslMode");
+            ApplySslMode(builder, sslMode, false);
+
+            var sslCaPath = ReadOverride("SMS_DB_SSL_CA_PATH", "DbSslCaPath");
+            if (!string.IsNullOrWhiteSpace(sslCaPath))
+            {
+                builder.SslCa = sslCaPath.Trim();
             }
         }
 
@@ -186,7 +195,24 @@ namespace School_Management_System.DataLayer.Configuration
 
             if (!string.IsNullOrWhiteSpace(password))
             {
-                builder.Password = password;
+                builder.Password = SensitiveDataProtector.Unprotect(password);
+            }
+
+            if (string.Equals(mode, "Online", StringComparison.OrdinalIgnoreCase))
+            {
+                var sslMode = ReadSetting(dbSettings, AppConstants.SettingKeys.DbSslModeOnline);
+                ApplySslMode(builder, sslMode, true);
+
+                var sslCaPath = ReadSetting(dbSettings, AppConstants.SettingKeys.DbSslCaPathOnline);
+                if (!string.IsNullOrWhiteSpace(sslCaPath))
+                {
+                    builder.SslCa = sslCaPath.Trim();
+                }
+            }
+            else
+            {
+                // Keep Local/Wired/Wireless permissive defaults unless explicitly overridden.
+                ApplySslMode(builder, null, false);
             }
         }
 
@@ -210,7 +236,7 @@ namespace School_Management_System.DataLayer.Configuration
 
                     const string sql = @"
 SELECT SettingKey, SettingValue
-FROM SystemSetting
+FROM `systemsetting`
 WHERE SettingKey = @ModeKey
    OR SettingKey LIKE 'Db%.%';";
 
@@ -359,6 +385,43 @@ WHERE SettingKey = @ModeKey
 
             var appValue = ConfigurationManager.AppSettings[appSettingKey];
             return string.IsNullOrWhiteSpace(appValue) ? null : appValue;
+        }
+
+        private static void ApplySslMode(MySqlConnectionStringBuilder builder, string sslModeValue, bool enforceMinimum)
+        {
+            if (builder == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(sslModeValue))
+            {
+                var currentMode = builder.SslMode.ToString();
+                if (enforceMinimum &&
+                    (string.Equals(currentMode, "None", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(currentMode, "Disabled", StringComparison.OrdinalIgnoreCase)))
+                {
+                    builder.SslMode = MySqlSslMode.Required;
+                }
+
+                return;
+            }
+
+            MySqlSslMode parsed;
+            if (!Enum.TryParse(sslModeValue.Trim(), true, out parsed))
+            {
+                parsed = enforceMinimum ? MySqlSslMode.Required : builder.SslMode;
+            }
+
+            var parsedMode = parsed.ToString();
+            if (enforceMinimum &&
+                (string.Equals(parsedMode, "None", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(parsedMode, "Disabled", StringComparison.OrdinalIgnoreCase)))
+            {
+                parsed = MySqlSslMode.Required;
+            }
+
+            builder.SslMode = parsed;
         }
     }
 }
