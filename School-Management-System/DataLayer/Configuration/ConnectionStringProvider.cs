@@ -75,41 +75,43 @@ namespace School_Management_System.DataLayer.Configuration
 
         private static void ApplyDirectOverrides(MySqlConnectionStringBuilder builder)
         {
-            var host = ReadOverride("SMS_DB_HOST", "DbHost");
+            var mode = NormalizeMode(ReadOverride("SMS_DB_MODE", "DbMode"));
+
+            var host = ReadModeAwareOverride("SMS_DB_HOST", "DbHost", mode);
             if (!string.IsNullOrWhiteSpace(host))
             {
                 builder.Server = host.Trim();
             }
 
-            var portValue = ReadOverride("SMS_DB_PORT", "DbPort");
+            var portValue = ReadModeAwareOverride("SMS_DB_PORT", "DbPort", mode);
             uint port;
             if (!string.IsNullOrWhiteSpace(portValue) && uint.TryParse(portValue, out port) && port > 0)
             {
                 builder.Port = port;
             }
 
-            var database = ReadOverride("SMS_DB_NAME", "DbName");
+            var database = ReadModeAwareOverride("SMS_DB_NAME", "DbName", mode);
             if (!string.IsNullOrWhiteSpace(database))
             {
                 builder.Database = database.Trim();
             }
 
-            var user = ReadOverride("SMS_DB_USER", "DbUser");
+            var user = ReadModeAwareOverride("SMS_DB_USER", "DbUser", mode);
             if (!string.IsNullOrWhiteSpace(user))
             {
                 builder.UserID = user.Trim();
             }
 
-            var password = ReadOverride("SMS_DB_PASSWORD", "DbPassword");
+            var password = ReadModeAwareOverride("SMS_DB_PASSWORD", "DbPassword", mode);
             if (!string.IsNullOrWhiteSpace(password))
             {
                 builder.Password = SensitiveDataProtector.Unprotect(password);
             }
 
-            var sslMode = ReadOverride("SMS_DB_SSL_MODE", "DbSslMode");
+            var sslMode = ReadModeAwareOverride("SMS_DB_SSL_MODE", "DbSslMode", mode);
             ApplySslMode(builder, sslMode, false);
 
-            var sslCaPath = ReadOverride("SMS_DB_SSL_CA_PATH", "DbSslCaPath");
+            var sslCaPath = ReadModeAwareOverride("SMS_DB_SSL_CA_PATH", "DbSslCaPath", mode);
             if (!string.IsNullOrWhiteSpace(sslCaPath))
             {
                 builder.SslCa = sslCaPath.Trim();
@@ -131,6 +133,13 @@ namespace School_Management_System.DataLayer.Configuration
             }
 
             var mode = NormalizeMode(preferredMode);
+            var hasDirectHostOverride = HasModeAwareOverride("SMS_DB_HOST", "DbHost", mode);
+            var hasDirectPortOverride = HasModeAwareOverride("SMS_DB_PORT", "DbPort", mode);
+            var hasDirectDatabaseOverride = HasModeAwareOverride("SMS_DB_NAME", "DbName", mode);
+            var hasDirectUserOverride = HasModeAwareOverride("SMS_DB_USER", "DbUser", mode);
+            var hasDirectPasswordOverride = HasModeAwareOverride("SMS_DB_PASSWORD", "DbPassword", mode);
+            var hasDirectSslModeOverride = HasModeAwareOverride("SMS_DB_SSL_MODE", "DbSslMode", mode);
+            var hasDirectSslCaOverride = HasModeAwareOverride("SMS_DB_SSL_CA_PATH", "DbSslCaPath", mode);
 
             string hostKey;
             string portKey;
@@ -172,28 +181,28 @@ namespace School_Management_System.DataLayer.Configuration
                 dbName = ReadSetting(dbSettings, dbLegacyKey);
             }
 
-            if (!string.IsNullOrWhiteSpace(host))
+            if (!hasDirectHostOverride && !string.IsNullOrWhiteSpace(host))
             {
                 builder.Server = host.Trim();
             }
 
             uint port;
-            if (!string.IsNullOrWhiteSpace(portValue) && uint.TryParse(portValue, out port) && port > 0)
+            if (!hasDirectPortOverride && !string.IsNullOrWhiteSpace(portValue) && uint.TryParse(portValue, out port) && port > 0)
             {
                 builder.Port = port;
             }
 
-            if (!string.IsNullOrWhiteSpace(dbName))
+            if (!hasDirectDatabaseOverride && !string.IsNullOrWhiteSpace(dbName))
             {
                 builder.Database = dbName.Trim();
             }
 
-            if (!string.IsNullOrWhiteSpace(user))
+            if (!hasDirectUserOverride && !string.IsNullOrWhiteSpace(user))
             {
                 builder.UserID = user.Trim();
             }
 
-            if (!string.IsNullOrWhiteSpace(password))
+            if (!hasDirectPasswordOverride && !string.IsNullOrWhiteSpace(password))
             {
                 builder.Password = SensitiveDataProtector.Unprotect(password);
             }
@@ -201,10 +210,10 @@ namespace School_Management_System.DataLayer.Configuration
             if (string.Equals(mode, "Online", StringComparison.OrdinalIgnoreCase))
             {
                 var sslMode = ReadSetting(dbSettings, AppConstants.SettingKeys.DbSslModeOnline);
-                ApplySslMode(builder, sslMode, true);
+                ApplySslMode(builder, hasDirectSslModeOverride ? null : sslMode, true);
 
                 var sslCaPath = ReadSetting(dbSettings, AppConstants.SettingKeys.DbSslCaPathOnline);
-                if (!string.IsNullOrWhiteSpace(sslCaPath))
+                if (!hasDirectSslCaOverride && !string.IsNullOrWhiteSpace(sslCaPath))
                 {
                     builder.SslCa = sslCaPath.Trim();
                 }
@@ -385,6 +394,66 @@ WHERE SettingKey = @ModeKey
 
             var appValue = ConfigurationManager.AppSettings[appSettingKey];
             return string.IsNullOrWhiteSpace(appValue) ? null : appValue;
+        }
+
+        private static string ReadModeAwareOverride(string envVarName, string appSettingKey, string mode)
+        {
+            var envValue = Environment.GetEnvironmentVariable(envVarName);
+            if (!string.IsNullOrWhiteSpace(envValue))
+            {
+                return envValue;
+            }
+
+            var profileAppSettingKey = ResolveProfileAppSettingKey(appSettingKey, mode);
+            if (!string.IsNullOrWhiteSpace(profileAppSettingKey))
+            {
+                var profileAppValue = ConfigurationManager.AppSettings[profileAppSettingKey];
+                if (!string.IsNullOrWhiteSpace(profileAppValue))
+                {
+                    return profileAppValue;
+                }
+            }
+
+            var appValue = ConfigurationManager.AppSettings[appSettingKey];
+            return string.IsNullOrWhiteSpace(appValue) ? null : appValue;
+        }
+
+        private static bool HasModeAwareOverride(string envVarName, string appSettingKey, string mode)
+        {
+            return !string.IsNullOrWhiteSpace(ReadModeAwareOverride(envVarName, appSettingKey, mode));
+        }
+
+        private static string ResolveProfileAppSettingKey(string appSettingKey, string mode)
+        {
+            if (string.IsNullOrWhiteSpace(appSettingKey))
+            {
+                return null;
+            }
+
+            if (!string.Equals(NormalizeMode(mode), "Online", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            switch (appSettingKey)
+            {
+                case "DbHost":
+                    return "DbHostOnline";
+                case "DbPort":
+                    return "DbPortOnline";
+                case "DbName":
+                    return "DbNameOnline";
+                case "DbUser":
+                    return "DbUserOnline";
+                case "DbPassword":
+                    return "DbPasswordOnline";
+                case "DbSslMode":
+                    return "DbSslModeOnline";
+                case "DbSslCaPath":
+                    return "DbSslCaPathOnline";
+                default:
+                    return null;
+            }
         }
 
         private static void ApplySslMode(MySqlConnectionStringBuilder builder, string sslModeValue, bool enforceMinimum)

@@ -873,6 +873,11 @@ namespace School_Management_System.Presentation.UserControls
             var fallbackUser = ConfigurationManager.AppSettings["DbUser"] ?? string.Empty;
             var fallbackPassword = ConfigurationManager.AppSettings["DbPassword"] ?? string.Empty;
             var fallbackMode = ConfigurationManager.AppSettings["DbMode"] ?? "Local";
+            var fallbackOnlineHost = ReadAppSettingOrFallback("DbHostOnline", fallbackHost);
+            var fallbackOnlinePort = ReadAppSettingOrFallback("DbPortOnline", fallbackPort);
+            var fallbackOnlineDbName = ReadAppSettingOrFallback("DbNameOnline", fallbackDbName);
+            var fallbackOnlineUser = ReadAppSettingOrFallback("DbUserOnline", fallbackUser);
+            var fallbackOnlinePassword = ReadAppSettingOrFallback("DbPasswordOnline", fallbackPassword);
             var fallbackOnlineSslMode = ConfigurationManager.AppSettings["DbSslModeOnline"]
                                         ?? ConfigurationManager.AppSettings["DbSslMode"]
                                         ?? "Required";
@@ -918,11 +923,11 @@ namespace School_Management_System.Presentation.UserControls
 
                     SetProfileInputs(
                         "Online",
-                        string.IsNullOrWhiteSpace(online.Host) ? fallbackHost : online.Host,
-                        string.IsNullOrWhiteSpace(online.Port) ? fallbackPort : online.Port,
-                        string.IsNullOrWhiteSpace(online.Database) ? fallbackDbName : online.Database,
-                        string.IsNullOrWhiteSpace(online.Username) ? fallbackUser : online.Username,
-                        string.IsNullOrWhiteSpace(online.Password) ? fallbackPassword : online.Password);
+                        string.IsNullOrWhiteSpace(online.Host) ? fallbackOnlineHost : online.Host,
+                        string.IsNullOrWhiteSpace(online.Port) ? fallbackOnlinePort : online.Port,
+                        string.IsNullOrWhiteSpace(online.Database) ? fallbackOnlineDbName : online.Database,
+                        string.IsNullOrWhiteSpace(online.Username) ? fallbackOnlineUser : online.Username,
+                        string.IsNullOrWhiteSpace(online.Password) ? fallbackOnlinePassword : online.Password);
 
                     var selectedMode = NormalizeMode(string.IsNullOrWhiteSpace(mode) ? fallbackMode : mode);
                     _cmbConnectionMode.SelectedItem = selectedMode;
@@ -946,7 +951,7 @@ namespace School_Management_System.Presentation.UserControls
             SetProfileInputs("Local", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
             SetProfileInputs("Wired", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
             SetProfileInputs("Wireless", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
-            SetProfileInputs("Online", fallbackHost, fallbackPort, fallbackDbName, fallbackUser, fallbackPassword);
+            SetProfileInputs("Online", fallbackOnlineHost, fallbackOnlinePort, fallbackOnlineDbName, fallbackOnlineUser, fallbackOnlinePassword);
             SetOnlineSecurityInputs(fallbackOnlineSslMode, fallbackOnlineSslCaPath);
 
             _cmbConnectionMode.SelectedItem = NormalizeMode(fallbackMode);
@@ -955,6 +960,13 @@ namespace School_Management_System.Presentation.UserControls
                 _cmbConnectionMode.SelectedItem = "Local";
             }
         }
+
+        private static string ReadAppSettingOrFallback(string key, string fallbackValue)
+        {
+            var value = ConfigurationManager.AppSettings[key];
+            return string.IsNullOrWhiteSpace(value) ? fallbackValue : value;
+        }
+
         private void SaveTermSettings()
         {
             if (_settingsService == null)
