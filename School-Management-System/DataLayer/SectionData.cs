@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -32,11 +32,11 @@ SELECT
     sem.Name AS Semester,
     s.Capacity,
     s.CreatedAt
-FROM Section s
-INNER JOIN Course c ON c.CourseId = s.CourseId
-INNER JOIN YearLevel yl ON yl.YearLevelId = s.YearLevelId
-INNER JOIN AcademicYear ay ON ay.AcademicYearId = s.AcademicYearId
-INNER JOIN Semester sem ON sem.SemesterId = s.SemesterId
+FROM section s
+INNER JOIN course c ON c.CourseId = s.CourseId
+INNER JOIN yearlevel yl ON yl.YearLevelId = s.YearLevelId
+INNER JOIN academicyear ay ON ay.AcademicYearId = s.AcademicYearId
+INNER JOIN semester sem ON sem.SemesterId = s.SemesterId
 WHERE s.IsActive = 1
 ORDER BY s.SectionName;";
 
@@ -60,11 +60,11 @@ SELECT
     sem.Name AS Semester,
     s.Capacity,
     s.CreatedAt
-FROM Section s
-INNER JOIN Course c ON c.CourseId = s.CourseId
-INNER JOIN YearLevel yl ON yl.YearLevelId = s.YearLevelId
-INNER JOIN AcademicYear ay ON ay.AcademicYearId = s.AcademicYearId
-INNER JOIN Semester sem ON sem.SemesterId = s.SemesterId
+FROM section s
+INNER JOIN course c ON c.CourseId = s.CourseId
+INNER JOIN yearlevel yl ON yl.YearLevelId = s.YearLevelId
+INNER JOIN academicyear ay ON ay.AcademicYearId = s.AcademicYearId
+INNER JOIN semester sem ON sem.SemesterId = s.SemesterId
 WHERE s.IsActive = 1
   AND (s.SectionName LIKE @Q OR c.CourseName LIKE @Q)
 ORDER BY s.SectionName;";
@@ -86,7 +86,7 @@ SELECT
     s.AcademicYearId,
     s.SemesterId,
     s.Capacity
-FROM Section s
+FROM section s
 WHERE s.IsActive = 1
   AND s.CourseId = @CourseId
   AND s.AcademicYearId = @AcademicYearId
@@ -111,7 +111,7 @@ ORDER BY s.SectionName;";
             Guard.NotNull(section, nameof(section));
 
             const string sql = @"
-INSERT INTO Section
+INSERT INTO section
 (
     SectionName,
     CourseId,
@@ -155,7 +155,7 @@ VALUES
             Guard.NotNull(section, nameof(section));
 
             const string sql = @"
-UPDATE Section
+UPDATE section
 SET
     SectionName = @SectionName,
     CourseId = @CourseId,
@@ -183,7 +183,7 @@ WHERE SectionId = @SectionId;";
 
         public void Delete(int sectionId)
         {
-            const string sql = @"UPDATE Section SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE SectionId = @SectionId;";
+            const string sql = @"UPDATE section SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE SectionId = @SectionId;";
             _db.ExecuteNonQuery(sql, CommandType.Text, new[] { new MySqlParameter("@SectionId", sectionId) });
         }
     }

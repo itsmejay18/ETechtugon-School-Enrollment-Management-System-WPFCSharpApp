@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.DataLayer.Interfaces;
@@ -18,7 +18,7 @@ namespace School_Management_System.DataLayer
         {
             const string sql = @"
 SELECT CurriculumId
-FROM Curriculum
+FROM curriculum
 WHERE IsActive = 1
   AND CourseId = @CourseId
   AND YearLevelId = @YearLevelId
@@ -48,7 +48,7 @@ LIMIT 1;";
         public int InsertCurriculum(string name, int courseId, int yearLevelId, int semesterId, int academicYearId)
         {
             const string sql = @"
-INSERT INTO Curriculum
+INSERT INTO curriculum
 (
     Name,
     CourseId,
@@ -93,7 +93,7 @@ SELECT
     SubjectName,
     Units,
     CourseId
-FROM Subject
+FROM subject
 WHERE IsActive = 1
   AND (CourseId = @CourseId OR CourseId IS NULL)
 ORDER BY SubjectName;";
@@ -109,8 +109,8 @@ SELECT
     s.SubjectCode,
     s.SubjectName,
     s.Units
-FROM CurriculumDetails cd
-INNER JOIN Subject s ON s.SubjectId = cd.SubjectId
+FROM curriculumdetails cd
+INNER JOIN subject s ON s.SubjectId = cd.SubjectId
 WHERE cd.CurriculumId = @CurriculumId
 ORDER BY s.SubjectName;";
 
@@ -120,7 +120,7 @@ ORDER BY s.SubjectName;";
         public void AddSubject(int curriculumId, int subjectId)
         {
             const string sql = @"
-INSERT IGNORE INTO CurriculumDetails (CurriculumId, SubjectId, CreatedAt)
+INSERT IGNORE INTO curriculumdetails (CurriculumId, SubjectId, CreatedAt)
 VALUES (@CurriculumId, @SubjectId, UTC_TIMESTAMP());";
 
             _db.ExecuteNonQuery(
@@ -135,7 +135,7 @@ VALUES (@CurriculumId, @SubjectId, UTC_TIMESTAMP());";
 
         public void RemoveSubject(int curriculumId, int subjectId)
         {
-            const string sql = @"DELETE FROM CurriculumDetails WHERE CurriculumId = @CurriculumId AND SubjectId = @SubjectId;";
+            const string sql = @"DELETE FROM curriculumdetails WHERE CurriculumId = @CurriculumId AND SubjectId = @SubjectId;";
             _db.ExecuteNonQuery(
                 sql,
                 CommandType.Text,

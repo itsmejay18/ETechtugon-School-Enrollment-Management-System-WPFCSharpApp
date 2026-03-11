@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -32,7 +32,7 @@ SELECT
     Address,
     PhotoPath,
     CreatedAt
-FROM Student
+FROM student
 WHERE IsActive = 1
 ORDER BY LastName, FirstName;";
 
@@ -57,7 +57,7 @@ SELECT
     Address,
     PhotoPath,
     CreatedAt
-FROM Student
+FROM student
 WHERE IsActive = 1
   AND (LastName LIKE @Q OR StudentNumber LIKE @Q)
 ORDER BY LastName, FirstName;";
@@ -80,7 +80,7 @@ SELECT CONCAT(
     '-',
     LPAD(IFNULL(MAX(CAST(RIGHT(StudentNumber, 4) AS UNSIGNED)), 0) + 1, 4, '0')
 )
-FROM Student
+FROM student
 WHERE StudentNumber LIKE CONCAT('STU-', YEAR(UTC_DATE()), '-', '____');";
 
             var result = _db.ExecuteScalar(sql, CommandType.Text, null);
@@ -93,7 +93,7 @@ WHERE StudentNumber LIKE CONCAT('STU-', YEAR(UTC_DATE()), '-', '____');";
             Guard.NotNull(student, nameof(student));
 
             const string sql = @"
-INSERT INTO Student
+INSERT INTO student
 (
     StudentNumber,
     FirstName,
@@ -149,7 +149,7 @@ VALUES
             Guard.NotNull(student, nameof(student));
 
             const string sql = @"
-UPDATE Student
+UPDATE student
 SET
     StudentNumber = @StudentNumber,
     FirstName = @FirstName,
@@ -185,7 +185,7 @@ WHERE StudentId = @StudentId;";
 
         public void Delete(int studentId)
         {
-            const string sql = @"UPDATE Student SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE StudentId = @StudentId;";
+            const string sql = @"UPDATE student SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE StudentId = @StudentId;";
             _db.ExecuteNonQuery(
                 sql,
                 CommandType.Text,
@@ -213,14 +213,14 @@ SELECT
     cs.StartTime,
     cs.EndTime,
     cs.Room
-FROM Enrollment e
-INNER JOIN EnrollmentDetails ed ON ed.EnrollmentId = e.EnrollmentId
-INNER JOIN Subject s ON s.SubjectId = ed.SubjectId
-LEFT JOIN Section sec ON sec.SectionId = e.SectionId
-LEFT JOIN YearLevel yl ON yl.YearLevelId = e.YearLevelId
-LEFT JOIN Semester sem ON sem.SemesterId = e.SemesterId
-LEFT JOIN AcademicYear ay ON ay.AcademicYearId = e.AcademicYearId
-LEFT JOIN ClassSchedule cs ON cs.ClassScheduleId = ed.ClassScheduleId
+FROM enrollment e
+INNER JOIN enrollmentdetails ed ON ed.EnrollmentId = e.EnrollmentId
+INNER JOIN subject s ON s.SubjectId = ed.SubjectId
+LEFT JOIN section sec ON sec.SectionId = e.SectionId
+LEFT JOIN yearlevel yl ON yl.YearLevelId = e.YearLevelId
+LEFT JOIN semester sem ON sem.SemesterId = e.SemesterId
+LEFT JOIN academicyear ay ON ay.AcademicYearId = e.AcademicYearId
+LEFT JOIN classschedule cs ON cs.ClassScheduleId = ed.ClassScheduleId
 WHERE e.StudentId = @StudentId
   AND e.Status <> 'Cancelled'
   AND (@AcademicYearId IS NULL OR e.AcademicYearId = @AcademicYearId)
@@ -240,7 +240,7 @@ ORDER BY e.EnrollDate DESC, s.SubjectName;";
 
         public int GetActiveCount()
         {
-            const string sql = @"SELECT COUNT(1) FROM Student WHERE IsActive = 1;";
+            const string sql = @"SELECT COUNT(1) FROM student WHERE IsActive = 1;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
         }
     }

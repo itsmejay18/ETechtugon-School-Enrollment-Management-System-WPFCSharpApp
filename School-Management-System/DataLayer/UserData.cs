@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using MySql.Data.MySqlClient;
@@ -36,7 +36,7 @@ SELECT
     CreatedAt,
     UpdatedAt,
     LastLoginAt
-FROM Users
+FROM users
 WHERE Username = @Username
 LIMIT 1;";
 
@@ -72,7 +72,7 @@ LIMIT 1;";
 
         public void UpdateLastLogin(int userId)
         {
-            const string sql = @"UPDATE Users SET LastLoginAt = UTC_TIMESTAMP() WHERE UserId = @UserId;";
+            const string sql = @"UPDATE users SET LastLoginAt = UTC_TIMESTAMP() WHERE UserId = @UserId;";
             _db.ExecuteNonQuery(
                 sql,
                 CommandType.Text,

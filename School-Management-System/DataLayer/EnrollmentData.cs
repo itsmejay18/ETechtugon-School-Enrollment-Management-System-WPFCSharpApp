@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using MySql.Data.MySqlClient;
@@ -26,7 +26,7 @@ SELECT CONCAT(
     '-',
     LPAD(IFNULL(MAX(CAST(RIGHT(EnrollmentNumber, 4) AS UNSIGNED)), 0) + 1, 4, '0')
 )
-FROM Enrollment
+FROM enrollment
 WHERE EnrollmentNumber LIKE CONCAT('ENR-', YEAR(UTC_DATE()), '-', '____');";
 
             return Convert.ToString(_db.ExecuteScalar(sql, CommandType.Text, null));
@@ -42,7 +42,7 @@ WHERE EnrollmentNumber LIKE CONCAT('ENR-', YEAR(UTC_DATE()), '-', '____');";
             _db.ExecuteInTransaction((conn, tx) =>
             {
                 const string sqlEnrollment = @"
-INSERT INTO Enrollment
+INSERT INTO enrollment
 (
     EnrollmentNumber,
     StudentId,
@@ -90,7 +90,7 @@ VALUES
                 }
 
                 const string sqlDetails = @"
-INSERT INTO EnrollmentDetails (EnrollmentId, SubjectId, Units, ClassScheduleId, Grade, CreatedAt)
+INSERT INTO enrollmentdetails (EnrollmentId, SubjectId, Units, ClassScheduleId, Grade, CreatedAt)
 VALUES (@EnrollmentId, @SubjectId, @Units, @ClassScheduleId, @Grade, UTC_TIMESTAMP());";
 
                 foreach (var d in details)

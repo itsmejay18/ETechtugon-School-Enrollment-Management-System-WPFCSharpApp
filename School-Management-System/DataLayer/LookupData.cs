@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using School_Management_System.DataLayer.Interfaces;
 
@@ -17,7 +17,7 @@ namespace School_Management_System.DataLayer
         {
             const string sql = @"
 SELECT AcademicYearId, Name, IsCurrent
-FROM AcademicYear
+FROM academicyear
 WHERE IsActive = 1
 ORDER BY IsCurrent DESC, Name DESC;";
 
@@ -28,7 +28,7 @@ ORDER BY IsCurrent DESC, Name DESC;";
         {
             const string sql = @"
 SELECT YearLevelId, Name, SortOrder
-FROM YearLevel
+FROM yearlevel
 WHERE IsActive = 1
 ORDER BY SortOrder, Name;";
 
@@ -39,7 +39,7 @@ ORDER BY SortOrder, Name;";
         {
             const string sql = @"
 SELECT SemesterId, Name, SortOrder
-FROM Semester
+FROM semester
 WHERE IsActive = 1
 ORDER BY SortOrder, Name;";
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -20,7 +20,7 @@ namespace School_Management_System.DataLayer
         {
             const string sql = @"
 SELECT YearLevelId, Name, SortOrder, IsActive
-FROM YearLevel
+FROM yearlevel
 WHERE IsActive = 1
 ORDER BY SortOrder, Name;";
 
@@ -32,7 +32,7 @@ ORDER BY SortOrder, Name;";
             query = (query ?? string.Empty).Trim();
             const string sql = @"
 SELECT YearLevelId, Name, SortOrder, IsActive
-FROM YearLevel
+FROM yearlevel
 WHERE IsActive = 1
   AND Name LIKE @Q
 ORDER BY SortOrder, Name;";
@@ -44,7 +44,7 @@ ORDER BY SortOrder, Name;";
         {
             Guard.NotNull(yearLevel, nameof(yearLevel));
             const string sql = @"
-INSERT INTO YearLevel (Name, SortOrder, IsActive)
+INSERT INTO yearlevel (Name, SortOrder, IsActive)
 VALUES (@Name, @SortOrder, 1);";
 
             var id = _db.ExecuteInsert(
@@ -63,7 +63,7 @@ VALUES (@Name, @SortOrder, 1);";
         {
             Guard.NotNull(yearLevel, nameof(yearLevel));
             const string sql = @"
-UPDATE YearLevel
+UPDATE yearlevel
 SET Name = @Name,
     SortOrder = @SortOrder
 WHERE YearLevelId = @YearLevelId;";
@@ -81,7 +81,7 @@ WHERE YearLevelId = @YearLevelId;";
 
         public void Delete(int yearLevelId)
         {
-            const string sql = @"UPDATE YearLevel SET IsActive = 0 WHERE YearLevelId = @YearLevelId;";
+            const string sql = @"UPDATE yearlevel SET IsActive = 0 WHERE YearLevelId = @YearLevelId;";
             _db.ExecuteNonQuery(sql, CommandType.Text, new[] { new MySqlParameter("@YearLevelId", yearLevelId) });
         }
     }

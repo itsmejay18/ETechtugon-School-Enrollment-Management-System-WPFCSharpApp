@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -27,8 +27,8 @@ SELECT
     s.CourseId,
     c.CourseCode,
     s.CreatedAt
-FROM Subject s
-LEFT JOIN Course c ON c.CourseId = s.CourseId
+FROM subject s
+LEFT JOIN course c ON c.CourseId = s.CourseId
 WHERE s.IsActive = 1
 ORDER BY s.SubjectName;";
 
@@ -45,8 +45,8 @@ SELECT
     s.Units,
     s.CourseId,
     c.CourseCode
-FROM Subject s
-LEFT JOIN Course c ON c.CourseId = s.CourseId
+FROM subject s
+LEFT JOIN course c ON c.CourseId = s.CourseId
 WHERE s.IsActive = 1
   AND (s.CourseId = @CourseId OR s.CourseId IS NULL)
 ORDER BY s.SubjectName;";
@@ -67,8 +67,8 @@ SELECT
     s.CourseId,
     c.CourseCode,
     s.CreatedAt
-FROM Subject s
-LEFT JOIN Course c ON c.CourseId = s.CourseId
+FROM subject s
+LEFT JOIN course c ON c.CourseId = s.CourseId
 WHERE s.IsActive = 1
   AND (s.SubjectCode LIKE @Q OR s.SubjectName LIKE @Q OR c.CourseCode LIKE @Q)
 ORDER BY s.SubjectName;";
@@ -81,7 +81,7 @@ ORDER BY s.SubjectName;";
             Guard.NotNull(subject, nameof(subject));
 
             const string sql = @"
-INSERT INTO Subject (SubjectCode, SubjectName, Units, CourseId, IsActive, CreatedAt)
+INSERT INTO subject (SubjectCode, SubjectName, Units, CourseId, IsActive, CreatedAt)
 VALUES (@SubjectCode, @SubjectName, @Units, @CourseId, 1, UTC_TIMESTAMP());";
 
             var id = _db.ExecuteInsert(
@@ -103,7 +103,7 @@ VALUES (@SubjectCode, @SubjectName, @Units, @CourseId, 1, UTC_TIMESTAMP());";
             Guard.NotNull(subject, nameof(subject));
 
             const string sql = @"
-UPDATE Subject
+UPDATE subject
 SET
     SubjectCode = @SubjectCode,
     SubjectName = @SubjectName,
@@ -127,13 +127,13 @@ WHERE SubjectId = @SubjectId;";
 
         public void Delete(int subjectId)
         {
-            const string sql = @"UPDATE Subject SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE SubjectId = @SubjectId;";
+            const string sql = @"UPDATE subject SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE SubjectId = @SubjectId;";
             _db.ExecuteNonQuery(sql, CommandType.Text, new[] { new MySqlParameter("@SubjectId", subjectId) });
         }
 
         public int GetActiveCount()
         {
-            const string sql = @"SELECT COUNT(1) FROM Subject WHERE IsActive = 1;";
+            const string sql = @"SELECT COUNT(1) FROM subject WHERE IsActive = 1;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
         }
     }

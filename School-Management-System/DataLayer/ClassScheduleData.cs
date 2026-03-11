@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -38,12 +38,12 @@ SELECT
     ay.Name AS AcademicYear,
     cs.SemesterId,
     sem.Name AS Semester
-FROM ClassSchedule cs
-INNER JOIN Section sec ON sec.SectionId = cs.SectionId
-INNER JOIN Subject s ON s.SubjectId = cs.SubjectId
-LEFT JOIN Faculty f ON f.FacultyId = cs.FacultyId
-INNER JOIN AcademicYear ay ON ay.AcademicYearId = cs.AcademicYearId
-INNER JOIN Semester sem ON sem.SemesterId = cs.SemesterId
+FROM classschedule cs
+INNER JOIN section sec ON sec.SectionId = cs.SectionId
+INNER JOIN subject s ON s.SubjectId = cs.SubjectId
+LEFT JOIN faculty f ON f.FacultyId = cs.FacultyId
+INNER JOIN academicyear ay ON ay.AcademicYearId = cs.AcademicYearId
+INNER JOIN semester sem ON sem.SemesterId = cs.SemesterId
 WHERE cs.IsActive = 1
   AND cs.SectionId = @SectionId
 ORDER BY s.SubjectName;";
@@ -59,7 +59,7 @@ ORDER BY s.SubjectName;";
             Guard.NotNull(schedule, nameof(schedule));
 
             const string sql = @"
-INSERT INTO ClassSchedule
+INSERT INTO classschedule
 (
     SectionId,
     SubjectId,
@@ -115,7 +115,7 @@ VALUES
             Guard.NotNull(schedule, nameof(schedule));
 
             const string sql = @"
-UPDATE ClassSchedule
+UPDATE classschedule
 SET
     SectionId = @SectionId,
     SubjectId = @SubjectId,
@@ -151,7 +151,7 @@ WHERE ClassScheduleId = @ClassScheduleId;";
 
         public void Delete(int classScheduleId)
         {
-            const string sql = @"UPDATE ClassSchedule SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE ClassScheduleId = @ClassScheduleId;";
+            const string sql = @"UPDATE classschedule SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE ClassScheduleId = @ClassScheduleId;";
             _db.ExecuteNonQuery(sql, CommandType.Text, new[] { new MySqlParameter("@ClassScheduleId", classScheduleId) });
         }
     }

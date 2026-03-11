@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -33,7 +33,7 @@ SELECT
     " + photoColumn + @",
     HireDate,
     CreatedAt
-FROM Faculty
+FROM faculty
 WHERE IsActive = 1
 ORDER BY LastName, FirstName;";
 
@@ -58,7 +58,7 @@ SELECT
     " + photoColumn + @",
     HireDate,
     CreatedAt
-FROM Faculty
+FROM faculty
 WHERE IsActive = 1
   AND (
         FacultyCode LIKE @Q
@@ -83,7 +83,7 @@ SELECT CONCAT(
     '-',
     LPAD(IFNULL(MAX(CAST(RIGHT(FacultyCode, 4) AS UNSIGNED)), 0) + 1, 4, '0')
 )
-FROM Faculty
+FROM faculty
 WHERE FacultyCode LIKE CONCAT('FAC-', YEAR(UTC_DATE()), '-', '____');";
 
             return Convert.ToString(_db.ExecuteScalar(sql, CommandType.Text, null));
@@ -95,7 +95,7 @@ WHERE FacultyCode LIKE CONCAT('FAC-', YEAR(UTC_DATE()), '-', '____');";
 
             var includePhoto = HasPhotoPathColumn();
             var sql = includePhoto ? @"
-INSERT INTO Faculty
+INSERT INTO faculty
 (
     FacultyCode,
     FirstName,
@@ -125,7 +125,7 @@ VALUES
 )
 "
             : @"
-INSERT INTO Faculty
+INSERT INTO faculty
 (
     FacultyCode,
     FirstName,
@@ -191,7 +191,7 @@ VALUES
 
             var includePhoto = HasPhotoPathColumn();
             var sql = includePhoto ? @"
-UPDATE Faculty
+UPDATE faculty
 SET
     FacultyCode = @FacultyCode,
     FirstName = @FirstName,
@@ -205,7 +205,7 @@ SET
     UpdatedAt = UTC_TIMESTAMP()
 WHERE FacultyId = @FacultyId;"
             : @"
-UPDATE Faculty
+UPDATE faculty
 SET
     FacultyCode = @FacultyCode,
     FirstName = @FirstName,
@@ -253,13 +253,13 @@ WHERE FacultyId = @FacultyId;";
 
         public void Delete(int facultyId)
         {
-            const string sql = @"UPDATE Faculty SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE FacultyId = @FacultyId;";
+            const string sql = @"UPDATE faculty SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE FacultyId = @FacultyId;";
             _db.ExecuteNonQuery(sql, CommandType.Text, new[] { new MySqlParameter("@FacultyId", facultyId) });
         }
 
         public int GetActiveCount()
         {
-            const string sql = @"SELECT COUNT(1) FROM Faculty WHERE IsActive = 1;";
+            const string sql = @"SELECT COUNT(1) FROM faculty WHERE IsActive = 1;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
         }
 

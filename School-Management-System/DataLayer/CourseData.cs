@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -26,7 +26,7 @@ SELECT
     Description,
     DepartmentId,
     CreatedAt
-FROM Course
+FROM course
 WHERE IsActive = 1
 ORDER BY CourseName;";
 
@@ -37,7 +37,7 @@ ORDER BY CourseName;";
         {
             const string sql = @"
 SELECT CourseId, CourseCode, CourseName
-FROM Course
+FROM course
 WHERE IsActive = 1
 ORDER BY CourseName;";
 
@@ -56,7 +56,7 @@ SELECT
     Description,
     DepartmentId,
     CreatedAt
-FROM Course
+FROM course
 WHERE IsActive = 1
   AND (CourseCode LIKE @Q OR CourseName LIKE @Q)
 ORDER BY CourseName;";
@@ -75,7 +75,7 @@ ORDER BY CourseName;";
             Guard.NotNull(course, nameof(course));
 
             const string sql = @"
-INSERT INTO Course (CourseCode, CourseName, Description, DepartmentId, IsActive, CreatedAt)
+INSERT INTO course (CourseCode, CourseName, Description, DepartmentId, IsActive, CreatedAt)
 VALUES (@CourseCode, @CourseName, @Description, @DepartmentId, 1, UTC_TIMESTAMP());";
 
             var id = _db.ExecuteInsert(
@@ -97,7 +97,7 @@ VALUES (@CourseCode, @CourseName, @Description, @DepartmentId, 1, UTC_TIMESTAMP(
             Guard.NotNull(course, nameof(course));
 
             const string sql = @"
-UPDATE Course
+UPDATE course
 SET
     CourseCode = @CourseCode,
     CourseName = @CourseName,
@@ -121,7 +121,7 @@ WHERE CourseId = @CourseId;";
 
         public void Delete(int courseId)
         {
-            const string sql = @"UPDATE Course SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE CourseId = @CourseId;";
+            const string sql = @"UPDATE course SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE CourseId = @CourseId;";
             _db.ExecuteNonQuery(
                 sql,
                 CommandType.Text,
@@ -130,7 +130,7 @@ WHERE CourseId = @CourseId;";
 
         public int GetActiveCount()
         {
-            const string sql = @"SELECT COUNT(1) FROM Course WHERE IsActive = 1;";
+            const string sql = @"SELECT COUNT(1) FROM course WHERE IsActive = 1;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
         }
     }

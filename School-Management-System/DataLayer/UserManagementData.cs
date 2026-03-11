@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -30,7 +30,7 @@ SELECT
     IsActive,
     CreatedAt,
     LastLoginAt
-FROM Users
+FROM users
 ORDER BY Username;";
 
             return _db.ExecuteDataTable(sql, CommandType.Text, null);
@@ -51,7 +51,7 @@ SELECT
     IsActive,
     CreatedAt,
     LastLoginAt
-FROM Users
+FROM users
 WHERE Username LIKE @Q OR DisplayName LIKE @Q OR `Role` LIKE @Q
 ORDER BY Username;";
 
@@ -64,7 +64,7 @@ ORDER BY Username;";
 
             const string sql = @"
 SELECT COUNT(1)
-FROM Users
+FROM users
 WHERE Username = @Username
   AND (@ExcludeUserId IS NULL OR UserId <> @ExcludeUserId);";
 
@@ -86,7 +86,7 @@ WHERE Username = @Username
 
             var includePhoto = HasPhotoPathColumn();
             var sql = includePhoto ? @"
-INSERT INTO Users
+INSERT INTO users
 (
     Username,
     PasswordHash,
@@ -109,7 +109,7 @@ VALUES
     UTC_TIMESTAMP()
 );"
             : @"
-INSERT INTO Users
+INSERT INTO users
 (
     Username,
     PasswordHash,
@@ -165,7 +165,7 @@ VALUES
 
             var includePhoto = HasPhotoPathColumn();
             var sql = includePhoto ? @"
-UPDATE Users
+UPDATE users
 SET
     Username = @Username,
     `Role` = @Role,
@@ -175,7 +175,7 @@ SET
     UpdatedAt = UTC_TIMESTAMP()
 WHERE UserId = @UserId;"
             : @"
-UPDATE Users
+UPDATE users
 SET
     Username = @Username,
     `Role` = @Role,
@@ -212,7 +212,7 @@ WHERE UserId = @UserId;";
         public void SetPassword(int userId, byte[] passwordHash, byte[] passwordSalt)
         {
             const string sql = @"
-UPDATE Users
+UPDATE users
 SET
     PasswordHash = @PasswordHash,
     PasswordSalt = @PasswordSalt,
@@ -232,7 +232,7 @@ WHERE UserId = @UserId;";
 
         public void SetActive(int userId, bool isActive)
         {
-            const string sql = @"UPDATE Users SET IsActive = @IsActive, UpdatedAt = UTC_TIMESTAMP() WHERE UserId = @UserId;";
+            const string sql = @"UPDATE users SET IsActive = @IsActive, UpdatedAt = UTC_TIMESTAMP() WHERE UserId = @UserId;";
             _db.ExecuteNonQuery(
                 sql,
                 CommandType.Text,

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using MySql.Data.MySqlClient;
@@ -9,7 +9,7 @@ namespace School_Management_System.DataLayer.Configuration
     /// <summary>
     /// Provides centralized access to configured database connection strings.
     /// Supports process-level overrides (command line/env), App.config fallback,
-    /// and database-driven connection profiles from SystemSetting.
+    /// and database-driven connection profiles from systemsetting.
     /// </summary>
     public static class ConnectionStringProvider
     {
@@ -67,7 +67,7 @@ namespace School_Management_System.DataLayer.Configuration
             // First-level direct override from command line/env/App.config.
             ApplyDirectOverrides(builder);
 
-            // Second-level profile override from SystemSetting table.
+            // Second-level profile override from systemsetting table.
             ApplyDatabaseProfileOverrides(builder);
 
             return builder.ConnectionString;

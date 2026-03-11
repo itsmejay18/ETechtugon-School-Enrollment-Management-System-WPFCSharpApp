@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -20,7 +20,7 @@ namespace School_Management_System.DataLayer
         {
             const string sql = @"
 SELECT DepartmentId, DepartmentCode, DepartmentName, Description, CreatedAt
-FROM Department
+FROM department
 WHERE IsActive = 1
 ORDER BY DepartmentName;";
 
@@ -29,7 +29,7 @@ ORDER BY DepartmentName;";
 
         public DataTable GetLookupActive()
         {
-            const string sql = @"SELECT DepartmentId, DepartmentCode, DepartmentName FROM Department WHERE IsActive = 1 ORDER BY DepartmentName;";
+            const string sql = @"SELECT DepartmentId, DepartmentCode, DepartmentName FROM department WHERE IsActive = 1 ORDER BY DepartmentName;";
             return _db.ExecuteDataTable(sql, CommandType.Text, null);
         }
 
@@ -39,7 +39,7 @@ ORDER BY DepartmentName;";
 
             const string sql = @"
 SELECT DepartmentId, DepartmentCode, DepartmentName, Description, CreatedAt
-FROM Department
+FROM department
 WHERE IsActive = 1
   AND (DepartmentCode LIKE @Q OR DepartmentName LIKE @Q)
 ORDER BY DepartmentName;";
@@ -55,7 +55,7 @@ ORDER BY DepartmentName;";
             Guard.NotNull(department, nameof(department));
 
             const string sql = @"
-INSERT INTO Department (DepartmentCode, DepartmentName, Description, IsActive, CreatedAt)
+INSERT INTO department (DepartmentCode, DepartmentName, Description, IsActive, CreatedAt)
 VALUES (@DepartmentCode, @DepartmentName, @Description, 1, UTC_TIMESTAMP());";
 
             var id = _db.ExecuteInsert(
@@ -76,7 +76,7 @@ VALUES (@DepartmentCode, @DepartmentName, @Description, 1, UTC_TIMESTAMP());";
             Guard.NotNull(department, nameof(department));
 
             const string sql = @"
-UPDATE Department
+UPDATE department
 SET
     DepartmentCode = @DepartmentCode,
     DepartmentName = @DepartmentName,
@@ -98,7 +98,7 @@ WHERE DepartmentId = @DepartmentId;";
 
         public void Delete(int departmentId)
         {
-            const string sql = @"UPDATE Department SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE DepartmentId = @DepartmentId;";
+            const string sql = @"UPDATE department SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE DepartmentId = @DepartmentId;";
             _db.ExecuteNonQuery(
                 sql,
                 CommandType.Text,
@@ -107,7 +107,7 @@ WHERE DepartmentId = @DepartmentId;";
 
         public int GetActiveCount()
         {
-            const string sql = @"SELECT COUNT(1) FROM Department WHERE IsActive = 1;";
+            const string sql = @"SELECT COUNT(1) FROM department WHERE IsActive = 1;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
         }
     }
