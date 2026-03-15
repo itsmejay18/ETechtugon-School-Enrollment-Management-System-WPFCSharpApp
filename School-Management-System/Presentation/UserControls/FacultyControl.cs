@@ -42,8 +42,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private int _editingFacultyId;
         private bool _isEditorActive;
-        private string _currentPhotoPath;
-        private string _selectedPhotoPath;
+        private byte[] _currentPhotoBytes;
+        private byte[] _selectedPhotoBytes;
 
         public FacultyControl()
             : this(null)
@@ -304,7 +304,7 @@ namespace School_Management_System.Presentation.UserControls
             _txtAddress.ReadOnly = !active;
             _dtHireDate.Enabled = active;
             if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = true;
-            if (_btnRemovePhoto != null) _btnRemovePhoto.Enabled = active && (!string.IsNullOrWhiteSpace(_selectedPhotoPath) || !string.IsNullOrWhiteSpace(_currentPhotoPath));
+            if (_btnRemovePhoto != null) _btnRemovePhoto.Enabled = active && (_selectedPhotoBytes != null || _currentPhotoBytes != null);
 
             _btnSave.Enabled = active;
             _btnCancel.Enabled = active;
@@ -323,9 +323,9 @@ namespace School_Management_System.Presentation.UserControls
             _txtEmail.Text = string.Empty;
             _txtPhone.Text = string.Empty;
             _txtAddress.Text = string.Empty;
-            _currentPhotoPath = null;
-            _selectedPhotoPath = null;
-            ShowPhoto(null);
+            _currentPhotoBytes = null;
+            _selectedPhotoBytes = null;
+            ShowPhoto((byte[])null);
             _dtHireDate.Checked = false;
             SetEditorState(true);
             _txtFirstName.Focus();
@@ -425,9 +425,9 @@ namespace School_Management_System.Presentation.UserControls
                 _txtEmail.Text = string.Empty;
                 _txtPhone.Text = string.Empty;
                 _txtAddress.Text = string.Empty;
-                _currentPhotoPath = null;
-                _selectedPhotoPath = null;
-                ShowPhoto(null);
+                _currentPhotoBytes = null;
+                _selectedPhotoBytes = null;
+                ShowPhoto((byte[])null);
                 _dtHireDate.Checked = false;
                 SetEditorState(false);
             }
@@ -469,9 +469,9 @@ namespace School_Management_System.Presentation.UserControls
             _txtEmail.Text = Convert.ToString(row.Cells["Email"].Value);
             _txtPhone.Text = Convert.ToString(row.Cells["Phone"].Value);
             _txtAddress.Text = Convert.ToString(row.Cells["Address"].Value);
-            _currentPhotoPath = row.Cells["PhotoPath"] == null ? null : Convert.ToString(row.Cells["PhotoPath"].Value);
-            _selectedPhotoPath = null;
-            ShowPhoto(_currentPhotoPath);
+            _currentPhotoBytes = _facultyService?.GetPhotoData(_editingFacultyId);
+            _selectedPhotoBytes = null;
+            ShowPhoto(_currentPhotoBytes);
 
             var hire = row.Cells["HireDate"].Value;
             if (hire == null || hire == DBNull.Value)
@@ -513,12 +513,7 @@ namespace School_Management_System.Presentation.UserControls
                     return;
                 }
 
-                var photoPathToSave = _currentPhotoPath;
-                if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
-                {
-                    photoPathToSave = PersistPhoto(_selectedPhotoPath, faculty.FacultyCode);
-                }
-                faculty.PhotoPath = photoPathToSave;
+                faculty.PhotoData = _selectedPhotoBytes ?? _currentPhotoBytes;
 
                 UseWaitCursor = true;
                 _btnSave.Enabled = false;
@@ -535,9 +530,9 @@ namespace School_Management_System.Presentation.UserControls
                 }
 
                 LoadGrid();
-                _currentPhotoPath = photoPathToSave;
-                _selectedPhotoPath = null;
-                ShowPhoto(_currentPhotoPath);
+                _currentPhotoBytes = faculty.PhotoData;
+                _selectedPhotoBytes = null;
+                ShowPhoto(_currentPhotoBytes);
                 SetEditorState(false);
             }
             catch (Exception ex)
@@ -572,8 +567,8 @@ namespace School_Management_System.Presentation.UserControls
                 ofd.Title = "Select faculty photo";
                 if (ofd.ShowDialog() != DialogResult.OK) return;
 
-                _selectedPhotoPath = ofd.FileName;
-                ShowPhoto(_selectedPhotoPath);
+                _selectedPhotoBytes = PhotoStorageHelper.ReadPhotoBytes(ofd.FileName);
+                ShowPhoto(_selectedPhotoBytes);
                 if (_btnRemovePhoto != null)
                 {
                     _btnRemovePhoto.Enabled = true;
@@ -585,30 +580,18 @@ namespace School_Management_System.Presentation.UserControls
         {
             if (!_isEditorActive) return;
 
-            _selectedPhotoPath = null;
-            _currentPhotoPath = null;
-            ShowPhoto(null);
+            _selectedPhotoBytes = null;
+            _currentPhotoBytes = null;
+            ShowPhoto((byte[])null);
             if (_btnRemovePhoto != null)
             {
                 _btnRemovePhoto.Enabled = false;
             }
         }
 
-        private void ShowPhoto(string path)
+        private void ShowPhoto(byte[] data)
         {
-            PhotoStorageHelper.ShowPhoto(_picPhoto, path);
-        }
-
-        private string PersistPhoto(string sourcePath, string facultyCode)
-        {
-            var savedPath = PhotoStorageHelper.PersistPhoto(sourcePath, "Faculty", facultyCode, _currentPhotoPath);
-            if (string.Equals(savedPath, _currentPhotoPath, StringComparison.OrdinalIgnoreCase) &&
-                !string.IsNullOrWhiteSpace(sourcePath))
-            {
-                ThemedMessageBox.ShowError(this, "Unable to save photo. Please choose a different image.", "Photo");
-            }
-
-            return savedPath;
+            PhotoStorageHelper.ShowPhotoFromBytes(_picPhoto, data);
         }
 
         private void DeleteCurrent()

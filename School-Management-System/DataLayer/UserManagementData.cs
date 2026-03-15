@@ -11,6 +11,7 @@ namespace School_Management_System.DataLayer
     {
         private readonly DatabaseHelper _db;
         private bool? _hasPhotoPathColumn;
+    private bool? _hasPhotoDataColumn;
 
         public UserManagementData(DatabaseHelper db)
         {
@@ -85,7 +86,32 @@ WHERE Username = @Username
             Guard.NotNull(user, nameof(user));
 
             var includePhoto = HasPhotoPathColumn();
-            var sql = includePhoto ? @"
+            var includePhotoData = HasPhotoDataColumn();
+            var sql = includePhoto && includePhotoData ? @"
+INSERT INTO users
+(
+    Username,
+    PasswordHash,
+    PasswordSalt,
+    `Role`,
+    DisplayName,
+    PhotoPath,
+    PhotoData,
+    IsActive,
+    CreatedAt
+)
+VALUES
+(
+    @Username,
+    @PasswordHash,
+    @PasswordSalt,
+    @Role,
+    @DisplayName,
+    @PhotoPath,
+    @PhotoData,
+    @IsActive,
+    UTC_TIMESTAMP()
+);" : includePhoto ? @"
 INSERT INTO users
 (
     Username,
@@ -107,8 +133,7 @@ VALUES
     @PhotoPath,
     @IsActive,
     UTC_TIMESTAMP()
-);"
-            : @"
+);" : @"
 INSERT INTO users
 (
     Username,
@@ -130,7 +155,19 @@ VALUES
     UTC_TIMESTAMP()
 );";
 
-            var parameters = includePhoto
+            var parameters = includePhoto && includePhotoData
+                ? new[]
+                {
+                    new MySqlParameter("@Username", (object)user.Username ?? DBNull.Value),
+                    new MySqlParameter("@PasswordHash", (object)user.PasswordHash ?? DBNull.Value),
+                    new MySqlParameter("@PasswordSalt", (object)user.PasswordSalt ?? DBNull.Value),
+                    new MySqlParameter("@Role", (object)user.Role ?? DBNull.Value),
+                    new MySqlParameter("@DisplayName", (object)user.DisplayName ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)user.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@PhotoData", (object)user.PhotoData ?? DBNull.Value),
+                    new MySqlParameter("@IsActive", user.IsActive)
+                }
+                : includePhoto
                 ? new[]
                 {
                     new MySqlParameter("@Username", (object)user.Username ?? DBNull.Value),
@@ -164,7 +201,18 @@ VALUES
             Guard.NotNull(user, nameof(user));
 
             var includePhoto = HasPhotoPathColumn();
-            var sql = includePhoto ? @"
+            var includePhotoData = HasPhotoDataColumn();
+            var sql = includePhoto && includePhotoData ? @"
+UPDATE users
+SET
+    Username = @Username,
+    `Role` = @Role,
+    DisplayName = @DisplayName,
+    PhotoPath = @PhotoPath,
+    PhotoData = @PhotoData,
+    IsActive = @IsActive,
+    UpdatedAt = UTC_TIMESTAMP()
+WHERE UserId = @UserId;" : includePhoto ? @"
 UPDATE users
 SET
     Username = @Username,
@@ -173,8 +221,7 @@ SET
     PhotoPath = @PhotoPath,
     IsActive = @IsActive,
     UpdatedAt = UTC_TIMESTAMP()
-WHERE UserId = @UserId;"
-            : @"
+WHERE UserId = @UserId;" : @"
 UPDATE users
 SET
     Username = @Username,
@@ -184,7 +231,18 @@ SET
     UpdatedAt = UTC_TIMESTAMP()
 WHERE UserId = @UserId;";
 
-            var parameters = includePhoto
+            var parameters = includePhoto && includePhotoData
+                ? new[]
+                {
+                    new MySqlParameter("@UserId", user.UserId),
+                    new MySqlParameter("@Username", (object)user.Username ?? DBNull.Value),
+                    new MySqlParameter("@Role", (object)user.Role ?? DBNull.Value),
+                    new MySqlParameter("@DisplayName", (object)user.DisplayName ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)user.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@PhotoData", (object)user.PhotoData ?? DBNull.Value),
+                    new MySqlParameter("@IsActive", user.IsActive)
+                }
+                : includePhoto
                 ? new[]
                 {
                     new MySqlParameter("@UserId", user.UserId),
@@ -259,6 +317,31 @@ WHERE table_schema = DATABASE()
 
             _hasPhotoPathColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
             return _hasPhotoPathColumn.Value;
+        }
+
+        public byte[] GetPhotoData(int userId)
+        {
+            if (!HasPhotoDataColumn()) return null;
+            const string sql = @"SELECT PhotoData FROM users WHERE UserId = @UserId LIMIT 1;";
+            var result = _db.ExecuteScalar(
+                sql,
+                CommandType.Text,
+                new[] { new MySqlParameter("@UserId", userId) });
+            if (result == null || result == DBNull.Value) return null;
+            return (byte[])result;
+        }
+
+        private bool HasPhotoDataColumn()
+        {
+            if (_hasPhotoDataColumn.HasValue) return _hasPhotoDataColumn.Value;
+            const string sql = @"
+SELECT COUNT(1)
+FROM information_schema.columns
+WHERE table_schema = DATABASE()
+  AND table_name = 'users'
+  AND column_name = 'PhotoData';";
+            _hasPhotoDataColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
+            return _hasPhotoDataColumn.Value;
         }
     }
 }

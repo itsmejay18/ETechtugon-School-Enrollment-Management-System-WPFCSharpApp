@@ -11,6 +11,7 @@ namespace School_Management_System.DataLayer
     {
         private readonly DatabaseHelper _db;
         private bool? _hasPhotoPathColumn;
+    private bool? _hasPhotoDataColumn;
 
         public FacultyData(DatabaseHelper db)
         {
@@ -94,7 +95,39 @@ WHERE FacultyCode LIKE CONCAT('FAC-', YEAR(UTC_DATE()), '-', '____');";
             Guard.NotNull(faculty, nameof(faculty));
 
             var includePhoto = HasPhotoPathColumn();
-            var sql = includePhoto ? @"
+            var includePhotoData = HasPhotoDataColumn();
+            var sql = includePhoto && includePhotoData ? @"
+INSERT INTO faculty
+(
+    FacultyCode,
+    FirstName,
+    LastName,
+    MiddleName,
+    Email,
+    Phone,
+    Address,
+    PhotoPath,
+    PhotoData,
+    HireDate,
+    IsActive,
+    CreatedAt
+)
+VALUES
+(
+    @FacultyCode,
+    @FirstName,
+    @LastName,
+    @MiddleName,
+    @Email,
+    @Phone,
+    @Address,
+    @PhotoPath,
+    @PhotoData,
+    @HireDate,
+    1,
+    UTC_TIMESTAMP()
+)
+" : includePhoto ? @"
 INSERT INTO faculty
 (
     FacultyCode,
@@ -122,9 +155,7 @@ VALUES
     @HireDate,
     1,
     UTC_TIMESTAMP()
-)
-"
-            : @"
+);" : @"
 INSERT INTO faculty
 (
     FacultyCode,
@@ -152,7 +183,21 @@ VALUES
     UTC_TIMESTAMP()
 );";
 
-            var parameters = includePhoto
+            var parameters = includePhoto && includePhotoData
+                ? new[]
+                {
+                    new MySqlParameter("@FacultyCode", (object)faculty.FacultyCode ?? DBNull.Value),
+                    new MySqlParameter("@FirstName", (object)faculty.FirstName ?? DBNull.Value),
+                    new MySqlParameter("@LastName", (object)faculty.LastName ?? DBNull.Value),
+                    new MySqlParameter("@MiddleName", (object)faculty.MiddleName ?? DBNull.Value),
+                    new MySqlParameter("@Email", (object)faculty.Email ?? DBNull.Value),
+                    new MySqlParameter("@Phone", (object)faculty.Phone ?? DBNull.Value),
+                    new MySqlParameter("@Address", (object)faculty.Address ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)faculty.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@PhotoData", (object)faculty.PhotoData ?? DBNull.Value),
+                    new MySqlParameter("@HireDate", (object)faculty.HireDate ?? DBNull.Value)
+                }
+                : includePhoto
                 ? new[]
                 {
                     new MySqlParameter("@FacultyCode", (object)faculty.FacultyCode ?? DBNull.Value),
@@ -190,7 +235,22 @@ VALUES
             Guard.NotNull(faculty, nameof(faculty));
 
             var includePhoto = HasPhotoPathColumn();
-            var sql = includePhoto ? @"
+            var includePhotoData = HasPhotoDataColumn();
+            var sql = includePhoto && includePhotoData ? @"
+UPDATE faculty
+SET
+    FacultyCode = @FacultyCode,
+    FirstName = @FirstName,
+    LastName = @LastName,
+    MiddleName = @MiddleName,
+    Email = @Email,
+    Phone = @Phone,
+    Address = @Address,
+    PhotoPath = @PhotoPath,
+    PhotoData = @PhotoData,
+    HireDate = @HireDate,
+    UpdatedAt = UTC_TIMESTAMP()
+WHERE FacultyId = @FacultyId;" : includePhoto ? @"
 UPDATE faculty
 SET
     FacultyCode = @FacultyCode,
@@ -203,8 +263,7 @@ SET
     PhotoPath = @PhotoPath,
     HireDate = @HireDate,
     UpdatedAt = UTC_TIMESTAMP()
-WHERE FacultyId = @FacultyId;"
-            : @"
+WHERE FacultyId = @FacultyId;" : @"
 UPDATE faculty
 SET
     FacultyCode = @FacultyCode,
@@ -218,7 +277,22 @@ SET
     UpdatedAt = UTC_TIMESTAMP()
 WHERE FacultyId = @FacultyId;";
 
-            var parameters = includePhoto
+            var parameters = includePhoto && includePhotoData
+                ? new[]
+                {
+                    new MySqlParameter("@FacultyId", faculty.FacultyId),
+                    new MySqlParameter("@FacultyCode", (object)faculty.FacultyCode ?? DBNull.Value),
+                    new MySqlParameter("@FirstName", (object)faculty.FirstName ?? DBNull.Value),
+                    new MySqlParameter("@LastName", (object)faculty.LastName ?? DBNull.Value),
+                    new MySqlParameter("@MiddleName", (object)faculty.MiddleName ?? DBNull.Value),
+                    new MySqlParameter("@Email", (object)faculty.Email ?? DBNull.Value),
+                    new MySqlParameter("@Phone", (object)faculty.Phone ?? DBNull.Value),
+                    new MySqlParameter("@Address", (object)faculty.Address ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)faculty.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@PhotoData", (object)faculty.PhotoData ?? DBNull.Value),
+                    new MySqlParameter("@HireDate", (object)faculty.HireDate ?? DBNull.Value)
+                }
+                : includePhoto
                 ? new[]
                 {
                     new MySqlParameter("@FacultyId", faculty.FacultyId),
@@ -263,6 +337,18 @@ WHERE FacultyId = @FacultyId;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
         }
 
+        public byte[] GetPhotoData(int facultyId)
+        {
+            if (!HasPhotoDataColumn()) return null;
+            const string sql = @"SELECT PhotoData FROM faculty WHERE FacultyId = @FacultyId LIMIT 1;";
+            var result = _db.ExecuteScalar(
+                sql,
+                CommandType.Text,
+                new[] { new MySqlParameter("@FacultyId", facultyId) });
+            if (result == null || result == DBNull.Value) return null;
+            return (byte[])result;
+        }
+
         private bool HasPhotoPathColumn()
         {
             if (_hasPhotoPathColumn.HasValue)
@@ -279,6 +365,19 @@ WHERE table_schema = DATABASE()
 
             _hasPhotoPathColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
             return _hasPhotoPathColumn.Value;
+        }
+
+        private bool HasPhotoDataColumn()
+        {
+            if (_hasPhotoDataColumn.HasValue) return _hasPhotoDataColumn.Value;
+            const string sql = @"
+SELECT COUNT(1)
+FROM information_schema.columns
+WHERE table_schema = DATABASE()
+  AND table_name = 'faculty'
+  AND column_name = 'PhotoData';";
+            _hasPhotoDataColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
+            return _hasPhotoDataColumn.Value;
         }
     }
 }

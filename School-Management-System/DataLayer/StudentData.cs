@@ -10,8 +10,9 @@ namespace School_Management_System.DataLayer
     public sealed class StudentData : IStudentData
     {
         private readonly DatabaseHelper _db;
+    private bool? _hasPhotoDataColumn;
 
-        public StudentData(DatabaseHelper db)
+    public StudentData(DatabaseHelper db)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
         }
@@ -92,7 +93,40 @@ WHERE StudentNumber LIKE CONCAT('STU-', YEAR(UTC_DATE()), '-', '____');";
         {
             Guard.NotNull(student, nameof(student));
 
-            const string sql = @"
+            var includePhotoData = HasPhotoDataColumn();
+            var sql = includePhotoData ? @"
+INSERT INTO student
+(
+    StudentNumber,
+    FirstName,
+    LastName,
+    MiddleName,
+    Gender,
+    BirthDate,
+    Email,
+    Phone,
+    Address,
+    PhotoPath,
+    PhotoData,
+    IsActive,
+    CreatedAt
+)
+VALUES
+(
+    @StudentNumber,
+    @FirstName,
+    @LastName,
+    @MiddleName,
+    @Gender,
+    @BirthDate,
+    @Email,
+    @Phone,
+    @Address,
+    @PhotoPath,
+    @PhotoData,
+    1,
+    UTC_TIMESTAMP()
+);" : @"
 INSERT INTO student
 (
     StudentNumber,
@@ -124,10 +158,22 @@ VALUES
     UTC_TIMESTAMP()
 );";
 
-            var id = _db.ExecuteInsert(
-                sql,
-                CommandType.Text,
-                new[]
+            var parameters = includePhotoData
+                ? new[]
+                {
+                    new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
+                    new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
+                    new MySqlParameter("@LastName", (object)student.LastName ?? DBNull.Value),
+                    new MySqlParameter("@MiddleName", (object)student.MiddleName ?? DBNull.Value),
+                    new MySqlParameter("@Gender", (object)student.Gender ?? DBNull.Value),
+                    new MySqlParameter("@BirthDate", (object)student.BirthDate ?? DBNull.Value),
+                    new MySqlParameter("@Email", (object)student.Email ?? DBNull.Value),
+                    new MySqlParameter("@Phone", (object)student.Phone ?? DBNull.Value),
+                    new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)student.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@PhotoData", (object)student.PhotoData ?? DBNull.Value)
+                }
+                : new[]
                 {
                     new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
                     new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
@@ -139,8 +185,9 @@ VALUES
                     new MySqlParameter("@Phone", (object)student.Phone ?? DBNull.Value),
                     new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value),
                     new MySqlParameter("@PhotoPath", (object)student.PhotoPath ?? DBNull.Value)
-                });
+                };
 
+            var id = _db.ExecuteInsert(sql, CommandType.Text, parameters);
             return Convert.ToInt32(id);
         }
 
@@ -148,7 +195,23 @@ VALUES
         {
             Guard.NotNull(student, nameof(student));
 
-            const string sql = @"
+            var includePhotoData = HasPhotoDataColumn();
+            var sql = includePhotoData ? @"
+UPDATE student
+SET
+    StudentNumber = @StudentNumber,
+    FirstName = @FirstName,
+    LastName = @LastName,
+    MiddleName = @MiddleName,
+    Gender = @Gender,
+    BirthDate = @BirthDate,
+    Email = @Email,
+    Phone = @Phone,
+    Address = @Address,
+    PhotoPath = @PhotoPath,
+    PhotoData = @PhotoData,
+    UpdatedAt = UTC_TIMESTAMP()
+WHERE StudentId = @StudentId;" : @"
 UPDATE student
 SET
     StudentNumber = @StudentNumber,
@@ -164,10 +227,23 @@ SET
     UpdatedAt = UTC_TIMESTAMP()
 WHERE StudentId = @StudentId;";
 
-            _db.ExecuteNonQuery(
-                sql,
-                CommandType.Text,
-                new[]
+            var parameters = includePhotoData
+                ? new[]
+                {
+                    new MySqlParameter("@StudentId", student.StudentId),
+                    new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
+                    new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
+                    new MySqlParameter("@LastName", (object)student.LastName ?? DBNull.Value),
+                    new MySqlParameter("@MiddleName", (object)student.MiddleName ?? DBNull.Value),
+                    new MySqlParameter("@Gender", (object)student.Gender ?? DBNull.Value),
+                    new MySqlParameter("@BirthDate", (object)student.BirthDate ?? DBNull.Value),
+                    new MySqlParameter("@Email", (object)student.Email ?? DBNull.Value),
+                    new MySqlParameter("@Phone", (object)student.Phone ?? DBNull.Value),
+                    new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value),
+                    new MySqlParameter("@PhotoPath", (object)student.PhotoPath ?? DBNull.Value),
+                    new MySqlParameter("@PhotoData", (object)student.PhotoData ?? DBNull.Value)
+                }
+                : new[]
                 {
                     new MySqlParameter("@StudentId", student.StudentId),
                     new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
@@ -180,7 +256,9 @@ WHERE StudentId = @StudentId;";
                     new MySqlParameter("@Phone", (object)student.Phone ?? DBNull.Value),
                     new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value),
                     new MySqlParameter("@PhotoPath", (object)student.PhotoPath ?? DBNull.Value)
-                });
+                };
+
+            _db.ExecuteNonQuery(sql, CommandType.Text, parameters);
         }
 
         public void Delete(int studentId)
@@ -242,6 +320,31 @@ ORDER BY e.EnrollDate DESC, s.SubjectName;";
         {
             const string sql = @"SELECT COUNT(1) FROM student WHERE IsActive = 1;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
+        }
+
+        public byte[] GetPhotoData(int studentId)
+        {
+            if (!HasPhotoDataColumn()) return null;
+            const string sql = @"SELECT PhotoData FROM student WHERE StudentId = @StudentId LIMIT 1;";
+            var result = _db.ExecuteScalar(
+                sql,
+                CommandType.Text,
+                new[] { new MySqlParameter("@StudentId", studentId) });
+            if (result == null || result == DBNull.Value) return null;
+            return (byte[])result;
+        }
+
+        private bool HasPhotoDataColumn()
+        {
+            if (_hasPhotoDataColumn.HasValue) return _hasPhotoDataColumn.Value;
+            const string sql = @"
+SELECT COUNT(1)
+FROM information_schema.columns
+WHERE table_schema = DATABASE()
+  AND table_name = 'student'
+  AND column_name = 'PhotoData';";
+            _hasPhotoDataColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
+            return _hasPhotoDataColumn.Value;
         }
     }
 }

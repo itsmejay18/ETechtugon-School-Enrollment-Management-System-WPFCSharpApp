@@ -29,6 +29,7 @@ namespace School_Management_System.DataLayer.Configuration
                 ApplyMigration2026030701(db);
                 ApplyMigration2026030702(db);
                 ApplyMigration2026030703(db);
+                ApplyMigration2026031501(db);
 
                 _initialized = true;
             }
@@ -132,6 +133,57 @@ ON DUPLICATE KEY UPDATE
             MarkApplied(db, migrationId, "Ensure online TLS and backup setting keys.");
         }
 
+        private static void ApplyMigration2026031501(DatabaseHelper db)
+        {
+            const string migrationId = "2026031501";
+            if (IsApplied(db, migrationId))
+            {
+                return;
+            }
+
+            EnsureSemesterRow(db, 1, "1st Semester", 1);
+            EnsureSemesterRow(db, 2, "2nd Semester", 2);
+
+            const string normalizeCurrentSemesterSql = @"
+UPDATE `systemsetting`
+SET `SettingValue` = CASE
+    WHEN CAST(`SettingValue` AS UNSIGNED) = 2 THEN '2'
+    WHEN CAST(`SettingValue` AS UNSIGNED) > 2 AND MOD(CAST(`SettingValue` AS UNSIGNED), 2) = 0 THEN '2'
+    ELSE '1'
+END
+WHERE `SettingKey` = @SettingKey;";
+
+            db.ExecuteNonQuery(
+                normalizeCurrentSemesterSql,
+                CommandType.Text,
+                new[]
+                {
+                    new MySqlParameter("@SettingKey", AppConstants.SettingKeys.CurrentSemesterId)
+                });
+
+            const string normalizeSemesterRowsSql = @"
+UPDATE `semester`
+SET
+  `Name` = CASE
+      WHEN `SemesterId` = 1 THEN '1st Semester'
+      WHEN `SemesterId` = 2 THEN '2nd Semester'
+      ELSE `Name`
+  END,
+  `SortOrder` = CASE
+      WHEN `SemesterId` = 1 THEN 1
+      WHEN `SemesterId` = 2 THEN 2
+      ELSE `SortOrder`
+  END,
+  `IsActive` = CASE
+      WHEN `SemesterId` IN (1, 2) THEN 1
+      ELSE 0
+  END;";
+
+            db.ExecuteNonQuery(normalizeSemesterRowsSql, CommandType.Text, null);
+
+            MarkApplied(db, migrationId, "Normalize semester catalog to 1st and 2nd semester only.");
+        }
+
         private static void EnsureActivityLogTable(DatabaseHelper db)
         {
             const string existsSql = @"
@@ -188,6 +240,27 @@ WHERE table_schema = DATABASE()
             {
                 db.ExecuteNonQuery(alterSql, CommandType.Text, null);
             }
+        }
+
+        private static void EnsureSemesterRow(DatabaseHelper db, int semesterId, string name, int sortOrder)
+        {
+            const string sql = @"
+INSERT INTO `semester` (`SemesterId`, `Name`, `SortOrder`, `IsActive`)
+VALUES (@SemesterId, @Name, @SortOrder, 1)
+ON DUPLICATE KEY UPDATE
+  `Name` = VALUES(`Name`),
+  `SortOrder` = VALUES(`SortOrder`),
+  `IsActive` = VALUES(`IsActive`);";
+
+            db.ExecuteNonQuery(
+                sql,
+                CommandType.Text,
+                new[]
+                {
+                    new MySqlParameter("@SemesterId", semesterId),
+                    new MySqlParameter("@Name", name),
+                    new MySqlParameter("@SortOrder", sortOrder)
+                });
         }
 
         private static void EnsureSystemSettingKey(DatabaseHelper db, string key, string defaultValue)

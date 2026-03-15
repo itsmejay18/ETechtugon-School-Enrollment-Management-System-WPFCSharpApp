@@ -47,7 +47,7 @@ namespace School_Management_System.BusinessLayer.Services
             return vr;
         }
 
-        public int Create(string username, string password, string role, string displayName, bool isActive, string photoPath)
+        public int Create(string username, string password, string role, string displayName, bool isActive, byte[] photoData = null)
         {
             var res = PasswordHasher.HashPassword(password);
 
@@ -58,7 +58,7 @@ namespace School_Management_System.BusinessLayer.Services
                 PasswordSalt = res.Salt,
                 Role = role,
                 DisplayName = string.IsNullOrWhiteSpace(displayName) ? null : displayName.Trim(),
-                PhotoPath = string.IsNullOrWhiteSpace(photoPath) ? null : photoPath.Trim(),
+                PhotoData = photoData,
                 IsActive = isActive,
                 CreatedAt = DateTime.UtcNow
             };
@@ -66,7 +66,7 @@ namespace School_Management_System.BusinessLayer.Services
             return _userData.Insert(user);
         }
 
-        public void Update(int userId, string username, string role, string displayName, bool isActive, string photoPath)
+        public void Update(int userId, string username, string role, string displayName, bool isActive, byte[] photoData = null)
         {
             var user = new User
             {
@@ -74,11 +74,16 @@ namespace School_Management_System.BusinessLayer.Services
                 Username = username.Trim(),
                 Role = role,
                 DisplayName = string.IsNullOrWhiteSpace(displayName) ? null : displayName.Trim(),
-                PhotoPath = string.IsNullOrWhiteSpace(photoPath) ? null : photoPath.Trim(),
+                PhotoData = photoData,
                 IsActive = isActive
             };
 
             _userData.Update(user);
+        }
+
+        public byte[] GetPhotoData(int userId)
+        {
+            return _userData.GetPhotoData(userId);
         }
 
         public void ResetPassword(int userId, string newPassword)

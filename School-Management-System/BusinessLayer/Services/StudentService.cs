@@ -91,6 +91,11 @@ namespace School_Management_System.BusinessLayer.Services
         {
             _studentData.Delete(studentId);
         }
+
+        public byte[] GetPhotoData(int studentId)
+        {
+            return _studentData.GetPhotoData(studentId);
+        }
     }
 }
 

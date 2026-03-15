@@ -12,6 +12,7 @@ namespace School_Management_System.DataLayer.Interfaces
         void Update(User user);
         void SetPassword(int userId, byte[] passwordHash, byte[] passwordSalt);
         void SetActive(int userId, bool isActive);
+        byte[] GetPhotoData(int userId);
     }
 }
 

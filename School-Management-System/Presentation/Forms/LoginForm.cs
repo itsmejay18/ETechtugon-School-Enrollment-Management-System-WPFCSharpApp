@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -22,13 +23,23 @@ namespace School_Management_System.Presentation.Forms
         private Panel _authHost;
         private Panel _card;
 
+        private TableLayoutPanel _stack;
         private Label _lblDbStatus;
+        private ComboBox _cmbQuickLogin;
         private TextBox _txtUsername;
         private TextBox _txtPassword;
         private CheckBox _chkShowPassword;
         private CheckBox _chkRememberMe;
         private Button _btnLogin;
         private Button _btnRegister;
+
+        private readonly List<QuickLoginPreset> _quickLoginPresets = new List<QuickLoginPreset>
+        {
+            new QuickLoginPreset("Admin", "admin", "admin123"),
+            new QuickLoginPreset("Staff", "faculty1", "faculty123"),
+            new QuickLoginPreset("Registrar", "registrar", "registrar123"),
+            new QuickLoginPreset("Student", "student1", "student123")
+        };
 
         private DatabaseHelper _db;
         private AuthService _authService;
@@ -77,6 +88,18 @@ namespace School_Management_System.Presentation.Forms
                 UserPreferences.RememberedUsername = null;
                 _chkRememberMe.Checked = false;
                 _txtUsername.Text = string.Empty;
+            }
+
+            if (_cmbQuickLogin != null)
+            {
+                if (!string.IsNullOrWhiteSpace(_txtUsername.Text))
+                {
+                    SyncQuickLoginSelection(_txtUsername.Text);
+                }
+                else if (_cmbQuickLogin.Items.Count > 1)
+                {
+                    _cmbQuickLogin.SelectedIndex = 1;
+                }
             }
 
             _txtUsername.Focus();
@@ -197,25 +220,28 @@ namespace School_Management_System.Presentation.Forms
             var shell = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface, Padding = new Padding(10) };
             _card.Controls.Add(shell);
 
-            var stack = new TableLayoutPanel
+            _stack = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 13
+                RowCount = 15
             };
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
-            stack.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            var stack = _stack;
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));   // 0  title
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));   // 1  subtitle
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 2  lblQuickLogin
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));   // 3  cmbQuickLogin
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));    // 4  dbStatus (collapsed by default)
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 5  lblUser
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));   // 6  txtUsername
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 7  lblPass
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));   // 8  txtPassword
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));   // 9  options
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));   // 10 btnLogin
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));   // 11 forgotLink
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));   // 12 btnRegister
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));   // 13 footerNote
+            stack.RowStyles.Add(new RowStyle(SizeType.Percent, 100));   // 14 spacer
 
             var title = new Label
             {
@@ -246,6 +272,18 @@ namespace School_Management_System.Presentation.Forms
 
             var lblUser = MakeLabel("Username");
             var lblPass = MakeLabel("Password");
+            var lblQuickLogin = MakeLabel("Quick Login Account");
+
+            _cmbQuickLogin = new ComboBox
+            {
+                Dock = DockStyle.Fill,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Margin = new Padding(0),
+                Height = 38
+            };
+            ThemeManager.StyleComboBox(_cmbQuickLogin);
+            InitializeQuickLoginItems();
+            _cmbQuickLogin.SelectedIndexChanged += (s, e) => ApplyQuickLoginSelection();
 
             _txtUsername = MakeTextBox();
             _txtPassword = MakeTextBox();
@@ -293,17 +331,19 @@ namespace School_Management_System.Presentation.Forms
 
             stack.Controls.Add(title, 0, 0);
             stack.Controls.Add(subtitle, 0, 1);
-            stack.Controls.Add(_lblDbStatus, 0, 2);
-            stack.Controls.Add(lblUser, 0, 3);
-            stack.Controls.Add(_txtUsername, 0, 4);
-            stack.Controls.Add(lblPass, 0, 5);
-            stack.Controls.Add(_txtPassword, 0, 6);
-            stack.Controls.Add(options, 0, 7);
-            stack.Controls.Add(_btnLogin, 0, 8);
-            stack.Controls.Add(forgotLink, 0, 9);
-            stack.Controls.Add(_btnRegister, 0, 10);
-            stack.Controls.Add(footerNote, 0, 11);
-            stack.Controls.Add(new Panel { Dock = DockStyle.Fill }, 0, 12);
+            stack.Controls.Add(lblQuickLogin, 0, 2);
+            stack.Controls.Add(_cmbQuickLogin, 0, 3);
+            stack.Controls.Add(_lblDbStatus, 0, 4);
+            stack.Controls.Add(lblUser, 0, 5);
+            stack.Controls.Add(_txtUsername, 0, 6);
+            stack.Controls.Add(lblPass, 0, 7);
+            stack.Controls.Add(_txtPassword, 0, 8);
+            stack.Controls.Add(options, 0, 9);
+            stack.Controls.Add(_btnLogin, 0, 10);
+            stack.Controls.Add(forgotLink, 0, 11);
+            stack.Controls.Add(_btnRegister, 0, 12);
+            stack.Controls.Add(footerNote, 0, 13);
+            stack.Controls.Add(new Panel { Dock = DockStyle.Fill }, 0, 14);
 
             shell.Controls.Add(stack);
 
@@ -326,10 +366,66 @@ namespace School_Management_System.Presentation.Forms
             };
         }
 
+        private void InitializeQuickLoginItems()
+        {
+            if (_cmbQuickLogin == null)
+            {
+                return;
+            }
+
+            _cmbQuickLogin.Items.Clear();
+            _cmbQuickLogin.Items.Add("Select account...");
+            for (var i = 0; i < _quickLoginPresets.Count; i++)
+            {
+                _cmbQuickLogin.Items.Add(_quickLoginPresets[i]);
+            }
+        }
+
+        private void ApplyQuickLoginSelection()
+        {
+            if (_cmbQuickLogin == null)
+            {
+                return;
+            }
+
+            var preset = _cmbQuickLogin.SelectedItem as QuickLoginPreset;
+            if (preset == null)
+            {
+                return;
+            }
+
+            _txtUsername.Text = preset.Username;
+            _txtPassword.Text = preset.Password;
+            _txtPassword.SelectionStart = _txtPassword.TextLength;
+        }
+
+        private void SyncQuickLoginSelection(string username)
+        {
+            if (_cmbQuickLogin == null || string.IsNullOrWhiteSpace(username))
+            {
+                return;
+            }
+
+            for (var i = 0; i < _quickLoginPresets.Count; i++)
+            {
+                if (string.Equals(_quickLoginPresets[i].Username, username.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    _cmbQuickLogin.SelectedIndex = i + 1;
+                    return;
+                }
+            }
+
+            _cmbQuickLogin.SelectedIndex = 0;
+        }
+
         private void SetConnectionState(bool isConnected, string errorMessage)
         {
             _lblDbStatus.Text = isConnected ? string.Empty : (string.IsNullOrWhiteSpace(errorMessage) ? Messages.NoDatabaseConnection : errorMessage);
             _lblDbStatus.Visible = !isConnected;
+            if (_stack != null)
+            {
+                _stack.RowStyles[4] = new RowStyle(SizeType.Absolute, isConnected ? 0 : 36);
+            }
             // Keep actions clickable so users can retry after starting DB without restarting the app.
             if (_btnLogin != null) _btnLogin.Enabled = true;
             if (_btnRegister != null) _btnRegister.Enabled = true;
@@ -494,6 +590,25 @@ namespace School_Management_System.Presentation.Forms
             {
                 UseWaitCursor = false;
                 _btnLogin.Enabled = true;
+            }
+        }
+
+        private sealed class QuickLoginPreset
+        {
+            public QuickLoginPreset(string label, string username, string password)
+            {
+                Label = label ?? string.Empty;
+                Username = username ?? string.Empty;
+                Password = password ?? string.Empty;
+            }
+
+            public string Label { get; private set; }
+            public string Username { get; private set; }
+            public string Password { get; private set; }
+
+            public override string ToString()
+            {
+                return Label;
             }
         }
     }

@@ -85,6 +85,11 @@ namespace School_Management_System.BusinessLayer.Services
         {
             _facultyData.Delete(facultyId);
         }
+
+        public byte[] GetPhotoData(int facultyId)
+        {
+            return _facultyData.GetPhotoData(facultyId);
+        }
     }
 }
 

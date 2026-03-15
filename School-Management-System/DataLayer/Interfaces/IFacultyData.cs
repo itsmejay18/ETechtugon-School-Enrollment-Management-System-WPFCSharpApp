@@ -12,6 +12,7 @@ namespace School_Management_System.DataLayer.Interfaces
         void Update(Faculty faculty);
         void Delete(int facultyId);
         int GetActiveCount();
+        byte[] GetPhotoData(int facultyId);
     }
 }
 

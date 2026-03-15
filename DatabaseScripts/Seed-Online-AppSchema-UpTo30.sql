@@ -65,13 +65,27 @@ BEGIN
     END WHILE;
 
     -- Semesters
-    SELECT COUNT(*) INTO v_count FROM semester;
-    WHILE v_count < 30 DO
-        SET v_seq = v_count + 1;
-        INSERT INTO semester (Name, SortOrder, IsActive)
-        VALUES (CONCAT('Term ', LPAD(v_seq, 2, '0')), v_seq, 1);
-        SET v_count = v_count + 1;
-    END WHILE;
+    INSERT INTO semester (SemesterId, Name, SortOrder, IsActive)
+    VALUES
+        (1, '1st Semester', 1, 1),
+        (2, '2nd Semester', 2, 1)
+    ON DUPLICATE KEY UPDATE
+        Name = VALUES(Name),
+        SortOrder = VALUES(SortOrder),
+        IsActive = VALUES(IsActive);
+
+    UPDATE semester
+    SET IsActive = CASE WHEN SemesterId IN (1, 2) THEN 1 ELSE 0 END;
+
+    SET v_current_semester_id = CASE
+        WHEN v_current_semester_id = 2 THEN 2
+        WHEN v_current_semester_id > 2 AND MOD(v_current_semester_id, 2) = 0 THEN 2
+        ELSE 1
+    END;
+
+    INSERT INTO systemsetting (SettingKey, SettingValue)
+    VALUES ('CurrentSemesterId', CAST(v_current_semester_id AS CHAR))
+    ON DUPLICATE KEY UPDATE SettingValue = VALUES(SettingValue);
 
     -- Year levels
     SELECT COUNT(*) INTO v_count FROM yearlevel;

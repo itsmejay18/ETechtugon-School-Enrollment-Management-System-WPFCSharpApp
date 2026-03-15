@@ -41,7 +41,15 @@ ORDER BY SortOrder, Name;";
 SELECT SemesterId, Name, SortOrder
 FROM semester
 WHERE IsActive = 1
-ORDER BY SortOrder, Name;";
+ORDER BY
+    CASE
+        WHEN Name = '1st Semester' THEN 1
+        WHEN Name = '2nd Semester' THEN 2
+        ELSE 100 + SortOrder
+    END,
+    SortOrder,
+    SemesterId
+LIMIT 2;";
 
             return _db.ExecuteDataTable(sql, CommandType.Text, null);
         }

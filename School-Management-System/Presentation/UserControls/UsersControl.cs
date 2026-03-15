@@ -38,8 +38,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private int _editingUserId;
         private bool _isEditorActive;
-        private string _currentPhotoPath;
-        private string _selectedPhotoPath;
+        private byte[] _currentPhotoBytes;
+        private byte[] _selectedPhotoBytes;
 
         public UsersControl()
             : this(null)
@@ -292,7 +292,7 @@ namespace School_Management_System.Presentation.UserControls
             _chkActive.Enabled = active;
             _txtPassword.ReadOnly = !active;
             if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = true;
-            if (_btnRemovePhoto != null) _btnRemovePhoto.Enabled = active && (!string.IsNullOrWhiteSpace(_selectedPhotoPath) || !string.IsNullOrWhiteSpace(_currentPhotoPath));
+            if (_btnRemovePhoto != null) _btnRemovePhoto.Enabled = active && (_selectedPhotoBytes != null || _currentPhotoBytes != null);
 
             _btnSave.Enabled = active;
             _btnCancel.Enabled = active;
@@ -309,9 +309,9 @@ namespace School_Management_System.Presentation.UserControls
             _cmbRole.SelectedIndex = _cmbRole.Items.Count > 0 ? 0 : -1;
             _chkActive.Checked = true;
             _txtPassword.Text = string.Empty;
-            _currentPhotoPath = null;
-            _selectedPhotoPath = null;
-            ShowPhoto(null);
+            _currentPhotoBytes = null;
+            _selectedPhotoBytes = null;
+            ShowPhoto((byte[])null);
             SetEditorState(true);
             _txtUsername.Focus();
         }
@@ -416,9 +416,9 @@ namespace School_Management_System.Presentation.UserControls
                 _cmbRole.SelectedIndex = _cmbRole.Items.Count > 0 ? 0 : -1;
                 _chkActive.Checked = true;
                 _txtPassword.Text = string.Empty;
-                _currentPhotoPath = null;
-                _selectedPhotoPath = null;
-                ShowPhoto(null);
+                _currentPhotoBytes = null;
+                _selectedPhotoBytes = null;
+                ShowPhoto((byte[])null);
                 SetEditorState(false);
             }
         }
@@ -454,9 +454,9 @@ namespace School_Management_System.Presentation.UserControls
             _editingUserId = Convert.ToInt32(row.Cells["UserId"].Value);
             _txtUsername.Text = Convert.ToString(row.Cells["Username"].Value);
             _txtDisplayName.Text = Convert.ToString(row.Cells["DisplayName"].Value);
-            _currentPhotoPath = row.Cells["PhotoPath"] == null ? null : Convert.ToString(row.Cells["PhotoPath"].Value);
-            _selectedPhotoPath = null;
-            ShowPhoto(_currentPhotoPath);
+            _currentPhotoBytes = _userService?.GetPhotoData(_editingUserId);
+            _selectedPhotoBytes = null;
+            ShowPhoto(_currentPhotoBytes);
 
             var role = Convert.ToString(row.Cells["Role"].Value);
             if (!string.IsNullOrWhiteSpace(role) && _cmbRole.Items.Contains(role))
@@ -498,20 +498,16 @@ namespace School_Management_System.Presentation.UserControls
                     }
                 }
 
-                var photoPathToSave = _currentPhotoPath;
-                if (!string.IsNullOrWhiteSpace(_selectedPhotoPath))
-                {
-                    photoPathToSave = PersistPhoto(_selectedPhotoPath, username);
-                }
+                var photoData = _selectedPhotoBytes ?? _currentPhotoBytes;
 
                 if (isCreate)
                 {
-                    _userService.Create(username, password, role, displayName, isActive, photoPathToSave);
+                    _userService.Create(username, password, role, displayName, isActive, photoData);
                     ThemedMessageBox.ShowInfo(this, "User created successfully.", "Saved");
                 }
                 else
                 {
-                    _userService.Update(_editingUserId, username, role, displayName, isActive, photoPathToSave);
+                    _userService.Update(_editingUserId, username, role, displayName, isActive, photoData);
                     if (!string.IsNullOrWhiteSpace(password))
                     {
                         _userService.ResetPassword(_editingUserId, password);
@@ -520,9 +516,9 @@ namespace School_Management_System.Presentation.UserControls
                 }
 
                 LoadGrid();
-                _currentPhotoPath = photoPathToSave;
-                _selectedPhotoPath = null;
-                ShowPhoto(_currentPhotoPath);
+                _currentPhotoBytes = photoData;
+                _selectedPhotoBytes = null;
+                ShowPhoto(_currentPhotoBytes);
                 SetEditorState(false);
             }
             catch (Exception ex)
@@ -557,8 +553,8 @@ namespace School_Management_System.Presentation.UserControls
                 ofd.Title = "Select user profile photo";
                 if (ofd.ShowDialog() != DialogResult.OK) return;
 
-                _selectedPhotoPath = ofd.FileName;
-                ShowPhoto(_selectedPhotoPath);
+                _selectedPhotoBytes = PhotoStorageHelper.ReadPhotoBytes(ofd.FileName);
+                ShowPhoto(_selectedPhotoBytes);
                 if (_btnRemovePhoto != null)
                 {
                     _btnRemovePhoto.Enabled = true;
@@ -570,30 +566,18 @@ namespace School_Management_System.Presentation.UserControls
         {
             if (!_isEditorActive) return;
 
-            _selectedPhotoPath = null;
-            _currentPhotoPath = null;
-            ShowPhoto(null);
+            _selectedPhotoBytes = null;
+            _currentPhotoBytes = null;
+            ShowPhoto((byte[])null);
             if (_btnRemovePhoto != null)
             {
                 _btnRemovePhoto.Enabled = false;
             }
         }
 
-        private void ShowPhoto(string path)
+        private void ShowPhoto(byte[] data)
         {
-            PhotoStorageHelper.ShowPhoto(_picPhoto, path);
-        }
-
-        private string PersistPhoto(string sourcePath, string username)
-        {
-            var savedPath = PhotoStorageHelper.PersistPhoto(sourcePath, "Users", username, _currentPhotoPath);
-            if (string.Equals(savedPath, _currentPhotoPath, StringComparison.OrdinalIgnoreCase) &&
-                !string.IsNullOrWhiteSpace(sourcePath))
-            {
-                ThemedMessageBox.ShowError(this, "Unable to save photo. Please choose a different image.", "Photo");
-            }
-
-            return savedPath;
+            PhotoStorageHelper.ShowPhotoFromBytes(_picPhoto, data);
         }
 
         private void DisableCurrent()

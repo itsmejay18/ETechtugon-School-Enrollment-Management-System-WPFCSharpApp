@@ -11,6 +11,7 @@ namespace School_Management_System.Models
         private string _role;
         private string _displayName;
         private string _photoPath;
+        private byte[] _photoData;
         private bool _isActive;
         private DateTime _createdAt;
         private DateTime? _updatedAt;
@@ -23,6 +24,7 @@ namespace School_Management_System.Models
         public string Role { get { return _role; } set { _role = value; } }
         public string DisplayName { get { return _displayName; } set { _displayName = value; } }
         public string PhotoPath { get { return _photoPath; } set { _photoPath = value; } }
+        public byte[] PhotoData { get { return _photoData; } set { _photoData = value; } }
         public bool IsActive { get { return _isActive; } set { _isActive = value; } }
         public DateTime CreatedAt { get { return _createdAt; } set { _createdAt = value; } }
         public DateTime? UpdatedAt { get { return _updatedAt; } set { _updatedAt = value; } }
