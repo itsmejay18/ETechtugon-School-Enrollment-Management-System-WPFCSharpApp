@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Net;
+using System.Net.Sockets;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
 
@@ -116,6 +118,11 @@ namespace School_Management_System.DataLayer.Configuration
             {
                 builder.SslCa = sslCaPath.Trim();
             }
+
+            if (string.Equals(mode, "Online", StringComparison.OrdinalIgnoreCase))
+            {
+                PreferIpv4Host(builder);
+            }
         }
 
         private static void ApplyDatabaseProfileOverrides(MySqlConnectionStringBuilder builder)
@@ -222,6 +229,42 @@ namespace School_Management_System.DataLayer.Configuration
             {
                 // Keep Local/Wired/Wireless permissive defaults unless explicitly overridden.
                 ApplySslMode(builder, null, false);
+            }
+
+            if (string.Equals(mode, "Online", StringComparison.OrdinalIgnoreCase))
+            {
+                PreferIpv4Host(builder);
+            }
+        }
+
+        private static void PreferIpv4Host(MySqlConnectionStringBuilder builder)
+        {
+            if (builder == null || string.IsNullOrWhiteSpace(builder.Server))
+            {
+                return;
+            }
+
+            IPAddress parsed;
+            if (IPAddress.TryParse(builder.Server, out parsed))
+            {
+                return;
+            }
+
+            try
+            {
+                var addresses = Dns.GetHostAddresses(builder.Server.Trim());
+                for (var i = 0; i < addresses.Length; i++)
+                {
+                    if (addresses[i].AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        builder.Server = addresses[i].ToString();
+                        return;
+                    }
+                }
+            }
+            catch
+            {
+                // Keep original host if DNS resolution fails.
             }
         }
 
