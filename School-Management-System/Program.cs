@@ -20,14 +20,6 @@ namespace School_Management_System
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            using (var connectionProfileForm = new ConnectionProfileForm())
-            {
-                if (connectionProfileForm.ShowDialog() != DialogResult.OK)
-                {
-                    return;
-                }
-            }
-
             Application.Run(new LoginForm());
         }
 

@@ -594,25 +594,29 @@ namespace School_Management_System.Presentation.UserControls
 
             try
             {
+                var bySection = _rbBySection.Checked;
+
+                _lvSubjects.Items.Clear();
+                _curriculumId = null;
+
+                if (!_loadingLookups)
+                {
+                    LoadSectionsLookup();
+                }
+
                 var courseId = GetSelectedInt(_cmbCourse);
                 var ayId = GetSelectedInt(_cmbAcademicYear);
                 var ylId = GetSelectedInt(_cmbYearLevel);
                 var semId = GetSelectedInt(_cmbSemester);
                 var sectionId = GetSelectedInt(_cmbSection);
 
-                _lvSubjects.Items.Clear();
-                _curriculumId = null;
-
-                var bySection = _rbBySection.Checked;
-
-                if (sectionId > 0)
+                if (bySection && sectionId > 0)
                 {
                     SyncCombosWithSection(sectionId);
-                }
-
-                if (!_loadingLookups)
-                {
-                    LoadSectionsLookup();
+                    courseId = GetSelectedInt(_cmbCourse);
+                    ayId = GetSelectedInt(_cmbAcademicYear);
+                    ylId = GetSelectedInt(_cmbYearLevel);
+                    semId = GetSelectedInt(_cmbSemester);
                 }
 
                 if (bySection)
@@ -794,7 +798,7 @@ namespace School_Management_System.Presentation.UserControls
                 var semId = GetSelectedInt(_cmbSemester);
                 var sectionId = GetSelectedInt(_cmbSection);
 
-                if (_sectionsTable != null && sectionId > 0)
+                if (_rbBySection.Checked && _sectionsTable != null && sectionId > 0)
                 {
                     var row = _sectionsTable.AsEnumerable().FirstOrDefault(r => Convert.ToInt32(r["SectionId"]) == sectionId);
                     if (row != null)

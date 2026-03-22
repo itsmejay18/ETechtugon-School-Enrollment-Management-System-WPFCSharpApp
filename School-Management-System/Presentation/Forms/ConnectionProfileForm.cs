@@ -19,20 +19,13 @@ namespace School_Management_System.Presentation.Forms
         private Button _btnModeOnline;
         private Button _btnModeLocal;
         private Button _btnModeNetwork;
-        private TextBox _txtHost;
-        private TextBox _txtPort;
-        private TextBox _txtDatabase;
-        private TextBox _txtUsername;
-        private TextBox _txtPassword;
         private Label _lblModeTitle;
         private Label _lblModeCaption;
         private Label _lblStatusTitle;
         private Label _lblStatus;
         private Panel _statusPanel;
-        private Button _btnTest;
         private Button _btnConnect;
         private Button _btnCancel;
-        private CheckBox _chkShowPassword;
         private string _currentMode;
 
         public ConnectionProfileForm()
@@ -274,7 +267,7 @@ namespace School_Management_System.Presentation.Forms
             {
                 Dock = DockStyle.Top,
                 ColumnCount = 1,
-                RowCount = 6,
+                RowCount = 4,
                 BackColor = Color.Transparent,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
@@ -284,9 +277,7 @@ namespace School_Management_System.Presentation.Forms
             rightStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
             rightStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
             rightStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
-            rightStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 268F));
-            rightStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-            rightStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 88F));
+            rightStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 320F));
 
             var rightContentPanel = new Panel
             {
@@ -315,7 +306,7 @@ namespace School_Management_System.Presentation.Forms
             var subHeader = new Label
             {
                 Dock = DockStyle.Fill,
-                Text = "Review the values below, test the server if needed, then continue to the login screen.",
+                Text = "Select which saved server profile to use before continuing to the login screen.",
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.TopLeft
@@ -350,7 +341,7 @@ namespace School_Management_System.Presentation.Forms
             var highlightBody = new Label
             {
                 Dock = DockStyle.Fill,
-                Text = "The Online profile is prefilled with your Hostinger server so the app can connect immediately after you click Continue.",
+                Text = "Connection details are now managed in Settings. This startup screen only chooses which saved profile the app should use.",
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.Text,
                 TextAlign = ContentAlignment.MiddleLeft
@@ -359,91 +350,74 @@ namespace School_Management_System.Presentation.Forms
             highlightLayout.Controls.Add(highlightBody, 0, 1);
             highlightPanel.Controls.Add(highlightLayout);
 
-            var detailsCard = new Panel
+            var summaryCard = new Panel
             {
                 Dock = DockStyle.Fill,
                 Padding = new Padding(20),
                 BackColor = Color.Transparent,
-                MinimumSize = new Size(0, 268)
+                MinimumSize = new Size(0, 320)
             };
-            ThemeManager.StyleCardPanel(detailsCard);
+            ThemeManager.StyleCardPanel(summaryCard);
 
-            var detailsStack = new TableLayoutPanel
+            var summaryStack = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 3,
+                RowCount = 4,
                 BackColor = Color.Transparent,
                 Margin = new Padding(0)
             };
-            detailsStack.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            detailsStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
-            detailsStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
-            detailsStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 182F));
+            summaryStack.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            summaryStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22F));
+            summaryStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
+            summaryStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 86F));
+            summaryStack.RowStyles.Add(new RowStyle(SizeType.Absolute, 150F));
 
-            var detailsTitle = new Label
+            var summaryTitle = new Label
             {
                 Dock = DockStyle.Fill,
-                Text = "Connection Details",
+                Text = "Startup Server Selection",
                 Font = ThemeFonts.SubHeader,
                 ForeColor = ThemeColors.Text,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            var detailsSubtitle = new Label
+            var summarySubtitle = new Label
             {
                 Dock = DockStyle.Fill,
-                Text = "You can edit these values before testing or continuing.",
+                Text = "Pick a saved profile here. Edit host, port, database, username, or password later in Settings.",
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-
-            var detailsGrid = new TableLayoutPanel
+            var summaryLead = new Label
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 3,
-                BackColor = Color.Transparent,
-                Margin = new Padding(0, 8, 0, 0)
+                Text = "The selected profile will be applied for this run of the app. If you need to update database credentials or server addresses, open Settings after login.",
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.Text,
+                TextAlign = ContentAlignment.TopLeft
             };
-            detailsGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            detailsGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            detailsGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
-            detailsGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
-            detailsGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
-
-            _txtHost = CreateInput();
-            _txtPort = CreateInput();
-            _txtDatabase = CreateInput();
-            _txtUsername = CreateInput();
-            _txtPassword = CreateInput(true);
-
-            detailsGrid.Controls.Add(CreateFieldPanel("Host", _txtHost), 0, 0);
-            detailsGrid.SetColumnSpan(detailsGrid.GetControlFromPosition(0, 0), 2);
-            detailsGrid.Controls.Add(CreateFieldPanel("Port", _txtPort), 0, 1);
-            detailsGrid.Controls.Add(CreateFieldPanel("Database", _txtDatabase), 1, 1);
-            detailsGrid.Controls.Add(CreateFieldPanel("Username", _txtUsername), 0, 2);
-            detailsGrid.Controls.Add(CreateFieldPanel("Password", _txtPassword), 1, 2);
-
-            detailsStack.Controls.Add(detailsTitle, 0, 0);
-            detailsStack.Controls.Add(detailsSubtitle, 0, 1);
-            detailsStack.Controls.Add(detailsGrid, 0, 2);
-            detailsCard.Controls.Add(detailsStack);
-
-            _chkShowPassword = new CheckBox
+            var summaryNotes = new Label
             {
-                AutoSize = true,
-                Text = "Show password",
-                Dock = DockStyle.Left,
-                Margin = new Padding(0)
+                Dock = DockStyle.Fill,
+                Text = "Profiles:\nOnline = Hostinger / internet database\nLocal = MySQL on this same computer\nNetwork = another MySQL server on LAN or Wi-Fi\n\nThe app will verify the selected profile when you click Continue.",
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.MutedText,
+                TextAlign = ContentAlignment.TopLeft
             };
-            ThemeManager.StyleCheckBox(_chkShowPassword);
-            _chkShowPassword.CheckedChanged += (s, e) => _txtPassword.UseSystemPasswordChar = !_chkShowPassword.Checked;
+
+            summaryStack.Controls.Add(summaryTitle, 0, 0);
+            summaryStack.Controls.Add(summarySubtitle, 0, 1);
+            summaryStack.Controls.Add(summaryLead, 0, 2);
+            summaryStack.Controls.Add(summaryNotes, 0, 3);
+            summaryCard.Controls.Add(summaryStack);
 
             _statusPanel = new Panel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
+                Height = 88,
                 BackColor = ThemeColors.SurfaceAlt,
+                Margin = new Padding(0, 14, 0, 0),
                 Padding = new Padding(16, 14, 16, 12)
             };
             var statusLayout = new TableLayoutPanel
@@ -489,15 +463,6 @@ namespace School_Management_System.Presentation.Forms
             actionRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 124F));
             actionRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
-            _btnTest = new Button
-            {
-                Text = "Test Connection",
-                Dock = DockStyle.Fill,
-                Margin = new Padding(0, 0, 10, 0)
-            };
-            ThemeManager.StyleButtonNeutral(_btnTest);
-            _btnTest.Click += (s, e) => TestCurrentConnection(false);
-
             _btnConnect = new Button
             {
                 Text = "Continue",
@@ -523,7 +488,7 @@ namespace School_Management_System.Presentation.Forms
             AcceptButton = _btnConnect;
             CancelButton = _btnCancel;
 
-            actionRow.Controls.Add(_btnTest, 0, 0);
+            actionRow.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent }, 0, 0);
             actionRow.Controls.Add(new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent }, 1, 0);
             actionRow.Controls.Add(_btnCancel, 2, 0);
             actionRow.Controls.Add(_btnConnect, 3, 0);
@@ -531,9 +496,8 @@ namespace School_Management_System.Presentation.Forms
             rightStack.Controls.Add(header, 0, 0);
             rightStack.Controls.Add(subHeader, 0, 1);
             rightStack.Controls.Add(highlightPanel, 0, 2);
-            rightStack.Controls.Add(detailsCard, 0, 3);
-            rightStack.Controls.Add(_chkShowPassword, 0, 4);
-            rightStack.Controls.Add(_statusPanel, 0, 5);
+            rightStack.Controls.Add(summaryCard, 0, 3);
+            rightContentPanel.Controls.Add(_statusPanel);
             actionHost.Controls.Add(actionRow);
             rightContentPanel.Controls.Add(rightStack);
             rightPanel.Controls.Add(rightContentPanel);
@@ -575,13 +539,7 @@ namespace School_Management_System.Presentation.Forms
         private void ChangeMode(string mode)
         {
             mode = NormalizeMode(mode);
-            if (!string.IsNullOrWhiteSpace(_currentMode))
-            {
-                SaveInputsToProfile(_currentMode);
-            }
-
             _currentMode = mode;
-            LoadProfileToInputs(mode);
             UpdateModeButtons(mode);
             UpdateModeSummary(mode);
 
@@ -615,9 +573,8 @@ namespace School_Management_System.Presentation.Forms
         {
             try
             {
-                SaveInputsToProfile(_currentMode);
-                ValidateInputs();
                 var profile = GetProfile(_currentMode);
+                ValidateProfile(profile);
                 var builder = BuildConnectionString(profile);
 
                 using (var connection = new MySqlConnection(builder.ConnectionString))
@@ -648,7 +605,6 @@ namespace School_Management_System.Presentation.Forms
         private void ApplyRuntimeSelection()
         {
             var profile = GetProfile(_currentMode);
-            SaveInputsToProfile(_currentMode);
 
             Environment.SetEnvironmentVariable("SMS_DB_MODE", profile.Mode, EnvironmentVariableTarget.Process);
             SetProcessVariable("SMS_DB_HOST", profile.Host);
@@ -670,30 +626,35 @@ namespace School_Management_System.Presentation.Forms
             ConnectionStringProvider.ResetDatabaseProfileCache();
         }
 
-        private void ValidateInputs()
+        private static void ValidateProfile(ConnectionProfile profile)
         {
-            if (string.IsNullOrWhiteSpace(_txtHost.Text))
+            if (profile == null)
+            {
+                throw new InvalidOperationException("Connection profile not found.");
+            }
+
+            if (string.IsNullOrWhiteSpace(profile.Host))
             {
                 throw new InvalidOperationException("Host is required.");
             }
 
-            if (string.IsNullOrWhiteSpace(_txtPort.Text))
+            if (string.IsNullOrWhiteSpace(profile.Port))
             {
                 throw new InvalidOperationException("Port is required.");
             }
 
             uint port;
-            if (!uint.TryParse(_txtPort.Text.Trim(), out port) || port == 0)
+            if (!uint.TryParse(profile.Port.Trim(), out port) || port == 0)
             {
                 throw new InvalidOperationException("Port must be a valid number.");
             }
 
-            if (string.IsNullOrWhiteSpace(_txtDatabase.Text))
+            if (string.IsNullOrWhiteSpace(profile.Database))
             {
                 throw new InvalidOperationException("Database name is required.");
             }
 
-            if (string.IsNullOrWhiteSpace(_txtUsername.Text))
+            if (string.IsNullOrWhiteSpace(profile.Username))
             {
                 throw new InvalidOperationException("Username is required.");
             }
@@ -721,37 +682,6 @@ namespace School_Management_System.Presentation.Forms
                 : MySqlSslMode.Preferred;
 
             return builder;
-        }
-
-        private void SaveInputsToProfile(string mode)
-        {
-            var profile = GetProfile(mode);
-            if (profile == null)
-            {
-                return;
-            }
-
-            profile.Host = (_txtHost.Text ?? string.Empty).Trim();
-            profile.Port = (_txtPort.Text ?? string.Empty).Trim();
-            profile.Database = (_txtDatabase.Text ?? string.Empty).Trim();
-            profile.Username = (_txtUsername.Text ?? string.Empty).Trim();
-            profile.Password = _txtPassword.Text ?? string.Empty;
-        }
-
-        private void LoadProfileToInputs(string mode)
-        {
-            var profile = GetProfile(mode);
-            if (profile == null)
-            {
-                return;
-            }
-
-            _txtHost.Text = profile.Host ?? string.Empty;
-            _txtPort.Text = profile.Port ?? string.Empty;
-            _txtDatabase.Text = profile.Database ?? string.Empty;
-            _txtUsername.Text = profile.Username ?? string.Empty;
-            _txtPassword.Text = profile.Password ?? string.Empty;
-            _txtPassword.UseSystemPasswordChar = !_chkShowPassword.Checked;
         }
 
         private ConnectionProfile GetProfile(string mode)
@@ -832,54 +762,6 @@ namespace School_Management_System.Presentation.Forms
 
             _lblModeTitle.Text = "Local Machine";
             _lblModeCaption.Text = "Use this when MySQL is installed on the same PC as the application and the database is hosted locally.";
-        }
-
-        private static Label CreateLabel(string text)
-        {
-            return new Label
-            {
-                Dock = DockStyle.Fill,
-                Text = text,
-                Font = ThemeFonts.CaptionStrong,
-                ForeColor = ThemeColors.MutedText,
-                TextAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(0)
-            };
-        }
-
-        private static Control CreateFieldPanel(string label, TextBox input)
-        {
-            var field = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 2,
-                Margin = new Padding(0, 0, 12, 8),
-                BackColor = Color.Transparent
-            };
-            field.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            field.RowStyles.Add(new RowStyle(SizeType.Absolute, 16F));
-            field.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-
-            input.Margin = new Padding(0, 2, 0, 0);
-            field.Controls.Add(CreateLabel(label), 0, 0);
-            field.Controls.Add(input, 0, 1);
-            return field;
-        }
-
-        private static TextBox CreateInput(bool isPassword = false)
-        {
-            var textBox = new TextBox
-            {
-                Dock = DockStyle.Fill,
-                Margin = new Padding(0, 2, 0, 2),
-                AutoSize = false,
-                Height = 30,
-                MinimumSize = new Size(0, 30)
-            };
-            ThemeManager.StyleInput(textBox);
-            textBox.UseSystemPasswordChar = isPassword;
-            return textBox;
         }
 
         private void SetStatus(string message, Color color)

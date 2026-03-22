@@ -25,6 +25,8 @@ namespace School_Management_System.Presentation.Forms
 
         private TableLayoutPanel _stack;
         private Label _lblDbStatus;
+        private ComboBox _cmbConnectionMode;
+        private Button _btnApplyConnectionMode;
         private ComboBox _cmbQuickLogin;
         private TextBox _txtUsername;
         private TextBox _txtPassword;
@@ -224,24 +226,26 @@ namespace School_Management_System.Presentation.Forms
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 15
+                RowCount = 17
             };
             var stack = _stack;
             stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));   // 0  title
             stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));   // 1  subtitle
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 2  lblQuickLogin
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));   // 3  cmbQuickLogin
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));    // 4  dbStatus (collapsed by default)
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 5  lblUser
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));   // 6  txtUsername
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 7  lblPass
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));   // 8  txtPassword
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));   // 9  options
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));   // 10 btnLogin
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));   // 11 forgotLink
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));   // 12 btnRegister
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));   // 13 footerNote
-            stack.RowStyles.Add(new RowStyle(SizeType.Percent, 100));   // 14 spacer
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 2  lblConnectionMode
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));   // 3  connection mode row
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 4  lblQuickLogin
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));   // 5  cmbQuickLogin
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));    // 6  dbStatus (collapsed by default)
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 7  lblUser
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));   // 8  txtUsername
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 9  lblPass
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));   // 10 txtPassword
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));   // 11 options
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));   // 12 btnLogin
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));   // 13 forgotLink
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));   // 14 btnRegister
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));   // 15 footerNote
+            stack.RowStyles.Add(new RowStyle(SizeType.Percent, 100));   // 16 spacer
 
             var title = new Label
             {
@@ -270,9 +274,45 @@ namespace School_Management_System.Presentation.Forms
                 TextAlign = ContentAlignment.TopLeft
             };
 
+            var lblConnectionMode = MakeLabel("Connection Mode");
             var lblUser = MakeLabel("Username");
             var lblPass = MakeLabel("Password");
             var lblQuickLogin = MakeLabel("Quick Login Account");
+
+            _cmbConnectionMode = new ComboBox
+            {
+                Dock = DockStyle.Fill,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Margin = new Padding(0),
+                Height = 38
+            };
+            ThemeManager.StyleComboBox(_cmbConnectionMode);
+            _cmbConnectionMode.Items.Add("Online");
+            _cmbConnectionMode.Items.Add("Local");
+            _cmbConnectionMode.Items.Add("Network");
+
+            _btnApplyConnectionMode = new Button
+            {
+                Text = "Apply",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(10, 0, 0, 0),
+                Width = 110
+            };
+            ThemeManager.StyleButtonNeutral(_btnApplyConnectionMode);
+            _btnApplyConnectionMode.Click += (s, e) => ApplySelectedConnectionMode();
+
+            var connectionModeRow = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                Margin = new Padding(0)
+            };
+            connectionModeRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            connectionModeRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
+            connectionModeRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            connectionModeRow.Controls.Add(_cmbConnectionMode, 0, 0);
+            connectionModeRow.Controls.Add(_btnApplyConnectionMode, 1, 0);
 
             _cmbQuickLogin = new ComboBox
             {
@@ -331,21 +371,25 @@ namespace School_Management_System.Presentation.Forms
 
             stack.Controls.Add(title, 0, 0);
             stack.Controls.Add(subtitle, 0, 1);
-            stack.Controls.Add(lblQuickLogin, 0, 2);
-            stack.Controls.Add(_cmbQuickLogin, 0, 3);
-            stack.Controls.Add(_lblDbStatus, 0, 4);
-            stack.Controls.Add(lblUser, 0, 5);
-            stack.Controls.Add(_txtUsername, 0, 6);
-            stack.Controls.Add(lblPass, 0, 7);
-            stack.Controls.Add(_txtPassword, 0, 8);
-            stack.Controls.Add(options, 0, 9);
-            stack.Controls.Add(_btnLogin, 0, 10);
-            stack.Controls.Add(forgotLink, 0, 11);
-            stack.Controls.Add(_btnRegister, 0, 12);
-            stack.Controls.Add(footerNote, 0, 13);
-            stack.Controls.Add(new Panel { Dock = DockStyle.Fill }, 0, 14);
+            stack.Controls.Add(lblConnectionMode, 0, 2);
+            stack.Controls.Add(connectionModeRow, 0, 3);
+            stack.Controls.Add(lblQuickLogin, 0, 4);
+            stack.Controls.Add(_cmbQuickLogin, 0, 5);
+            stack.Controls.Add(_lblDbStatus, 0, 6);
+            stack.Controls.Add(lblUser, 0, 7);
+            stack.Controls.Add(_txtUsername, 0, 8);
+            stack.Controls.Add(lblPass, 0, 9);
+            stack.Controls.Add(_txtPassword, 0, 10);
+            stack.Controls.Add(options, 0, 11);
+            stack.Controls.Add(_btnLogin, 0, 12);
+            stack.Controls.Add(forgotLink, 0, 13);
+            stack.Controls.Add(_btnRegister, 0, 14);
+            stack.Controls.Add(footerNote, 0, 15);
+            stack.Controls.Add(new Panel { Dock = DockStyle.Fill }, 0, 16);
 
             shell.Controls.Add(stack);
+
+            LoadConnectionModeSelection();
 
             _txtUsername.KeyDown += (s, e) =>
             {
@@ -424,11 +468,47 @@ namespace School_Management_System.Presentation.Forms
             _lblDbStatus.Visible = !isConnected;
             if (_stack != null)
             {
-                _stack.RowStyles[4] = new RowStyle(SizeType.Absolute, isConnected ? 0 : 36);
+                _stack.RowStyles[6] = new RowStyle(SizeType.Absolute, isConnected ? 0 : 36);
             }
             // Keep actions clickable so users can retry after starting DB without restarting the app.
             if (_btnLogin != null) _btnLogin.Enabled = true;
             if (_btnRegister != null) _btnRegister.Enabled = true;
+        }
+
+        private void LoadConnectionModeSelection()
+        {
+            if (_cmbConnectionMode == null)
+            {
+                return;
+            }
+
+            var mode = NormalizeConnectionMode(Environment.GetEnvironmentVariable("SMS_DB_MODE"));
+            if (string.IsNullOrWhiteSpace(mode))
+            {
+                mode = NormalizeConnectionMode(System.Configuration.ConfigurationManager.AppSettings["DbMode"]);
+            }
+
+            _cmbConnectionMode.SelectedItem = mode;
+            if (_cmbConnectionMode.SelectedIndex < 0)
+            {
+                _cmbConnectionMode.SelectedItem = "Online";
+            }
+        }
+
+        private void ApplySelectedConnectionMode()
+        {
+            if (_cmbConnectionMode == null || _cmbConnectionMode.SelectedItem == null)
+            {
+                return;
+            }
+
+            var mode = NormalizeConnectionMode(_cmbConnectionMode.SelectedItem.ToString());
+            Environment.SetEnvironmentVariable("SMS_DB_MODE", MapConnectionModeToRuntimeMode(mode), EnvironmentVariableTarget.Process);
+            ConnectionStringProvider.ResetDatabaseProfileCache();
+            _db = null;
+            _authService = null;
+            _activityLogService = null;
+            TryInitServices();
         }
 
         private string BuildConnectionStateMessage(string rawError)
@@ -445,6 +525,16 @@ namespace School_Management_System.Presentation.Forms
             {
                 return "Database access denied. Run DatabaseScripts\\Allow-RemoteRoot.ps1 on the MySQL server using an app user, then allow host '" +
                     Environment.MachineName + "' (or '%') and retry.";
+            }
+
+            if (lower.Contains("reading from the stream has failed") ||
+                lower.Contains("unable to read data from the transport connection") ||
+                lower.Contains("connected party did not properly respond") ||
+                lower.Contains("host has failed to respond") ||
+                lower.Contains("unable to connect") ||
+                lower.Contains("actively refused"))
+            {
+                return "Cannot reach the database server. Check the selected host, port, internet/LAN access, and firewall settings, then retry.";
             }
 
             if (message.Length > 220)
@@ -591,6 +681,34 @@ namespace School_Management_System.Presentation.Forms
                 UseWaitCursor = false;
                 _btnLogin.Enabled = true;
             }
+        }
+
+        private static string NormalizeConnectionMode(string mode)
+        {
+            if (string.IsNullOrWhiteSpace(mode))
+            {
+                return "Online";
+            }
+
+            var normalized = mode.Trim();
+            if (string.Equals(normalized, "wired", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "network", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "lan", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Network";
+            }
+
+            if (string.Equals(normalized, "local", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Local";
+            }
+
+            return "Online";
+        }
+
+        private static string MapConnectionModeToRuntimeMode(string mode)
+        {
+            return string.Equals(mode, "Network", StringComparison.OrdinalIgnoreCase) ? "Wired" : mode;
         }
 
         private sealed class QuickLoginPreset

@@ -363,6 +363,16 @@ namespace School_Management_System.Presentation.Forms
                     Environment.MachineName + "' (or '%') and retry.";
             }
 
+            if (lower.Contains("reading from the stream has failed") ||
+                lower.Contains("unable to read data from the transport connection") ||
+                lower.Contains("connected party did not properly respond") ||
+                lower.Contains("host has failed to respond") ||
+                lower.Contains("unable to connect") ||
+                lower.Contains("actively refused"))
+            {
+                return "Cannot reach the database server. Check the selected host, port, internet/LAN access, and firewall settings, then retry.";
+            }
+
             if (message.Length > 220)
             {
                 return message.Substring(0, 220) + "...";
