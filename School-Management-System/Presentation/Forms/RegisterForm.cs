@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using School_Management_System.BusinessLayer.Services;
 using School_Management_System.Common;
@@ -33,6 +34,7 @@ namespace School_Management_System.Presentation.Forms
 
         private DatabaseHelper _db;
         private UserManagementService _userManagementService;
+        private int _serviceInitVersion;
 
         public string RegisteredUsername { get; private set; }
 
@@ -68,7 +70,12 @@ namespace School_Management_System.Presentation.Forms
                 return;
             }
 
-            TryInitServices();
+            BeginInvoke(new Action(InitializeAfterFirstPaint));
+        }
+
+        private void InitializeAfterFirstPaint()
+        {
+            BeginServiceInitialization();
             _txtUsername.Focus();
         }
 
@@ -99,6 +106,46 @@ namespace School_Management_System.Presentation.Forms
                 _userManagementService = null;
                 SetConnectionState(false, BuildConnectionStateMessage(ex.Message));
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("RegisterForm.TryInitServices", ex);
+            }
+        }
+
+        private async void BeginServiceInitialization()
+        {
+            var version = ++_serviceInitVersion;
+            SetConnectionState(false, "Checking database connection...");
+            if (_btnCreate != null) _btnCreate.Enabled = false;
+
+            var result = await Task.Run(() => InitializeServicesCore(_db));
+            if (version != _serviceInitVersion || IsDisposed)
+            {
+                return;
+            }
+
+            _db = result.Database;
+            _userManagementService = result.UserManagementService;
+            SetConnectionState(result.IsConnected, result.ErrorMessage);
+            if (_btnCreate != null) _btnCreate.Enabled = result.IsConnected;
+        }
+
+        private static RegisterInitializationResult InitializeServicesCore(DatabaseHelper existingDb)
+        {
+            try
+            {
+                var db = existingDb ?? DatabaseHelper.FromConfig();
+                string error;
+                if (!db.TestConnection(out error))
+                {
+                    return RegisterInitializationResult.Failed(BuildStaticConnectionStateMessage(error));
+                }
+
+                IUserManagementData userData = new UserManagementData(db);
+                var userManagementService = new UserManagementService(userData);
+                return RegisterInitializationResult.Success(db, userManagementService);
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("RegisterForm.TryInitServices", ex);
+                return RegisterInitializationResult.Failed(BuildStaticConnectionStateMessage(ex.Message));
             }
         }
 
@@ -349,6 +396,11 @@ namespace School_Management_System.Presentation.Forms
 
         private string BuildConnectionStateMessage(string rawError)
         {
+            return BuildStaticConnectionStateMessage(rawError);
+        }
+
+        private static string BuildStaticConnectionStateMessage(string rawError)
+        {
             if (string.IsNullOrWhiteSpace(rawError))
             {
                 return Messages.NoDatabaseConnection;
@@ -379,6 +431,33 @@ namespace School_Management_System.Presentation.Forms
             }
 
             return message;
+        }
+
+        private sealed class RegisterInitializationResult
+        {
+            public bool IsConnected { get; private set; }
+            public string ErrorMessage { get; private set; }
+            public DatabaseHelper Database { get; private set; }
+            public UserManagementService UserManagementService { get; private set; }
+
+            public static RegisterInitializationResult Success(DatabaseHelper database, UserManagementService userManagementService)
+            {
+                return new RegisterInitializationResult
+                {
+                    IsConnected = true,
+                    Database = database,
+                    UserManagementService = userManagementService
+                };
+            }
+
+            public static RegisterInitializationResult Failed(string errorMessage)
+            {
+                return new RegisterInitializationResult
+                {
+                    IsConnected = false,
+                    ErrorMessage = errorMessage
+                };
+            }
         }
 
         private void DoRegister()

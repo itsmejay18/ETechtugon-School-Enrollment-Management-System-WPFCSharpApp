@@ -1,0 +1,24 @@
+<UserControl x:Class="School_Management_System.Wpf.Views.ModulePlaceholderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Style="{StaticResource CardBorderStyle}">
+        <StackPanel>
+            <TextBlock Text="{Binding Title}"
+                       FontSize="24"
+                       FontWeight="Bold"
+                       Foreground="{StaticResource TextBrush}" />
+            <TextBlock Margin="0,12,0,0"
+                       Text="{Binding Description}"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource MutedTextBrush}" />
+            <Border Margin="0,24,0,0"
+                    Padding="16"
+                    CornerRadius="14"
+                    Background="#EFF6FF">
+                <TextBlock Text="{Binding Note}"
+                           TextWrapping="Wrap"
+                           Foreground="#1D4ED8" />
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Configuration;
 using System.Windows.Forms;
+using School_Management_System.DataLayer.Configuration;
 using School_Management_System.DataLayer.Logging;
 using School_Management_System.Presentation.Forms;
 
@@ -15,12 +17,24 @@ namespace School_Management_System
         [STAThread]
         static void Main(string[] args)
         {
+            ApplyDefaultConnectionMode();
             ApplyRuntimeConnectionMode(args);
             WireGlobalExceptionHandlers();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
             Application.Run(new LoginForm());
+        }
+
+        private static void ApplyDefaultConnectionMode()
+        {
+            var mode = ConfigurationManager.AppSettings["DbMode"];
+            if (string.IsNullOrWhiteSpace(mode))
+            {
+                mode = "Online";
+            }
+
+            ConnectionModeHelper.ApplyRuntimeMode(mode);
         }
 
         private static void ApplyRuntimeConnectionMode(string[] args)
@@ -42,32 +56,32 @@ namespace School_Management_System
 
                 if (string.Equals(token, "--network", StringComparison.OrdinalIgnoreCase))
                 {
-                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Wired", EnvironmentVariableTarget.Process);
+                    ConnectionModeHelper.ApplyRuntimeMode("Wired");
                     continue;
                 }
 
                 if (string.Equals(token, "--wired", StringComparison.OrdinalIgnoreCase))
                 {
-                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Wired", EnvironmentVariableTarget.Process);
+                    ConnectionModeHelper.ApplyRuntimeMode("Wired");
                     continue;
                 }
 
                 if (string.Equals(token, "--wireless", StringComparison.OrdinalIgnoreCase))
                 {
-                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Wireless", EnvironmentVariableTarget.Process);
+                    ConnectionModeHelper.ApplyRuntimeMode("Wireless");
                     continue;
                 }
 
                 if (string.Equals(token, "--local", StringComparison.OrdinalIgnoreCase))
                 {
-                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Local", EnvironmentVariableTarget.Process);
+                    ConnectionModeHelper.ApplyRuntimeMode("Local");
                     continue;
                 }
 
                 if (string.Equals(token, "--online", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(token, "--hostinger", StringComparison.OrdinalIgnoreCase))
                 {
-                    Environment.SetEnvironmentVariable("SMS_DB_MODE", "Online", EnvironmentVariableTarget.Process);
+                    ConnectionModeHelper.ApplyRuntimeMode("Online");
                     continue;
                 }
 
@@ -77,7 +91,7 @@ namespace School_Management_System
                     var mode = token.Substring(longPrefix.Length).Trim();
                     if (!string.IsNullOrWhiteSpace(mode))
                     {
-                        Environment.SetEnvironmentVariable("SMS_DB_MODE", mode, EnvironmentVariableTarget.Process);
+                        ConnectionModeHelper.ApplyRuntimeMode(mode);
                     }
                     continue;
                 }
@@ -88,7 +102,7 @@ namespace School_Management_System
                     var mode = token.Substring(slashPrefix.Length).Trim();
                     if (!string.IsNullOrWhiteSpace(mode))
                     {
-                        Environment.SetEnvironmentVariable("SMS_DB_MODE", mode, EnvironmentVariableTarget.Process);
+                        ConnectionModeHelper.ApplyRuntimeMode(mode);
                     }
                 }
             }

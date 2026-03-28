@@ -19,7 +19,7 @@ namespace School_Management_System.Presentation.Forms
 {
     public sealed partial class DashboardForm : BaseForm
     {
-        private const int SidebarHeaderHeight = 94;
+        private const int SidebarHeaderHeight = 112;
 
         private readonly DatabaseHelper _db;
 
@@ -28,6 +28,7 @@ namespace School_Management_System.Presentation.Forms
         private Panel _header;
         private Panel _body;
         private Label _lblHeader;
+        private Label _lblSubHeader;
         private Label _lblUser;
 
         private FlowLayoutPanel _nav;
@@ -50,6 +51,8 @@ namespace School_Management_System.Presentation.Forms
         private SystemSettingService _systemSettingService;
         private ActivityLogService _activityLogService;
         private DatabaseBackupService _databaseBackupService;
+
+        public event EventHandler LogoutRequested;
 
         public DashboardForm()
         {
@@ -160,7 +163,7 @@ namespace School_Management_System.Presentation.Forms
             _sidebar = new Panel 
             { 
                 Dock = DockStyle.Left, 
-                Width = 272, 
+                Width = 292, 
                 BackColor = ThemeColors.SidebarBackground,
                 Name = "SidebarPanel"
             };
@@ -218,45 +221,53 @@ namespace School_Management_System.Presentation.Forms
                 Dock = DockStyle.Top, 
                 Height = SidebarHeaderHeight, 
                 BackColor = ThemeColors.SidebarBackground,
+                Padding = new Padding(12, 12, 12, 8),
                 Name = "BrandPanel"
             };
+
+            var brandCard = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = ThemeColors.Surface,
+                Padding = new Padding(12, 10, 12, 10)
+            };
+            UiHelper.ApplyRoundedCorners(brandCard, 12);
 
             var brandLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                Padding = new Padding(12, 10, 12, 8),
                 ColumnCount = 2,
                 RowCount = 1,
                 AutoSize = false
             };
-            brandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50));
+            brandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 58));
             brandLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             brandLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             var brandIcon = new PictureBox
             {
-                Size = new Size(50, 50),
+                Size = new Size(58, 58),
                 SizeMode = brandLogo != null ? PictureBoxSizeMode.Zoom : PictureBoxSizeMode.CenterImage,
-                Image = brandLogo ?? IconFactory.CreateCircleIcon(ThemeColors.SidebarIcon, IconKind.School, 44),
+                Image = brandLogo ?? IconFactory.CreateCircleIcon(ThemeColors.SidebarIcon, IconKind.School, 52),
                 Dock = DockStyle.Fill
             };
 
-            var textHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(10, 6, 0, 0), BackColor = Color.Transparent };
+            var textHost = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12, 8, 0, 0), BackColor = Color.Transparent };
             var brandTitle = new Label
             {
-                Text = "School Management",
+                Text = "School Enrollment",
                 ForeColor = ThemeColors.Text,
-                Font = ThemeFonts.Sidebar,
+                Font = new Font("Segoe UI Semibold", 11.5F, FontStyle.Bold),
                 Dock = DockStyle.Top,
-                Height = 22,
+                Height = 24,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding = new Padding(0)
             };
             var brandSubtitle = new Label
             {
-                Text = "SYSTEM",
+                Text = "MANAGEMENT SYSTEM",
                 ForeColor = ThemeColors.SidebarSectionText,
-                Font = ThemeFonts.Label,
+                Font = new Font("Segoe UI", 8.4F, FontStyle.Regular),
                 Dock = DockStyle.Top,
                 Height = 18,
                 TextAlign = ContentAlignment.MiddleLeft
@@ -267,14 +278,15 @@ namespace School_Management_System.Presentation.Forms
 
             brandLayout.Controls.Add(brandIcon, 0, 0);
             brandLayout.Controls.Add(textHost, 1, 0);
-            var accentLine = new Panel
+            brandCard.Controls.Add(brandLayout);
+            brandCard.Controls.Add(new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 2,
-                BackColor = Color.FromArgb(120, ThemeColors.Secondary)
-            };
-            brand.Controls.Add(accentLine);
-            brand.Controls.Add(brandLayout);
+                Height = 3,
+                BackColor = Color.FromArgb(110, ThemeColors.Secondary)
+            });
+
+            brand.Controls.Add(brandCard);
 
             return brand;
         }
@@ -287,8 +299,8 @@ namespace School_Management_System.Presentation.Forms
             var navHeader = new Panel 
             { 
                 Dock = DockStyle.Top, 
-                Height = 34, 
-                Padding = new Padding(14, 8, 12, 4), 
+                Height = 38, 
+                Padding = new Padding(16, 10, 14, 4), 
                 BackColor = ThemeColors.SidebarBackground,
                 Name = "NavHeaderPanel"
             };
@@ -296,8 +308,8 @@ namespace School_Management_System.Presentation.Forms
             var navHeaderText = new Label
             {
                 Dock = DockStyle.Fill,
-                Text = "NAVIGATION",
-                Font = ThemeFonts.Label,
+                Text = "MAIN MENU",
+                Font = ThemeFonts.CaptionStrong,
                 ForeColor = ThemeColors.SidebarSectionText,
                 TextAlign = ContentAlignment.MiddleLeft
             };
@@ -320,7 +332,7 @@ namespace School_Management_System.Presentation.Forms
             var profilePanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 88,
+                Height = 104,
                 BackColor = ThemeColors.SidebarBackground,
                 Padding = new Padding(12, 10, 12, 10),
                 Name = "SidebarProfilePanel"
@@ -330,9 +342,9 @@ namespace School_Management_System.Presentation.Forms
             {
                 Dock = DockStyle.Fill,
                 BackColor = ThemeColors.Surface,
-                Padding = new Padding(10, 8, 10, 8)
+                Padding = new Padding(12, 10, 12, 10)
             };
-            UiHelper.ApplyRoundedCorners(card, 6);
+            UiHelper.ApplyRoundedCorners(card, 12);
 
             var layout = new TableLayoutPanel
             {
@@ -342,8 +354,8 @@ namespace School_Management_System.Presentation.Forms
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 42));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 55));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 45));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 52));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 48));
 
             var avatar = new PictureBox
             {
@@ -352,7 +364,7 @@ namespace School_Management_System.Presentation.Forms
                 Image = avatarImage,
                 BackColor = hasPhoto ? Color.White : Color.Transparent,
                 BorderStyle = hasPhoto ? BorderStyle.FixedSingle : BorderStyle.None,
-                Margin = new Padding(0, 0, 8, 0)
+                Margin = new Padding(0, 0, 10, 0)
             };
 
             var nameLabel = new Label
@@ -362,7 +374,7 @@ namespace School_Management_System.Presentation.Forms
                 AutoEllipsis = true,
                 TextAlign = ContentAlignment.BottomLeft,
                 ForeColor = ThemeColors.Text,
-                Font = ThemeFonts.Sidebar
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold)
             };
 
             var roleLabel = new Label
@@ -372,7 +384,7 @@ namespace School_Management_System.Presentation.Forms
                 AutoEllipsis = true,
                 TextAlign = ContentAlignment.TopLeft,
                 ForeColor = roleColor,
-                Font = ThemeFonts.CaptionStrong
+                Font = new Font("Segoe UI", 8.8F, FontStyle.Regular)
             };
 
             layout.Controls.Add(avatar, 0, 0);
@@ -429,14 +441,30 @@ namespace School_Management_System.Presentation.Forms
             var logoutDivider = new Panel { Dock = DockStyle.Top, Height = 1, BackColor = ThemeColors.SidebarDivider };
             var btnLogout = new Button { Text = "  Logout", Dock = DockStyle.Fill };
             btnLogout.Image = IconFactory.CreateCircleIcon(ThemeColors.SidebarIconDanger, IconKind.Logout, 22);
-            ThemeManager.StyleSidebarButton(btnLogout);
-            btnLogout.ForeColor = ThemeColors.Text;
-            btnLogout.Click += (s, e) => Close();
+            ThemeManager.StyleButtonNeutral(btnLogout);
+            btnLogout.ForeColor = ThemeColors.AccentDanger;
+            btnLogout.FlatAppearance.BorderColor = ThemeColors.Border;
+            btnLogout.TextAlign = ContentAlignment.MiddleCenter;
+            btnLogout.ImageAlign = ContentAlignment.MiddleLeft;
+            btnLogout.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnLogout.Click += (s, e) => RaiseLogoutRequested();
 
             logoutPanel.Controls.Add(btnLogout);
             logoutPanel.Controls.Add(logoutDivider);
 
             return logoutPanel;
+        }
+
+        private void RaiseLogoutRequested()
+        {
+            var handler = LogoutRequested;
+            if (handler != null)
+            {
+                handler(this, EventArgs.Empty);
+                return;
+            }
+
+            Close();
         }
 
         /// <summary>
@@ -449,7 +477,7 @@ namespace School_Management_System.Presentation.Forms
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
                 WrapContents = false,
-                AutoScroll = false,
+                AutoScroll = true,
                 Padding = new Padding(10, 6, 10, 10),
                 BackColor = ThemeColors.SidebarBackground,
                 Name = "NavigationPanel"
@@ -464,63 +492,88 @@ namespace School_Management_System.Presentation.Forms
         /// </summary>
         private void InitializeContentArea()
         {
-            // Header panel
             _header = new Panel 
             { 
                 Dock = DockStyle.Top, 
-                Height = SidebarHeaderHeight, 
-                BackColor = ThemeColors.CardBackground, 
-                Padding = new Padding(18, 0, 18, 0),
+                Height = 110, 
+                BackColor = ThemeColors.Background, 
+                Padding = new Padding(18, 18, 18, 0),
                 Name = "HeaderPanel"
             };
 
-            // Header labels using table layout for better spacing
+            var headerCard = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = ThemeColors.CardBackground,
+                Padding = new Padding(24, 16, 24, 16)
+            };
+            ThemeManager.StyleCardPanel(headerCard);
+
             var headerLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 3,
+                ColumnCount = 2,
                 RowCount = 1,
                 AutoSize = false
             };
-            headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 1));
-            headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65));
+            headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
             headerLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            _lblHeader = new Label 
-            { 
-                Dock = DockStyle.Fill, 
-                Font = ThemeFonts.SubHeader, 
-                ForeColor = ThemeColors.Text, 
-                Text = "Dashboard", 
-                TextAlign = ContentAlignment.MiddleLeft 
+            var titleHost = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent };
+            _lblSubHeader = new Label
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                ForeColor = ThemeColors.MutedText,
+                Text = "Operational overview and live academic activity",
+                TextAlign = ContentAlignment.TopLeft
             };
+            _lblHeader = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 32,
+                Font = ThemeFonts.PageTitle,
+                ForeColor = ThemeColors.Text,
+                Text = "Dashboard",
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            titleHost.Controls.Add(_lblSubHeader);
+            titleHost.Controls.Add(_lblHeader);
 
-            _lblUser = new Label 
-            { 
-                Dock = DockStyle.Fill, 
-                Font = ThemeFonts.Label, 
-                ForeColor = ThemeColors.MutedText, 
-                TextAlign = ContentAlignment.MiddleRight 
+            var userCard = new Panel
+            {
+                Dock = DockStyle.Right,
+                Width = 280,
+                BackColor = ThemeColors.Surface,
+                Padding = new Padding(14, 10, 14, 10)
+            };
+            UiHelper.ApplyRoundedCorners(userCard, 12);
+
+            _lblUser = new Label
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                ForeColor = ThemeColors.Text,
+                TextAlign = ContentAlignment.MiddleRight
             };
             _lblUser.Text = GetUserDisplay();
+            userCard.Controls.Add(_lblUser);
 
-            headerLayout.Controls.Add(_lblHeader, 0, 0);
-            headerLayout.Controls.Add(_lblUser, 2, 0);
-            _header.Controls.Add(headerLayout);
-            _header.Controls.Add(new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = ThemeColors.SidebarDivider });
+            headerLayout.Controls.Add(titleHost, 0, 0);
+            headerLayout.Controls.Add(userCard, 1, 0);
+            headerCard.Controls.Add(headerLayout);
+            _header.Controls.Add(headerCard);
 
-            // Body panel for content
             _body = new Panel 
             { 
                 Dock = DockStyle.Fill, 
                 BackColor = ThemeColors.Background, 
-                Padding = new Padding(18),
+                Padding = new Padding(18, 18, 18, 18),
                 Name = "BodyPanel",
                 AutoScroll = true
             };
 
-            // For Dock layout, add Fill first then Top.
             _content.Controls.Add(_body);
             _content.Controls.Add(_header);
         }
@@ -541,7 +594,7 @@ namespace School_Management_System.Presentation.Forms
                 () => LoadModule("students", () => new StudentControl(_studentService, _systemSettingService)));
 
             AddNavButton("faculty", "Faculty", IconKind.Faculty, ThemeColors.SidebarIcon, 
-                () => LoadModule("faculty", () => new FacultyControl(_facultyService)));
+                () => LoadModule("faculty", () => new FacultyControl(_facultyService, _classScheduleService)));
 
             AddNavButton("enrollment", "Enrollment", IconKind.Enrollment, ThemeColors.SidebarIcon,
                 () => LoadModule("enrollment", () => new EnrollmentControl(_enrollmentService, _studentService, _curriculumService, _courseService, _lookupService, _sectionService, _systemSettingService, _classScheduleService)));
@@ -569,8 +622,6 @@ namespace School_Management_System.Presentation.Forms
                         _databaseBackupService,
                         isAdmin)));
 
-            // Load default page
-            LoadModule("dashboard", () => new DashboardHomeControl(_studentService, _facultyService, _courseService, _subjectService));
         }
 
         private void InitializeDesignerSurface()
@@ -607,6 +658,10 @@ namespace School_Management_System.Presentation.Forms
             try
             {
                 _lblHeader.Text = GetHeaderForKey(key);
+                if (_lblSubHeader != null)
+                {
+                    _lblSubHeader.Text = GetSubtitleForKey(key);
+                }
                 SetActiveNavButton(key);
 
                 _body.Controls.Clear();
@@ -673,17 +728,10 @@ namespace School_Management_System.Presentation.Forms
                         - (_nav.VerticalScroll.Visible ? SystemInformation.VerticalScrollBarWidth : 0);
             if (width < 120) width = 120;
 
-            var buttons = _nav.Controls.OfType<Button>().ToList();
-            var availableHeight = _nav.ClientSize.Height - _nav.Padding.Top - _nav.Padding.Bottom;
-            var totalMarginHeight = buttons.Count * 4; // top+bottom margin (2 + 2)
-            var computedHeight = buttons.Count == 0 ? 46 : (availableHeight - totalMarginHeight) / buttons.Count;
-            if (computedHeight > 46) computedHeight = 46;
-            if (computedHeight < 28) computedHeight = 28;
-
-            foreach (var button in buttons)
+            foreach (var button in _nav.Controls.OfType<Button>())
             {
                 button.Width = width;
-                button.Height = computedHeight;
+                button.Height = 46;
                 button.Margin = new Padding(0, 2, 0, 2);
             }
         }
@@ -749,6 +797,18 @@ namespace School_Management_System.Presentation.Forms
             if (string.Equals(key, "calendar", StringComparison.OrdinalIgnoreCase)) return "Calendar";
             if (string.Equals(key, "settings", StringComparison.OrdinalIgnoreCase)) return "Settings";
             return "Module";
+        }
+
+        private static string GetSubtitleForKey(string key)
+        {
+            if (string.Equals(key, "dashboard", StringComparison.OrdinalIgnoreCase)) return "Operational overview and live academic activity.";
+            if (string.Equals(key, "students", StringComparison.OrdinalIgnoreCase)) return "Student records, profiles, and enrollment history.";
+            if (string.Equals(key, "faculty", StringComparison.OrdinalIgnoreCase)) return "Faculty members, assignments, and profile details.";
+            if (string.Equals(key, "enrollment", StringComparison.OrdinalIgnoreCase)) return "Enrollment workflow, subject loading, and billing flow.";
+            if (string.Equals(key, "schedule", StringComparison.OrdinalIgnoreCase)) return "Schedules, rooms, and subject offering alignment.";
+            if (string.Equals(key, "calendar", StringComparison.OrdinalIgnoreCase)) return "Calendar view of generated class activity and key dates.";
+            if (string.Equals(key, "settings", StringComparison.OrdinalIgnoreCase)) return "Academic structure, users, connection settings, and backups.";
+            return "Manage the selected module.";
         }
 
         /// <summary>

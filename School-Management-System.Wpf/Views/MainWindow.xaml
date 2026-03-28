@@ -1,0 +1,18 @@
+<Window x:Class="School_Management_System.Wpf.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wf="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
+        Title="School Enrollment Management System"
+        Width="1440"
+        Height="900"
+        MinWidth="1180"
+        MinHeight="760"
+        Background="{StaticResource WindowBackgroundBrush}"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+    <Grid Background="{StaticResource WindowBackgroundBrush}">
+        <wf:WindowsFormsHost x:Name="DashboardHost" />
+    </Grid>
+</Window>

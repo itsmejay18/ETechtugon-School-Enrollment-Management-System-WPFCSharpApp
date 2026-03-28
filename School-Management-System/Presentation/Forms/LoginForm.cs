@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using School_Management_System.BusinessLayer.Services;
 using School_Management_System.BusinessLayer.Session;
@@ -25,8 +26,8 @@ namespace School_Management_System.Presentation.Forms
 
         private TableLayoutPanel _stack;
         private Label _lblDbStatus;
-        private ComboBox _cmbConnectionMode;
-        private Button _btnApplyConnectionMode;
+        private Label _lblConnectionProfileTitle;
+        private Label _lblConnectionProfileNote;
         private ComboBox _cmbQuickLogin;
         private TextBox _txtUsername;
         private TextBox _txtPassword;
@@ -38,14 +39,14 @@ namespace School_Management_System.Presentation.Forms
         private readonly List<QuickLoginPreset> _quickLoginPresets = new List<QuickLoginPreset>
         {
             new QuickLoginPreset("Admin", "admin", "admin123"),
-            new QuickLoginPreset("Staff", "faculty1", "faculty123"),
-            new QuickLoginPreset("Registrar", "registrar", "registrar123"),
-            new QuickLoginPreset("Student", "student1", "student123")
+            new QuickLoginPreset("Faculty", "faculty1", "faculty123"),
+            new QuickLoginPreset("Registrar", "registrar", "registrar123")
         };
 
         private DatabaseHelper _db;
         private AuthService _authService;
         private ActivityLogService _activityLogService;
+        private int _serviceInitVersion;
 
         public LoginForm()
         {
@@ -72,7 +73,12 @@ namespace School_Management_System.Presentation.Forms
                 return;
             }
 
-            TryInitServices();
+            BeginInvoke(new Action(InitializeAfterFirstPaint));
+        }
+
+        private void InitializeAfterFirstPaint()
+        {
+            BeginServiceInitialization();
 
             _chkRememberMe.Checked = UserPreferences.RememberMe;
             var rememberedUsername = UserPreferences.RememberedUsername ?? string.Empty;
@@ -134,6 +140,50 @@ namespace School_Management_System.Presentation.Forms
                 _activityLogService = null;
                 SetConnectionState(false, BuildConnectionStateMessage(ex.Message));
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("LoginForm.TryInitServices", ex);
+            }
+        }
+
+        private async void BeginServiceInitialization()
+        {
+            var version = ++_serviceInitVersion;
+            SetConnectionState(false, "Checking database connection...");
+            if (_btnLogin != null) _btnLogin.Enabled = false;
+            if (_btnRegister != null) _btnRegister.Enabled = false;
+
+            var result = await Task.Run(() => InitializeServicesCore());
+            if (version != _serviceInitVersion || IsDisposed)
+            {
+                return;
+            }
+
+            _db = result.Database;
+            _authService = result.AuthService;
+            _activityLogService = result.ActivityLogService;
+            SetConnectionState(result.IsConnected, result.ErrorMessage);
+        }
+
+        private static ServiceInitializationResult InitializeServicesCore()
+        {
+            try
+            {
+                var db = DatabaseHelper.FromConfig();
+                string error;
+                if (!db.TestConnection(out error))
+                {
+                    return ServiceInitializationResult.Failed(BuildStaticConnectionStateMessage(error));
+                }
+
+                SchemaMigrationRunner.EnsureCurrent(db);
+                IUserData userData = new UserData(db);
+                IActivityLogData activityLogData = new ActivityLogData(db);
+                var activityLogService = new ActivityLogService(activityLogData);
+                var authService = new AuthService(userData, activityLogService);
+                return ServiceInitializationResult.Success(db, authService, activityLogService);
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("LoginForm.TryInitServices", ex);
+                return ServiceInitializationResult.Failed(BuildStaticConnectionStateMessage(ex.Message));
             }
         }
 
@@ -232,7 +282,7 @@ namespace School_Management_System.Presentation.Forms
             stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));   // 0  title
             stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));   // 1  subtitle
             stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 2  lblConnectionMode
-            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));   // 3  connection mode row
+            stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));   // 3  connection profile row
             stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));   // 4  lblQuickLogin
             stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));   // 5  cmbQuickLogin
             stack.RowStyles.Add(new RowStyle(SizeType.Absolute, 0));    // 6  dbStatus (collapsed by default)
@@ -249,7 +299,7 @@ namespace School_Management_System.Presentation.Forms
 
             var title = new Label
             {
-                Text = "Log in to School Management",
+                Text = "Log in to School Enrollment",
                 Dock = DockStyle.Fill,
                 Font = ThemeFonts.AuthTitle,
                 ForeColor = ThemeColors.Text,
@@ -257,7 +307,7 @@ namespace School_Management_System.Presentation.Forms
             };
             var subtitle = new Label
             {
-                Text = "Sign in using your existing account credentials.",
+                Text = "Sign in using your existing account credentials. Database profiles are managed in Settings.",
                 Dock = DockStyle.Fill,
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
@@ -274,45 +324,39 @@ namespace School_Management_System.Presentation.Forms
                 TextAlign = ContentAlignment.TopLeft
             };
 
-            var lblConnectionMode = MakeLabel("Connection Mode");
+            var lblConnectionMode = MakeLabel("Database Profile");
             var lblUser = MakeLabel("Username");
             var lblPass = MakeLabel("Password");
             var lblQuickLogin = MakeLabel("Quick Login Account");
 
-            _cmbConnectionMode = new ComboBox
+            var connectionModeRow = new Panel
             {
                 Dock = DockStyle.Fill,
-                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = ThemeColors.SurfaceAlt,
                 Margin = new Padding(0),
-                Height = 38
+                Padding = new Padding(12, 6, 12, 6)
             };
-            ThemeManager.StyleComboBox(_cmbConnectionMode);
-            _cmbConnectionMode.Items.Add("Online");
-            _cmbConnectionMode.Items.Add("Local");
-            _cmbConnectionMode.Items.Add("Network");
+            UiHelper.ApplyRoundedCorners(connectionModeRow, 6);
 
-            _btnApplyConnectionMode = new Button
+            _lblConnectionProfileTitle = new Label
             {
-                Text = "Apply",
-                Dock = DockStyle.Fill,
-                Margin = new Padding(10, 0, 0, 0),
-                Width = 110
+                Dock = DockStyle.Top,
+                Height = 16,
+                Font = ThemeFonts.CaptionStrong,
+                ForeColor = ThemeColors.Secondary,
+                TextAlign = ContentAlignment.MiddleLeft
             };
-            ThemeManager.StyleButtonNeutral(_btnApplyConnectionMode);
-            _btnApplyConnectionMode.Click += (s, e) => ApplySelectedConnectionMode();
 
-            var connectionModeRow = new TableLayoutPanel
+            _lblConnectionProfileNote = new Label
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                RowCount = 1,
-                Margin = new Padding(0)
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.Text,
+                TextAlign = ContentAlignment.MiddleLeft,
+                AutoEllipsis = true
             };
-            connectionModeRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            connectionModeRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
-            connectionModeRow.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            connectionModeRow.Controls.Add(_cmbConnectionMode, 0, 0);
-            connectionModeRow.Controls.Add(_btnApplyConnectionMode, 1, 0);
+            connectionModeRow.Controls.Add(_lblConnectionProfileNote);
+            connectionModeRow.Controls.Add(_lblConnectionProfileTitle);
 
             _cmbQuickLogin = new ComboBox
             {
@@ -389,7 +433,7 @@ namespace School_Management_System.Presentation.Forms
 
             shell.Controls.Add(stack);
 
-            LoadConnectionModeSelection();
+            LoadConnectionProfileSummary();
 
             _txtUsername.KeyDown += (s, e) =>
             {
@@ -471,47 +515,28 @@ namespace School_Management_System.Presentation.Forms
                 _stack.RowStyles[6] = new RowStyle(SizeType.Absolute, isConnected ? 0 : 36);
             }
             // Keep actions clickable so users can retry after starting DB without restarting the app.
-            if (_btnLogin != null) _btnLogin.Enabled = true;
+            if (_btnLogin != null) _btnLogin.Enabled = isConnected;
             if (_btnRegister != null) _btnRegister.Enabled = true;
         }
 
-        private void LoadConnectionModeSelection()
+        private void LoadConnectionProfileSummary()
         {
-            if (_cmbConnectionMode == null)
+            if (_lblConnectionProfileTitle == null || _lblConnectionProfileNote == null)
             {
                 return;
             }
 
-            var mode = NormalizeConnectionMode(Environment.GetEnvironmentVariable("SMS_DB_MODE"));
-            if (string.IsNullOrWhiteSpace(mode))
-            {
-                mode = NormalizeConnectionMode(System.Configuration.ConfigurationManager.AppSettings["DbMode"]);
-            }
-
-            _cmbConnectionMode.SelectedItem = mode;
-            if (_cmbConnectionMode.SelectedIndex < 0)
-            {
-                _cmbConnectionMode.SelectedItem = "Online";
-            }
-        }
-
-        private void ApplySelectedConnectionMode()
-        {
-            if (_cmbConnectionMode == null || _cmbConnectionMode.SelectedItem == null)
-            {
-                return;
-            }
-
-            var mode = NormalizeConnectionMode(_cmbConnectionMode.SelectedItem.ToString());
-            Environment.SetEnvironmentVariable("SMS_DB_MODE", MapConnectionModeToRuntimeMode(mode), EnvironmentVariableTarget.Process);
-            ConnectionStringProvider.ResetDatabaseProfileCache();
-            _db = null;
-            _authService = null;
-            _activityLogService = null;
-            TryInitServices();
+            var mode = ConnectionModeHelper.GetCurrentMode("Online");
+            _lblConnectionProfileTitle.Text = "Active Profile: " + ConnectionModeHelper.GetDisplayName(mode);
+            _lblConnectionProfileNote.Text = ConnectionModeHelper.GetLoginSummary(mode);
         }
 
         private string BuildConnectionStateMessage(string rawError)
+        {
+            return BuildStaticConnectionStateMessage(rawError);
+        }
+
+        private static string BuildStaticConnectionStateMessage(string rawError)
         {
             if (string.IsNullOrWhiteSpace(rawError))
             {
@@ -523,8 +548,8 @@ namespace School_Management_System.Presentation.Forms
 
             if (lower.Contains("access denied for user") || (lower.Contains("host") && lower.Contains("not allowed to connect")))
             {
-                return "Database access denied. Run DatabaseScripts\\Allow-RemoteRoot.ps1 on the MySQL server using an app user, then allow host '" +
-                    Environment.MachineName + "' (or '%') and retry.";
+                return "Database access denied. Ask an administrator to review the saved database profile in Settings > Database, then verify the MySQL host grants for '" +
+                    Environment.MachineName + "'.";
             }
 
             if (lower.Contains("reading from the stream has failed") ||
@@ -534,7 +559,7 @@ namespace School_Management_System.Presentation.Forms
                 lower.Contains("unable to connect") ||
                 lower.Contains("actively refused"))
             {
-                return "Cannot reach the database server. Check the selected host, port, internet/LAN access, and firewall settings, then retry.";
+                return "Cannot reach the saved database profile. Ask an administrator to verify the server address, port, network/internet access, and firewall settings.";
             }
 
             if (message.Length > 220)
@@ -683,34 +708,6 @@ namespace School_Management_System.Presentation.Forms
             }
         }
 
-        private static string NormalizeConnectionMode(string mode)
-        {
-            if (string.IsNullOrWhiteSpace(mode))
-            {
-                return "Online";
-            }
-
-            var normalized = mode.Trim();
-            if (string.Equals(normalized, "wired", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(normalized, "network", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(normalized, "lan", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Network";
-            }
-
-            if (string.Equals(normalized, "local", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Local";
-            }
-
-            return "Online";
-        }
-
-        private static string MapConnectionModeToRuntimeMode(string mode)
-        {
-            return string.Equals(mode, "Network", StringComparison.OrdinalIgnoreCase) ? "Wired" : mode;
-        }
-
         private sealed class QuickLoginPreset
         {
             public QuickLoginPreset(string label, string username, string password)
@@ -728,6 +725,41 @@ namespace School_Management_System.Presentation.Forms
             {
                 return Label;
             }
+        }
+
+        private sealed class ServiceInitializationResult
+        {
+            public bool IsConnected { get; private set; }
+            public string ErrorMessage { get; private set; }
+            public DatabaseHelper Database { get; private set; }
+            public AuthService AuthService { get; private set; }
+            public ActivityLogService ActivityLogService { get; private set; }
+
+            public static ServiceInitializationResult Success(DatabaseHelper database, AuthService authService, ActivityLogService activityLogService)
+            {
+                return new ServiceInitializationResult
+                {
+                    IsConnected = true,
+                    Database = database,
+                    AuthService = authService,
+                    ActivityLogService = activityLogService,
+                    ErrorMessage = null
+                };
+            }
+
+            public static ServiceInitializationResult Failed(string errorMessage)
+            {
+                return new ServiceInitializationResult
+                {
+                    IsConnected = false,
+                    ErrorMessage = errorMessage
+                };
+            }
+        }
+
+        private void LoginForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

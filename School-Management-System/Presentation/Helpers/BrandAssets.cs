@@ -93,6 +93,13 @@ namespace School_Management_System.Presentation.Helpers
 
         private static Icon TryLoadAppIcon()
         {
+            var logo = GetLogo();
+            var generatedIcon = TryCreateIconFromBitmap(logo, 64);
+            if (generatedIcon != null)
+            {
+                return generatedIcon;
+            }
+
             foreach (var iconPath in EnumerateIconCandidates())
             {
                 if (!File.Exists(iconPath))
@@ -113,7 +120,6 @@ namespace School_Management_System.Presentation.Helpers
                 }
             }
 
-            var logo = GetLogo();
             if (logo == null)
             {
                 return null;

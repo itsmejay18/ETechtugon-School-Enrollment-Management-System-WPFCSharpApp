@@ -15,8 +15,10 @@
     <ApplicationIcon>assets\app-logo.ico</ApplicationIcon>
     <GenerateManifests>true</GenerateManifests>
     <SignManifests>false</SignManifests>
-    <ManifestKeyFile></ManifestKeyFile>
-    <ManifestCertificateThumbprint></ManifestCertificateThumbprint>
+    <ManifestKeyFile>
+    </ManifestKeyFile>
+    <ManifestCertificateThumbprint>
+    </ManifestCertificateThumbprint>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>bin\Publish\</PublishUrl>
     <Install>true</Install>
@@ -36,6 +38,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -46,6 +49,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -149,6 +153,9 @@
     <Compile Include="Presentation\Forms\ConnectionProfileForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Presentation\Forms\FacultyProfileForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Presentation\Forms\LoginForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -218,6 +225,9 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Presentation\Forms\LoginForm.resx">
+      <DependentUpon>LoginForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Presentation\UserControls\CourseControl.resx">
       <DependentUpon>CourseControl.cs</DependentUpon>
     </EmbeddedResource>
