@@ -53,6 +53,13 @@ namespace School_Management_System.BusinessLayer.Services
             _data.Set(key, storedValue);
         }
 
+        public decimal GetDecimal(string key, decimal defaultValue)
+        {
+            var raw = Get(key);
+            decimal parsed;
+            return decimal.TryParse(raw, out parsed) ? parsed : defaultValue;
+        }
+
         public (int? AcademicYearId, int? SemesterId) GetActiveTerm()
         {
             int? ay = ParseNullableInt(Get(AppConstants.SettingKeys.CurrentAcademicYearId));

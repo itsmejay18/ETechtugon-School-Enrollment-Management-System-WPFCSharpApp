@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -8,6 +9,20 @@ namespace School_Management_System.Presentation.Theming
 {
     public static class ThemeManager
     {
+        private sealed class ButtonStyleMetadata
+        {
+            public Color EnabledBackColor { get; set; }
+            public Color EnabledForeColor { get; set; }
+            public Color EnabledBorderColor { get; set; }
+            public int EnabledBorderSize { get; set; }
+            public Color DisabledBackColor { get; set; }
+            public Color DisabledForeColor { get; set; }
+            public Color DisabledBorderColor { get; set; }
+            public int DisabledBorderSize { get; set; }
+        }
+
+        private static readonly Dictionary<Button, ButtonStyleMetadata> ButtonStyles = new Dictionary<Button, ButtonStyleMetadata>();
+
         public static void ApplyBaseForm(Form form)
         {
             if (form == null) return;
@@ -29,29 +44,10 @@ namespace School_Management_System.Presentation.Theming
             if (panel == null) return;
 
             panel.BackColor = ThemeColors.CardBackground;
-            panel.Padding = new Padding(18);
-            UiHelper.ApplyRoundedCorners(panel, 6);
+            UiHelper.ApplyRoundedCorners(panel, 12);
             UiHelper.EnableDoubleBuffering(panel);
-
-            panel.Paint += (s, e) =>
-            {
-                var rect = panel.ClientRectangle;
-                rect.Width -= 1;
-                rect.Height -= 1;
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-                using (var shadowPen = new Pen(Color.FromArgb(20, 44, 62, 80)))
-                {
-                    var shadowRect = rect;
-                    shadowRect.Offset(0, 1);
-                    e.Graphics.DrawRectangle(shadowPen, shadowRect);
-                }
-
-                using (var pen = new Pen(ThemeColors.Border))
-                {
-                    e.Graphics.DrawRectangle(pen, rect);
-                }
-            };
+            panel.Paint -= CardPanelPaint;
+            panel.Paint += CardPanelPaint;
         }
 
         public static void StyleGroupBox(GroupBox groupBox)
@@ -61,15 +57,27 @@ namespace School_Management_System.Presentation.Theming
             groupBox.Font = ThemeFonts.SubHeader;
             groupBox.ForeColor = ThemeColors.Text;
             groupBox.BackColor = ThemeColors.CardBackground;
+            groupBox.Padding = new Padding(
+                Math.Max(groupBox.Padding.Left, 14),
+                Math.Max(groupBox.Padding.Top, 30),
+                Math.Max(groupBox.Padding.Right, 14),
+                Math.Max(groupBox.Padding.Bottom, 14));
+            groupBox.Paint -= GroupBoxPaint;
+            groupBox.Paint += GroupBoxPaint;
         }
 
         public static void StyleInput(TextBox textBox)
         {
             if (textBox == null) return;
             textBox.Font = ThemeFonts.Input;
+            textBox.AutoSize = false;
             textBox.BorderStyle = BorderStyle.FixedSingle;
-            textBox.BackColor = Color.White;
+            textBox.BackColor = textBox.ReadOnly ? ThemeColors.Surface : Color.White;
             textBox.ForeColor = ThemeColors.Text;
+            if (!textBox.Multiline)
+            {
+                textBox.Height = Math.Max(textBox.Height, 30);
+            }
         }
 
         public static void StyleInput(NumericUpDown numericUpDown)
@@ -80,6 +88,7 @@ namespace School_Management_System.Presentation.Theming
             numericUpDown.BackColor = Color.White;
             numericUpDown.ForeColor = ThemeColors.Text;
             numericUpDown.TextAlign = HorizontalAlignment.Right;
+            numericUpDown.Height = Math.Max(numericUpDown.Height, 30);
         }
 
         public static void StyleComboBox(ComboBox comboBox)
@@ -87,25 +96,26 @@ namespace School_Management_System.Presentation.Theming
             if (comboBox == null) return;
             comboBox.Font = ThemeFonts.Input;
             comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox.FlatStyle = FlatStyle.Flat;
+            comboBox.IntegralHeight = false;
             comboBox.BackColor = Color.White;
             comboBox.ForeColor = ThemeColors.Text;
+            comboBox.Height = Math.Max(comboBox.Height, 32);
         }
 
         public static void StyleButtonPrimary(Button button)
         {
-            StyleButton(button, ThemeColors.Secondary, Darken(ThemeColors.Secondary, 0.08f), Color.White);
+            StyleButton(button, ThemeColors.Secondary, Darken(ThemeColors.Secondary, 0.08f), Color.White, 0, ThemeColors.Secondary);
         }
 
         public static void StyleButtonDanger(Button button)
         {
-            StyleButton(button, ThemeColors.AccentDanger, Darken(ThemeColors.AccentDanger, 0.08f), Color.White);
+            StyleButton(button, ThemeColors.AccentDanger, Darken(ThemeColors.AccentDanger, 0.08f), Color.White, 0, ThemeColors.AccentDanger);
         }
 
         public static void StyleButtonNeutral(Button button)
         {
-            StyleButton(button, Color.White, ThemeColors.SurfaceAlt, ThemeColors.Text);
-            button.FlatAppearance.BorderSize = 1;
-            button.FlatAppearance.BorderColor = ThemeColors.Border;
+            StyleButton(button, Color.White, ThemeColors.SurfaceAlt, ThemeColors.Text, 1, ThemeColors.Border);
         }
 
         public static void StyleButtonGhost(Button button)
@@ -150,6 +160,7 @@ namespace School_Management_System.Presentation.Theming
             dateTimePicker.Font = ThemeFonts.Input;
             dateTimePicker.CalendarForeColor = ThemeColors.Text;
             dateTimePicker.CalendarMonthBackground = Color.White;
+            dateTimePicker.Height = Math.Max(dateTimePicker.Height, 32);
         }
 
         public static void StyleSidebarButton(Button button)
@@ -167,12 +178,12 @@ namespace School_Management_System.Presentation.Theming
             button.TextAlign = ContentAlignment.MiddleLeft;
             button.ImageAlign = ContentAlignment.MiddleLeft;
             button.TextImageRelation = TextImageRelation.ImageBeforeText;
-            button.Padding = new Padding(12, 0, 12, 0);
-            button.Height = 46;
+            button.Padding = new Padding(16, 0, 16, 0);
+            button.Height = 48;
             button.AutoEllipsis = true;
             button.Cursor = Cursors.Hand;
             button.TabStop = false;
-            UiHelper.ApplyRoundedCorners(button, 6);
+            UiHelper.ApplyRoundedCorners(button, 10);
         }
 
         public static void SetSidebarButtonState(Button button, bool active)
@@ -202,42 +213,156 @@ namespace School_Management_System.Presentation.Theming
 
             grid.BackgroundColor = Color.White;
             grid.BorderStyle = BorderStyle.FixedSingle;
+            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
             grid.GridColor = ThemeColors.Border;
             grid.EnableHeadersVisualStyles = false;
             grid.ColumnHeadersDefaultCellStyle.BackColor = ThemeColors.Primary;
             grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
             grid.ColumnHeadersDefaultCellStyle.Font = ThemeFonts.SubHeader;
-            grid.ColumnHeadersHeight = 36;
+            grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = ThemeColors.Primary;
+            grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = Color.White;
+            grid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            grid.ColumnHeadersHeight = 40;
             grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-            grid.RowTemplate.Height = 32;
+            grid.RowHeadersVisible = false;
+            grid.RowTemplate.Height = 36;
             grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             grid.MultiSelect = false;
             grid.AllowUserToAddRows = false;
             grid.AllowUserToDeleteRows = false;
+            grid.AllowUserToResizeRows = false;
             grid.ReadOnly = true;
             grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
             grid.DefaultCellStyle.BackColor = Color.White;
             grid.DefaultCellStyle.ForeColor = ThemeColors.Text;
+            grid.DefaultCellStyle.Padding = new Padding(6, 0, 6, 0);
             grid.DefaultCellStyle.SelectionBackColor = ColorTranslator.FromHtml("#D6EAF8");
             grid.DefaultCellStyle.SelectionForeColor = ThemeColors.Text;
-            grid.AlternatingRowsDefaultCellStyle.BackColor = ThemeColors.Surface;
+            grid.AlternatingRowsDefaultCellStyle.BackColor = ColorTranslator.FromHtml("#F9FBFD");
         }
 
-        private static void StyleButton(Button button, Color backColor, Color hoverBackColor, Color foreColor)
+        public static void StyleListView(ListView listView)
+        {
+            if (listView == null) return;
+
+            listView.Font = ThemeFonts.Label;
+            listView.BackColor = Color.White;
+            listView.ForeColor = ThemeColors.Text;
+            listView.BorderStyle = BorderStyle.FixedSingle;
+            listView.HideSelection = false;
+            listView.FullRowSelect = true;
+            listView.GridLines = true;
+            listView.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+        }
+
+        public static void StyleTabControl(TabControl tabControl)
+        {
+            if (tabControl == null) return;
+
+            tabControl.Font = ThemeFonts.Label;
+            tabControl.DrawMode = TabDrawMode.OwnerDrawFixed;
+            tabControl.Padding = new Point(18, 8);
+            tabControl.ItemSize = new Size(132, 34);
+            tabControl.SizeMode = TabSizeMode.Fixed;
+            tabControl.DrawItem -= TabControlDrawItem;
+            tabControl.DrawItem += TabControlDrawItem;
+            foreach (TabPage page in tabControl.TabPages)
+            {
+                page.BackColor = ThemeColors.Background;
+                page.ForeColor = ThemeColors.Text;
+            }
+        }
+
+        public static void StyleSplitContainer(SplitContainer splitContainer)
+        {
+            if (splitContainer == null) return;
+
+            splitContainer.BackColor = ThemeColors.Border;
+        }
+
+        private static void StyleButton(Button button, Color backColor, Color hoverBackColor, Color foreColor, int borderSize, Color borderColor)
         {
             if (button == null) return;
 
             button.Font = ThemeFonts.Button;
             button.FlatStyle = FlatStyle.Flat;
-            button.FlatAppearance.BorderSize = 0;
+            button.FlatAppearance.BorderSize = borderSize;
+            button.FlatAppearance.BorderColor = borderColor;
+            button.UseVisualStyleBackColor = false;
             button.BackColor = backColor;
             button.ForeColor = foreColor;
-            button.Height = 34;
+            button.AutoSize = false;
+            button.Height = Math.Max(button.Height, 34);
             button.Cursor = Cursors.Hand;
+            button.AutoEllipsis = true;
+            button.TextAlign = ContentAlignment.MiddleCenter;
+            button.ImageAlign = button.Image == null ? ContentAlignment.MiddleCenter : ContentAlignment.MiddleLeft;
+            button.TextImageRelation = TextImageRelation.ImageBeforeText;
+            if (button.Padding == Padding.Empty)
+            {
+                button.Padding = button.Image == null ? new Padding(8, 0, 8, 0) : new Padding(10, 0, 12, 0);
+            }
             button.FlatAppearance.MouseOverBackColor = hoverBackColor;
             button.FlatAppearance.MouseDownBackColor = Darken(backColor, 0.12f);
-            UiHelper.ApplyRoundedCorners(button, 4);
+            UiHelper.ApplyRoundedCorners(button, 8);
+
+            ButtonStyles[button] = new ButtonStyleMetadata
+            {
+                EnabledBackColor = backColor,
+                EnabledForeColor = foreColor,
+                EnabledBorderColor = borderColor,
+                EnabledBorderSize = borderSize,
+                DisabledBackColor = ThemeColors.SurfaceAlt,
+                DisabledForeColor = ThemeColors.MutedText,
+                DisabledBorderColor = ThemeColors.Border,
+                DisabledBorderSize = 1
+            };
+
+            button.EnabledChanged -= ButtonEnabledChanged;
+            button.EnabledChanged += ButtonEnabledChanged;
+            ApplyButtonState(button);
+        }
+
+        private static void ButtonEnabledChanged(object sender, EventArgs e)
+        {
+            var button = sender as Button;
+            if (button == null)
+            {
+                return;
+            }
+
+            ApplyButtonState(button);
+        }
+
+        private static void ApplyButtonState(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            ButtonStyleMetadata metadata;
+            if (!ButtonStyles.TryGetValue(button, out metadata) || metadata == null)
+            {
+                return;
+            }
+
+            if (button.Enabled)
+            {
+                button.BackColor = metadata.EnabledBackColor;
+                button.ForeColor = metadata.EnabledForeColor;
+                button.FlatAppearance.BorderColor = metadata.EnabledBorderColor;
+                button.FlatAppearance.BorderSize = metadata.EnabledBorderSize;
+                button.Cursor = Cursors.Hand;
+                return;
+            }
+
+            button.BackColor = metadata.DisabledBackColor;
+            button.ForeColor = metadata.DisabledForeColor;
+            button.FlatAppearance.BorderColor = metadata.DisabledBorderColor;
+            button.FlatAppearance.BorderSize = metadata.DisabledBorderSize;
+            button.Cursor = Cursors.Default;
         }
 
         private static void ApplyPaletteToControl(Control control)
@@ -300,6 +425,27 @@ namespace School_Management_System.Presentation.Theming
                 return;
             }
 
+            var listView = control as ListView;
+            if (listView != null)
+            {
+                StyleListView(listView);
+                return;
+            }
+
+            var tabControl = control as TabControl;
+            if (tabControl != null)
+            {
+                StyleTabControl(tabControl);
+                return;
+            }
+
+            var splitContainer = control as SplitContainer;
+            if (splitContainer != null)
+            {
+                StyleSplitContainer(splitContainer);
+                return;
+            }
+
             var button = control as Button;
             if (button != null)
             {
@@ -335,6 +481,96 @@ namespace School_Management_System.Presentation.Theming
             var g = (int)(color.G * (1f - amount));
             var b = (int)(color.B * (1f - amount));
             return Color.FromArgb(color.A, r, g, b);
+        }
+
+        private static void CardPanelPaint(object sender, PaintEventArgs e)
+        {
+            var panel = sender as Panel;
+            if (panel == null) return;
+
+            var rect = new Rectangle(0, 0, panel.ClientSize.Width - 1, panel.ClientSize.Height - 1);
+            if (rect.Width <= 1 || rect.Height <= 1) return;
+
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            using (var shadowPath = UiHelper.GetRoundedRectPath(new Rectangle(rect.X, rect.Y + 1, rect.Width, rect.Height), 12))
+            using (var shadowPen = new Pen(Color.FromArgb(10, 44, 62, 80)))
+            {
+                e.Graphics.DrawPath(shadowPen, shadowPath);
+            }
+
+            using (var borderPath = UiHelper.GetRoundedRectPath(rect, 12))
+            using (var borderPen = new Pen(ThemeColors.Border))
+            {
+                e.Graphics.DrawPath(borderPen, borderPath);
+            }
+        }
+
+        private static void GroupBoxPaint(object sender, PaintEventArgs e)
+        {
+            var groupBox = sender as GroupBox;
+            if (groupBox == null) return;
+
+            var backgroundColor = groupBox.Parent == null ? ThemeColors.Background : groupBox.Parent.BackColor;
+            var rect = new Rectangle(0, 10, groupBox.ClientSize.Width - 1, groupBox.ClientSize.Height - 11);
+            if (rect.Width <= 1 || rect.Height <= 1) return;
+
+            e.Graphics.Clear(backgroundColor);
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            using (var backgroundBrush = new SolidBrush(groupBox.BackColor))
+            using (var borderPath = UiHelper.GetRoundedRectPath(rect, 12))
+            using (var borderPen = new Pen(ThemeColors.Border))
+            {
+                e.Graphics.FillPath(backgroundBrush, borderPath);
+                e.Graphics.DrawPath(borderPen, borderPath);
+            }
+
+            var title = string.IsNullOrWhiteSpace(groupBox.Text) ? string.Empty : groupBox.Text.Trim();
+            if (title.Length == 0) return;
+
+            var textSize = TextRenderer.MeasureText(title, groupBox.Font, new Size(int.MaxValue, int.MaxValue), TextFormatFlags.NoPadding);
+            var textRect = new Rectangle(16, 0, textSize.Width + 18, 22);
+            using (var coverBrush = new SolidBrush(groupBox.BackColor))
+            using (var accentPen = new Pen(Color.FromArgb(140, ThemeColors.Secondary), 2f))
+            {
+                e.Graphics.FillRectangle(coverBrush, textRect);
+                TextRenderer.DrawText(e.Graphics, title, groupBox.Font, new Point(22, 0), ThemeColors.Text, TextFormatFlags.NoPadding);
+                e.Graphics.DrawLine(accentPen, 18, 24, 66, 24);
+            }
+        }
+
+        private static void TabControlDrawItem(object sender, DrawItemEventArgs e)
+        {
+            var tabControl = sender as TabControl;
+            if (tabControl == null || e.Index < 0 || e.Index >= tabControl.TabPages.Count)
+            {
+                return;
+            }
+
+            var isSelected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+            var bounds = Rectangle.Inflate(e.Bounds, -4, -3);
+            var fillColor = isSelected ? ThemeColors.CardBackground : ThemeColors.Surface;
+            var borderColor = isSelected ? ThemeColors.Secondary : ThemeColors.Border;
+            var textColor = isSelected ? ThemeColors.Text : ThemeColors.MutedText;
+
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using (var fillBrush = new SolidBrush(fillColor))
+            using (var borderPen = new Pen(borderColor))
+            using (var path = UiHelper.GetRoundedRectPath(bounds, 10))
+            {
+                e.Graphics.FillPath(fillBrush, path);
+                e.Graphics.DrawPath(borderPen, path);
+            }
+
+            var textBounds = new Rectangle(bounds.X + 10, bounds.Y + 1, bounds.Width - 20, bounds.Height - 2);
+            TextRenderer.DrawText(
+                e.Graphics,
+                tabControl.TabPages[e.Index].Text,
+                ThemeFonts.Label,
+                textBounds,
+                textColor,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis);
         }
     }
 }

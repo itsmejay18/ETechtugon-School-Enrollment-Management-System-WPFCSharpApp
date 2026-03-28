@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using MySql.Data.MySqlClient;
 using School_Management_System.Common;
@@ -52,6 +52,35 @@ ORDER BY s.SubjectName;";
                 sql,
                 CommandType.Text,
                 new[] { new MySqlParameter("@SectionId", sectionId) });
+        }
+
+        public DataTable GetByFaculty(int facultyId)
+        {
+            const string sql = @"
+SELECT
+    cs.ClassScheduleId,
+    s.SubjectCode,
+    s.SubjectName,
+    sec.SectionName,
+    cs.DayOfWeek,
+    cs.StartTime,
+    cs.EndTime,
+    cs.Room,
+    ay.Name AS AcademicYear,
+    sem.Name AS Semester
+FROM classschedule cs
+INNER JOIN subject s ON s.SubjectId = cs.SubjectId
+LEFT JOIN section sec ON sec.SectionId = cs.SectionId
+LEFT JOIN academicyear ay ON ay.AcademicYearId = cs.AcademicYearId
+LEFT JOIN semester sem ON sem.SemesterId = cs.SemesterId
+WHERE cs.IsActive = 1
+  AND cs.FacultyId = @FacultyId
+ORDER BY ay.Name DESC, sem.Name DESC, s.SubjectName;";
+
+            return _db.ExecuteDataTable(
+                sql,
+                CommandType.Text,
+                new[] { new MySqlParameter("@FacultyId", facultyId) });
         }
 
         public int Insert(ClassSchedule schedule)

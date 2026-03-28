@@ -94,19 +94,44 @@ namespace School_Management_System.Presentation.UserControls
         {
             BackColor = ThemeColors.Background;
 
-            var header = new Panel { Dock = DockStyle.Top, Height = 54, Padding = new Padding(10, 10, 10, 8), BackColor = ThemeColors.CardBackground };
-            var lblSection = new Label { Text = "Section:", AutoSize = true, Location = new Point(0, 14), Font = ThemeFonts.Label, ForeColor = ThemeColors.Text };
-            _cmbSection = new ComboBox { Width = 340, Location = new Point(68, 10), DropDownStyle = ComboBoxStyle.DropDownList, Font = ThemeFonts.Input };
+            var header = new Panel { Dock = DockStyle.Top, Height = 64, Padding = new Padding(0, 0, 0, 12), BackColor = ThemeColors.Background };
+            var headerCard = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(12, 8, 12, 8) };
+            ThemeManager.StyleCardPanel(headerCard);
+
+            var headerStrip = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = true,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+
+            var lblSection = new Label
+            {
+                Text = "Section:",
+                AutoSize = false,
+                Width = 58,
+                Height = 32,
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.Text,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 2, 6, 0)
+            };
+            _cmbSection = new ComboBox { Width = 340, DropDownStyle = ComboBoxStyle.DropDownList, Font = ThemeFonts.Input, Margin = new Padding(0, 0, 10, 0) };
             ThemeManager.StyleComboBox(_cmbSection);
             _cmbSection.SelectedIndexChanged += (s, e) => OnSectionChanged();
 
-            _btnReloadSections = new Button { Text = "Reload", Width = 86, Location = new Point(418, 8) };
+            _btnReloadSections = new Button { Text = "Reload", Width = 96 };
             ThemeManager.StyleButtonNeutral(_btnReloadSections);
             _btnReloadSections.Click += (s, e) => LoadSections();
 
-            header.Controls.Add(lblSection);
-            header.Controls.Add(_cmbSection);
-            header.Controls.Add(_btnReloadSections);
+            headerStrip.Controls.Add(lblSection);
+            headerStrip.Controls.Add(_cmbSection);
+            headerStrip.Controls.Add(_btnReloadSections);
+            headerCard.Controls.Add(headerStrip);
+            header.Controls.Add(headerCard);
 
             _lvSchedules = new ListView
             {
@@ -1029,7 +1054,7 @@ namespace School_Management_System.Presentation.UserControls
             finally
             {
                 UseWaitCursor = false;
-                _btnSave.Enabled = true;
+                _btnSave.Enabled = _isEditorActive;
             }
         }
 

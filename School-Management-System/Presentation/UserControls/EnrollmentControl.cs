@@ -74,6 +74,11 @@ namespace School_Management_System.Presentation.UserControls
 
         private readonly PrintDocument _printDocument = new PrintDocument();
         private string _printText;
+        private bool _enrollmentSaved;
+        private decimal _tuitionPerUnit;
+        private decimal _miscellaneousFee;
+        private decimal _registrationFee;
+        private decimal _laboratoryFee;
 
         private sealed class SubjectPick
         {
@@ -121,6 +126,7 @@ namespace School_Management_System.Presentation.UserControls
             }
 
             LoadLookups();
+            LoadAssessmentSettings();
             LoadStudents();
             ShowStep(1);
         }
@@ -309,7 +315,7 @@ namespace School_Management_System.Presentation.UserControls
                     ThemedMessageBox.ShowError(this, "Please select at least one subject.", "Enrollment");
                     return;
                 }
-                BuildSummary(details);
+                BuildSummary(details, false);
                 ShowStep(3);
             };
 
@@ -354,13 +360,23 @@ namespace School_Management_System.Presentation.UserControls
             var footer = new Panel { Dock = DockStyle.Bottom, Height = 52, Padding = new Padding(0, 10, 0, 0) };
             _btnBack3 = new Button { Text = "Back", Width = 110, Dock = DockStyle.Left };
             ThemeManager.StyleButtonNeutral(_btnBack3);
-            _btnBack3.Click += (s, e) => ShowStep(2);
+            _btnBack3.Click += (s, e) =>
+            {
+                if (_enrollmentSaved)
+                {
+                    ResetAll();
+                    ShowStep(1);
+                    return;
+                }
 
-            _btnSave = new Button { Text = "Save", Width = 110, Dock = DockStyle.Right };
+                ShowStep(2);
+            };
+
+            _btnSave = new Button { Text = "Save Enrollment", Width = 130, Dock = DockStyle.Right };
             ThemeManager.StyleButtonPrimary(_btnSave);
             _btnSave.Click += (s, e) => SaveEnrollment();
 
-            _btnPrint = new Button { Text = "Print", Width = 110, Dock = DockStyle.Right };
+            _btnPrint = new Button { Text = "Print COR", Width = 110, Dock = DockStyle.Right, Enabled = false };
             ThemeManager.StyleButtonNeutral(_btnPrint);
             _btnPrint.Click += (s, e) => PrintSummary();
 
@@ -466,6 +482,23 @@ namespace School_Management_System.Presentation.UserControls
                 LoadSectionsLookup(false);
                 LoadCurriculumSubjects();
             }
+        }
+
+        private void LoadAssessmentSettings()
+        {
+            if (_systemSettingService == null)
+            {
+                _tuitionPerUnit = 650m;
+                _miscellaneousFee = 1850m;
+                _registrationFee = 350m;
+                _laboratoryFee = 0m;
+                return;
+            }
+
+            _tuitionPerUnit = _systemSettingService.GetDecimal(AppConstants.SettingKeys.TuitionPerUnit, 650m);
+            _miscellaneousFee = _systemSettingService.GetDecimal(AppConstants.SettingKeys.MiscellaneousFee, 1850m);
+            _registrationFee = _systemSettingService.GetDecimal(AppConstants.SettingKeys.RegistrationFee, 350m);
+            _laboratoryFee = _systemSettingService.GetDecimal(AppConstants.SettingKeys.LaboratoryFee, 0m);
         }
 
         private void LoadSectionsLookup(bool preserveSelection = true)
@@ -752,27 +785,38 @@ namespace School_Management_System.Presentation.UserControls
             return details;
         }
 
-        private void BuildSummary(List<EnrollmentDetail> details)
+        private void BuildSummary(List<EnrollmentDetail> details, bool includeSavedNotice)
         {
-            _enrollmentNumber = _enrollmentService.GetNextEnrollmentNumber();
+            if (string.IsNullOrWhiteSpace(_enrollmentNumber))
+            {
+                _enrollmentNumber = _enrollmentService.GetNextEnrollmentNumber();
+            }
+
+            var totalUnits = details == null ? 0 : details.Sum(d => d.Units);
+            var tuitionAmount = totalUnits * _tuitionPerUnit;
+            var totalAssessment = tuitionAmount + _miscellaneousFee + _registrationFee + _laboratoryFee;
 
             var sb = new StringBuilder();
-            sb.AppendLine("Enrollment Number: " + _enrollmentNumber);
-            sb.AppendLine("Student: " + _selectedStudentNumber + " - " + _selectedStudentName);
-            sb.AppendLine("Course: " + (_cmbCourse.Text ?? string.Empty));
-            sb.AppendLine("Academic Year: " + (_cmbAcademicYear.Text ?? string.Empty));
-            sb.AppendLine("Year Level: " + (_cmbYearLevel.Text ?? string.Empty));
-            sb.AppendLine("Semester: " + (_cmbSemester.Text ?? string.Empty));
-            sb.AppendLine("Section: " + (_cmbSection.Text ?? string.Empty));
-            sb.AppendLine("Enrollment Type: " + (_rbBySection.Checked ? "By Section (Regular)" : "By Subject (Irregular)"));
+            sb.AppendLine("CERTIFICATE OF REGISTRATION / ASSESSMENT");
+            sb.AppendLine(new string('=', 70));
+            sb.AppendLine("Enrollment Number : " + _enrollmentNumber);
+            sb.AppendLine("Student           : " + _selectedStudentNumber + " - " + _selectedStudentName);
+            sb.AppendLine("Course            : " + (_cmbCourse.Text ?? string.Empty));
+            sb.AppendLine("Academic Year     : " + (_cmbAcademicYear.Text ?? string.Empty));
+            sb.AppendLine("Year Level        : " + (_cmbYearLevel.Text ?? string.Empty));
+            sb.AppendLine("Semester          : " + (_cmbSemester.Text ?? string.Empty));
+            sb.AppendLine("Section           : " + (_cmbSection.Text ?? string.Empty));
+            sb.AppendLine("Enrollment Type   : " + (_rbBySection.Checked ? "By Section (Regular)" : "By Subject (Irregular)"));
+            sb.AppendLine("Status            : " + (includeSavedNotice ? "Posted / Ready for COR printing" : "Pending save"));
             sb.AppendLine();
-            sb.AppendLine("Subjects:");
+            sb.AppendLine("ENROLLED SUBJECTS");
+            sb.AppendLine(new string('-', 70));
 
             foreach (ListViewItem item in _lvSubjects.Items)
             {
                 if (!item.Checked) continue;
                 var sched = item.SubItems.Count > 3 ? item.SubItems[3].Text : string.Empty;
-                var line = "- " + item.Text + " | " + item.SubItems[1].Text + " (" + item.SubItems[2].Text + " units)";
+                var line = item.Text + " | " + item.SubItems[1].Text + " | " + item.SubItems[2].Text + " unit(s)";
                 if (!string.IsNullOrWhiteSpace(sched))
                 {
                     line += " | " + sched;
@@ -781,7 +825,22 @@ namespace School_Management_System.Presentation.UserControls
             }
 
             sb.AppendLine();
-            sb.AppendLine(_lblTotalUnits.Text);
+            sb.AppendLine("ASSESSMENT");
+            sb.AppendLine(new string('-', 70));
+            sb.AppendLine("Total Units       : " + totalUnits.ToString());
+            sb.AppendLine("Tuition           : " + totalUnits.ToString() + " x " + _tuitionPerUnit.ToString("N2") + " = " + tuitionAmount.ToString("N2"));
+            sb.AppendLine("Miscellaneous Fee : " + _miscellaneousFee.ToString("N2"));
+            sb.AppendLine("Registration Fee  : " + _registrationFee.ToString("N2"));
+            sb.AppendLine("Laboratory Fee    : " + _laboratoryFee.ToString("N2"));
+            sb.AppendLine(new string('-', 70));
+            sb.AppendLine("TOTAL ASSESSMENT  : " + totalAssessment.ToString("N2"));
+
+            if (includeSavedNotice)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Enrollment saved successfully.");
+                sb.AppendLine("You may now print the Certificate of Registration.");
+            }
 
             _lblSummary.Text = sb.ToString();
         }
@@ -841,10 +900,12 @@ namespace School_Management_System.Presentation.UserControls
                 _btnSave.Enabled = false;
 
                 _enrollmentService.Save(enrollment, details);
+                _enrollmentSaved = true;
+                _enrollmentNumber = enrollment.EnrollmentNumber;
+                BuildSummary(details, true);
+                _btnPrint.Enabled = true;
+                _btnBack3.Text = "New Enrollment";
                 ThemedMessageBox.ShowInfo(this, "Enrollment saved successfully.\n\n" + enrollment.EnrollmentNumber, "Saved");
-
-                ResetAll();
-                ShowStep(1);
             }
             catch (Exception ex)
             {
@@ -854,7 +915,7 @@ namespace School_Management_System.Presentation.UserControls
             finally
             {
                 UseWaitCursor = false;
-                _btnSave.Enabled = true;
+                _btnSave.Enabled = !_enrollmentSaved;
             }
         }
 
@@ -888,6 +949,7 @@ namespace School_Management_System.Presentation.UserControls
             _selectedStudentName = null;
             _enrollmentNumber = null;
             _curriculumId = null;
+            _enrollmentSaved = false;
 
             _lblSelectedStudent.Text = "Selected: (none)";
             _txtStudentSearch.Text = string.Empty;
@@ -898,6 +960,10 @@ namespace School_Management_System.Presentation.UserControls
             _lvSubjects.Items.Clear();
             UpdateUnits();
             _lblCurriculumStatus.Text = "Select course/year/semester/academic year to load subjects.";
+            _lblSummary.Text = "Summary";
+            _btnBack3.Text = "Back";
+            _btnSave.Enabled = true;
+            _btnPrint.Enabled = false;
         }
 
         private void WirePrinting()
@@ -916,6 +982,12 @@ namespace School_Management_System.Presentation.UserControls
         {
             try
             {
+                if (!_enrollmentSaved)
+                {
+                    ThemedMessageBox.ShowError(this, "Print COR is only available after a successful enrollment save.", "Print");
+                    return;
+                }
+
                 _printText = _lblSummary.Text ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(_printText))
                 {

@@ -20,6 +20,11 @@ namespace School_Management_System.BusinessLayer.Services
             return _classScheduleData.GetBySection(sectionId);
         }
 
+        public DataTable GetByFaculty(int facultyId)
+        {
+            return _classScheduleData.GetByFaculty(facultyId);
+        }
+
         public ValidationResult Validate(ClassSchedule schedule)
         {
             var vr = new ValidationResult();

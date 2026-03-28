@@ -37,6 +37,11 @@ namespace School_Management_System.Presentation.UserControls
         private ComboBox _cmbAcademicYear;
         private ComboBox _cmbSemester;
         private Button _btnSaveTerm;
+        private TextBox _txtTuitionPerUnit;
+        private TextBox _txtMiscellaneousFee;
+        private TextBox _txtRegistrationFee;
+        private TextBox _txtLaboratoryFee;
+        private Button _btnSaveBillingSettings;
 
         private ComboBox _cmbConnectionMode;
         private TextBox _txtLocalHost;
@@ -138,7 +143,11 @@ namespace School_Management_System.Presentation.UserControls
             InitializeComponent();
             LoadLookups();
             LoadCurrentTerm();
-            LoadConnectionSettings();
+            LoadBillingSettings();
+            if (_isAdmin)
+            {
+                LoadConnectionSettings();
+            }
             LoadBackupSettings();
             LoadUserLogs();
         }
@@ -191,6 +200,7 @@ namespace School_Management_System.Presentation.UserControls
                 Padding = new Padding(10)
             };
 
+            host.Controls.Add(BuildTuitionGroup());
             host.Controls.Add(BuildTermGroup());
             page.Controls.Add(host);
             return page;
@@ -211,11 +221,45 @@ namespace School_Management_System.Presentation.UserControls
                 Padding = new Padding(10)
             };
 
+            if (!_isAdmin)
+            {
+                host.Controls.Add(BuildDatabaseAdminOnlyNotice());
+                page.Controls.Add(host);
+                return page;
+            }
+
             host.Controls.Add(BuildLogGroup());
             host.Controls.Add(BuildBackupGroup());
             host.Controls.Add(BuildConnectionGroup());
             page.Controls.Add(host);
             return page;
+        }
+
+        private Control BuildDatabaseAdminOnlyNotice()
+        {
+            var gb = new GroupBox
+            {
+                Text = "Database Access",
+                Dock = DockStyle.Top,
+                Height = 150,
+                Font = ThemeFonts.SubHeader,
+                ForeColor = ThemeColors.Text,
+                Padding = new Padding(12, 18, 12, 12),
+                BackColor = ThemeColors.CardBackground
+            };
+            ThemeManager.StyleGroupBox(gb);
+
+            var message = new Label
+            {
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.MutedText,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Text = "Database connection profiles, backup tools, and audit logs are available to administrators only. This keeps server settings out of the day-to-day enrollment workflow."
+            };
+
+            gb.Controls.Add(message);
+            return gb;
         }
 
         private GroupBox BuildTermGroup()
@@ -260,6 +304,70 @@ namespace School_Management_System.Presentation.UserControls
             layout.Controls.Add(MakeLabel("Current Semester"), 0, 1);
             layout.Controls.Add(_cmbSemester, 1, 1);
             layout.Controls.Add(_btnSaveTerm, 1, 2);
+
+            gb.Controls.Add(layout);
+            return gb;
+        }
+
+        private GroupBox BuildTuitionGroup()
+        {
+            var gb = new GroupBox
+            {
+                Text = "Enrollment Billing Defaults",
+                Dock = DockStyle.Top,
+                Height = 216,
+                Font = ThemeFonts.SubHeader,
+                ForeColor = ThemeColors.Text,
+                Padding = new Padding(12, 18, 12, 12),
+                BackColor = ThemeColors.CardBackground
+            };
+            ThemeManager.StyleGroupBox(gb);
+
+            var layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 6,
+                Padding = new Padding(8, 6, 8, 6)
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            _txtTuitionPerUnit = MakeTextBox();
+            _txtMiscellaneousFee = MakeTextBox();
+            _txtRegistrationFee = MakeTextBox();
+            _txtLaboratoryFee = MakeTextBox();
+
+            _btnSaveBillingSettings = new Button { Text = "Save Billing Defaults", Width = 176, Height = 32, Anchor = AnchorStyles.Left };
+            ThemeManager.StyleButtonPrimary(_btnSaveBillingSettings);
+            _btnSaveBillingSettings.Click += (s, e) => SaveBillingSettings();
+
+            var note = new Label
+            {
+                Text = "These values are used by Enrollment assessment and COR printing. Leave laboratory fee at 0 if not used.",
+                Dock = DockStyle.Fill,
+                Font = ThemeFonts.Label,
+                ForeColor = ThemeColors.MutedText,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            layout.Controls.Add(MakeLabel("Tuition Per Unit"), 0, 0);
+            layout.Controls.Add(_txtTuitionPerUnit, 1, 0);
+            layout.Controls.Add(MakeLabel("Miscellaneous Fee"), 0, 1);
+            layout.Controls.Add(_txtMiscellaneousFee, 1, 1);
+            layout.Controls.Add(MakeLabel("Registration Fee"), 0, 2);
+            layout.Controls.Add(_txtRegistrationFee, 1, 2);
+            layout.Controls.Add(MakeLabel("Laboratory Fee"), 0, 3);
+            layout.Controls.Add(_txtLaboratoryFee, 1, 3);
+            layout.Controls.Add(_btnSaveBillingSettings, 1, 4);
+            layout.Controls.Add(note, 0, 5);
+            layout.SetColumnSpan(note, 2);
 
             gb.Controls.Add(layout);
             return gb;
@@ -865,8 +973,84 @@ namespace School_Management_System.Presentation.UserControls
             }
         }
 
+        private void LoadBillingSettings()
+        {
+            if (_settingsService == null || _txtTuitionPerUnit == null)
+            {
+                return;
+            }
+
+            try
+            {
+                _txtTuitionPerUnit.Text = _settingsService.GetDecimal(AppConstants.SettingKeys.TuitionPerUnit, 650m).ToString("0.00");
+                _txtMiscellaneousFee.Text = _settingsService.GetDecimal(AppConstants.SettingKeys.MiscellaneousFee, 1850m).ToString("0.00");
+                _txtRegistrationFee.Text = _settingsService.GetDecimal(AppConstants.SettingKeys.RegistrationFee, 350m).ToString("0.00");
+                _txtLaboratoryFee.Text = _settingsService.GetDecimal(AppConstants.SettingKeys.LaboratoryFee, 0m).ToString("0.00");
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.LoadBillingSettings", ex);
+            }
+        }
+
+        private void SaveBillingSettings()
+        {
+            if (_settingsService == null)
+            {
+                return;
+            }
+
+            decimal tuitionPerUnit;
+            decimal miscFee;
+            decimal registrationFee;
+            decimal laboratoryFee;
+
+            if (!decimal.TryParse(_txtTuitionPerUnit.Text, out tuitionPerUnit) || tuitionPerUnit < 0m)
+            {
+                ThemedMessageBox.ShowError(this, "Enter a valid non-negative Tuition Per Unit.", "Billing");
+                return;
+            }
+
+            if (!decimal.TryParse(_txtMiscellaneousFee.Text, out miscFee) || miscFee < 0m)
+            {
+                ThemedMessageBox.ShowError(this, "Enter a valid non-negative Miscellaneous Fee.", "Billing");
+                return;
+            }
+
+            if (!decimal.TryParse(_txtRegistrationFee.Text, out registrationFee) || registrationFee < 0m)
+            {
+                ThemedMessageBox.ShowError(this, "Enter a valid non-negative Registration Fee.", "Billing");
+                return;
+            }
+
+            if (!decimal.TryParse(_txtLaboratoryFee.Text, out laboratoryFee) || laboratoryFee < 0m)
+            {
+                ThemedMessageBox.ShowError(this, "Enter a valid non-negative Laboratory Fee.", "Billing");
+                return;
+            }
+
+            try
+            {
+                _settingsService.Set(AppConstants.SettingKeys.TuitionPerUnit, tuitionPerUnit.ToString("0.00", CultureInfo.InvariantCulture));
+                _settingsService.Set(AppConstants.SettingKeys.MiscellaneousFee, miscFee.ToString("0.00", CultureInfo.InvariantCulture));
+                _settingsService.Set(AppConstants.SettingKeys.RegistrationFee, registrationFee.ToString("0.00", CultureInfo.InvariantCulture));
+                _settingsService.Set(AppConstants.SettingKeys.LaboratoryFee, laboratoryFee.ToString("0.00", CultureInfo.InvariantCulture));
+                ThemedMessageBox.ShowInfo(this, "Billing defaults updated successfully.", "Billing");
+            }
+            catch (Exception ex)
+            {
+                School_Management_System.DataLayer.Logging.FileLogger.LogError("SettingsControl.SaveBillingSettings", ex);
+                ThemedMessageBox.ShowError(this, Messages.UnexpectedError);
+            }
+        }
+
         private void LoadConnectionSettings()
         {
+            if (!_isAdmin || _cmbConnectionMode == null)
+            {
+                return;
+            }
+
             var fallbackHost = ConfigurationManager.AppSettings["DbHost"] ?? "localhost";
             var fallbackPort = ConfigurationManager.AppSettings["DbPort"] ?? "3306";
             var fallbackDbName = ConfigurationManager.AppSettings["DbName"] ?? "schoolmanagementsystem";
@@ -997,6 +1181,12 @@ namespace School_Management_System.Presentation.UserControls
 
         private void SaveConnectionSettings()
         {
+            if (!_isAdmin)
+            {
+                ThemedMessageBox.ShowError(this, "Only administrators can edit database profiles.", "Database");
+                return;
+            }
+
             if (_settingsService == null)
             {
                 ThemedMessageBox.ShowError(this, "Settings service is unavailable.", "Settings");
@@ -1019,9 +1209,7 @@ namespace School_Management_System.Presentation.UserControls
                 _settingsService.SetDbConnectionMode(mode);
                 _settingsService.Set(AppConstants.SettingKeys.DbSslModeOnline, GetOnlineSslModeInput());
                 _settingsService.Set(AppConstants.SettingKeys.DbSslCaPathOnline, GetOnlineSslCaPathInput());
-                ConnectionStringProvider.ResetDatabaseProfileCache();
-
-                Environment.SetEnvironmentVariable("SMS_DB_MODE", mode, EnvironmentVariableTarget.Process);
+                ConnectionModeHelper.ApplyRuntimeMode(mode);
 
                 _lblConnectionStatus.Text = "Status: Profiles saved. Active mode set to " + mode + ".";
                 _lblConnectionStatus.ForeColor = ThemeColors.Success;
@@ -1038,6 +1226,12 @@ namespace School_Management_System.Presentation.UserControls
 
         private void TestActiveConnection()
         {
+            if (!_isAdmin)
+            {
+                ThemedMessageBox.ShowError(this, "Only administrators can test database profiles.", "Database");
+                return;
+            }
+
             try
             {
                 var mode = NormalizeMode(_cmbConnectionMode.SelectedItem == null ? null : _cmbConnectionMode.SelectedItem.ToString());
@@ -1087,9 +1281,14 @@ namespace School_Management_System.Presentation.UserControls
 
         private void ApplyRuntimeMode()
         {
+            if (!_isAdmin)
+            {
+                ThemedMessageBox.ShowError(this, "Only administrators can apply database profiles.", "Database");
+                return;
+            }
+
             var mode = NormalizeMode(_cmbConnectionMode.SelectedItem == null ? null : _cmbConnectionMode.SelectedItem.ToString());
-            Environment.SetEnvironmentVariable("SMS_DB_MODE", mode, EnvironmentVariableTarget.Process);
-            ConnectionStringProvider.ResetDatabaseProfileCache();
+            ConnectionModeHelper.ApplyRuntimeMode(mode);
             _lblConnectionStatus.Text = "Status: Runtime mode applied (" + mode + ").";
             _lblConnectionStatus.ForeColor = ThemeColors.Secondary;
             ThemedMessageBox.ShowInfo(this, "Runtime DB mode applied: " + mode + ".", "Database");

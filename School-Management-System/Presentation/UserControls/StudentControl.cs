@@ -83,10 +83,11 @@ namespace School_Management_System.Presentation.UserControls
                 SplitterDistance = 730,
                 BackColor = ThemeColors.Border
             };
-            LockSplitEditorPanel(_split, 460);
+            LockSplitEditorPanel(_split, 500, 360);
 
             _grid = new DataGridView { Dock = DockStyle.Fill };
             ThemeManager.StyleDataGrid(_grid);
+            ConfigureCompactRecordGrid(_grid);
             _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             _grid.CellClick += (s, e) => PreviewSelected();
 
@@ -110,18 +111,18 @@ namespace School_Management_System.Presentation.UserControls
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 RowCount = 10,
-                Padding = new Padding(8, 6, 8, 6)
+                Padding = new Padding(6, 4, 6, 4)
             };
-            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 112));
             formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
             formLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
 
@@ -133,6 +134,7 @@ namespace School_Management_System.Presentation.UserControls
             ThemeManager.StyleComboBox(_cmbGender);
             _cmbGender.Items.AddRange(new object[] { "", "Male", "Female", "Other" });
             _dtBirthDate = new DateTimePicker { Font = ThemeFonts.Input, Dock = DockStyle.Fill, Format = DateTimePickerFormat.Short, ShowCheckBox = true };
+            ThemeManager.StyleDatePicker(_dtBirthDate);
             _txtEmail = MakeTextBox();
             _txtPhone = MakeTextBox();
             _txtAddress = new TextBox { Font = ThemeFonts.Input, Dock = DockStyle.Fill, Multiline = true, ScrollBars = ScrollBars.Vertical };
@@ -176,8 +178,8 @@ namespace School_Management_System.Presentation.UserControls
                 ColumnCount = 2,
                 RowCount = 1
             };
-            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
-            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 64));
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36));
             detailsLayout.Controls.Add(formLayout, 0, 0);
             detailsLayout.Controls.Add(photoPanel, 1, 0);
 
@@ -201,13 +203,14 @@ namespace School_Management_System.Presentation.UserControls
                 FullRowSelect = true,
                 GridLines = true
             };
-            _lvEnrollments.Columns.Add("Enrollment #", 120);
-            _lvEnrollments.Columns.Add("Subject", 240);
-            _lvEnrollments.Columns.Add("Units", 60);
-            _lvEnrollments.Columns.Add("Grade", 70);
-            _lvEnrollments.Columns.Add("Section", 100);
-            _lvEnrollments.Columns.Add("Term", 120);
-            _lvEnrollments.Columns.Add("Schedule", 140);
+            ThemeManager.StyleListView(_lvEnrollments);
+            _lvEnrollments.Columns.Add("Enrollment #", 108);
+            _lvEnrollments.Columns.Add("Subject", 220);
+            _lvEnrollments.Columns.Add("Units", 54);
+            _lvEnrollments.Columns.Add("Grade", 58);
+            _lvEnrollments.Columns.Add("Section", 88);
+            _lvEnrollments.Columns.Add("Term", 118);
+            _lvEnrollments.Columns.Add("Schedule", 130);
             _gbEnrollment.Controls.Add(_lvEnrollments);
 
             var rightLayout = new TableLayoutPanel
@@ -236,17 +239,17 @@ namespace School_Management_System.Presentation.UserControls
             _picPhoto = new PictureBox
             {
                 Dock = DockStyle.Top,
-                Height = 180,
+                Height = 156,
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = ThemeColors.Background
             };
 
-            _btnUploadPhoto = new Button { Text = "Upload Photo", Dock = DockStyle.Top, Height = 36 };
+            _btnUploadPhoto = new Button { Text = "Upload Photo", Dock = DockStyle.Top, Height = 34 };
             ThemeManager.StyleButtonNeutral(_btnUploadPhoto);
             _btnUploadPhoto.Click += (s, e) => UploadPhoto();
 
-            _btnRemovePhoto = new Button { Text = "Remove Photo", Dock = DockStyle.Top, Height = 32 };
+            _btnRemovePhoto = new Button { Text = "Remove Photo", Dock = DockStyle.Top, Height = 34 };
             ThemeManager.StyleButtonDanger(_btnRemovePhoto);
             _btnRemovePhoto.Click += (s, e) => ClearPhoto();
 
@@ -259,7 +262,9 @@ namespace School_Management_System.Presentation.UserControls
 
         private Panel BuildToolbar()
         {
-            var toolbar = new Panel { Dock = DockStyle.Top, Height = 56, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
+            var toolbar = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = ThemeColors.Background, Padding = new Padding(0, 0, 0, 10) };
+            var card = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
+            ThemeManager.StyleCardPanel(card);
             var strip = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -274,39 +279,39 @@ namespace School_Management_System.Presentation.UserControls
             {
                 Text = "Search:",
                 AutoSize = false,
-                Width = 58,
-                Height = 32,
+                Width = 54,
+                Height = 30,
                 ForeColor = ThemeColors.MutedText,
                 Font = ThemeFonts.Label,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Margin = new Padding(0, 2, 4, 0)
             };
 
-            _txtSearch = new TextBox { Width = 220, Margin = new Padding(0, 0, 8, 0) };
+            _txtSearch = new TextBox { Width = 200, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleInput(_txtSearch);
             _txtSearch.TextChanged += (s, e) => LoadGrid();
 
-            _btnRefresh = new Button { Text = "Refresh", Width = 86, Margin = new Padding(0, 0, 8, 0) };
+            _btnRefresh = new Button { Text = "Refresh", Width = 82, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonNeutral(_btnRefresh);
             _btnRefresh.Click += (s, e) => LoadGrid();
 
-            _btnAdd = new Button { Text = "New Student", Width = 110, Margin = new Padding(0, 0, 8, 0) };
+            _btnAdd = new Button { Text = "New Student", Width = 102, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonPrimary(_btnAdd);
             _btnAdd.Click += (s, e) => BeginAdd();
 
-            _btnEdit = new Button { Text = "Edit", Width = 86, Margin = new Padding(0, 0, 8, 0) };
+            _btnEdit = new Button { Text = "Edit", Width = 80, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonNeutral(_btnEdit);
             _btnEdit.Click += (s, e) => BeginEdit();
 
-            _btnDelete = new Button { Text = "Delete", Width = 86, Margin = new Padding(0, 0, 8, 0) };
+            _btnDelete = new Button { Text = "Delete", Width = 80, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonDanger(_btnDelete);
             _btnDelete.Click += (s, e) => DeleteCurrent();
 
-            _btnSave = new Button { Text = "Save", Width = 86, Margin = new Padding(0, 0, 8, 0) };
+            _btnSave = new Button { Text = "Save", Width = 80, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonPrimary(_btnSave);
             _btnSave.Click += (s, e) => Save();
 
-            _btnCancel = new Button { Text = "Cancel", Width = 86 };
+            _btnCancel = new Button { Text = "Cancel", Width = 80 };
             ThemeManager.StyleButtonNeutral(_btnCancel);
             _btnCancel.Click += (s, e) => CancelEdit();
 
@@ -318,7 +323,8 @@ namespace School_Management_System.Presentation.UserControls
             strip.Controls.Add(_btnDelete);
             strip.Controls.Add(_btnSave);
             strip.Controls.Add(_btnCancel);
-            toolbar.Controls.Add(strip);
+            card.Controls.Add(strip);
+            toolbar.Controls.Add(card);
             return toolbar;
         }
 
@@ -419,6 +425,7 @@ namespace School_Management_System.Presentation.UserControls
 
         private void BindGrid(DataTable dt)
         {
+            EnsureStudentDisplayColumns(dt);
             _grid.DataSource = null;
             _grid.Columns.Clear();
             _grid.DataSource = dt;
@@ -444,51 +451,35 @@ namespace School_Management_System.Presentation.UserControls
             {
                 _grid.Columns["StudentId"].HeaderText = "ID";
                 _grid.Columns["StudentId"].DisplayIndex = 0;
-                _grid.Columns["StudentId"].FillWeight = 16f;
+                _grid.Columns["StudentId"].FillWeight = 14f;
+                _grid.Columns["StudentId"].MinimumWidth = 54;
             }
 
-            if (_grid.Columns["FirstName"] != null)
+            if (_grid.Columns["FullName"] != null)
             {
-                _grid.Columns["FirstName"].HeaderText = "First Name";
-                _grid.Columns["FirstName"].DisplayIndex = 1;
-                _grid.Columns["FirstName"].FillWeight = 28f;
-            }
-
-            if (_grid.Columns["LastName"] != null)
-            {
-                _grid.Columns["LastName"].HeaderText = "Last Name";
-                _grid.Columns["LastName"].DisplayIndex = 2;
-                _grid.Columns["LastName"].FillWeight = 28f;
+                _grid.Columns["FullName"].HeaderText = "Student";
+                _grid.Columns["FullName"].DisplayIndex = 1;
+                _grid.Columns["FullName"].FillWeight = 42f;
+                _grid.Columns["FullName"].MinimumWidth = 180;
             }
 
             if (_grid.Columns["StudentNumber"] != null)
             {
                 _grid.Columns["StudentNumber"].HeaderText = "Number";
-                _grid.Columns["StudentNumber"].DisplayIndex = 3;
-                _grid.Columns["StudentNumber"].FillWeight = 28f;
+                _grid.Columns["StudentNumber"].DisplayIndex = 2;
+                _grid.Columns["StudentNumber"].FillWeight = 24f;
+                _grid.Columns["StudentNumber"].MinimumWidth = 126;
+            }
+
+            if (_grid.Columns["Gender"] != null)
+            {
+                _grid.Columns["Gender"].HeaderText = "Gender";
+                _grid.Columns["Gender"].DisplayIndex = 3;
+                _grid.Columns["Gender"].FillWeight = 20f;
+                _grid.Columns["Gender"].MinimumWidth = 78;
             }
 
             _grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-
-            if (_grid.Columns["StudentId"] != null)
-            {
-                _grid.Columns["StudentId"].MinimumWidth = 56;
-            }
-
-            if (_grid.Columns["FirstName"] != null)
-            {
-                _grid.Columns["FirstName"].MinimumWidth = 110;
-            }
-
-            if (_grid.Columns["LastName"] != null)
-            {
-                _grid.Columns["LastName"].MinimumWidth = 110;
-            }
-
-            if (_grid.Columns["StudentNumber"] != null)
-            {
-                _grid.Columns["StudentNumber"].MinimumWidth = 130;
-            }
 
             if (_grid.Rows.Count > 0)
             {
@@ -515,7 +506,7 @@ namespace School_Management_System.Presentation.UserControls
 
         private void ConfigureGridColumnsForListView()
         {
-            var allowed = new[] { "StudentId", "FirstName", "LastName", "StudentNumber" };
+            var allowed = new[] { "StudentId", "FullName", "StudentNumber", "Gender" };
 
             foreach (DataGridViewColumn col in _grid.Columns)
             {
@@ -531,6 +522,57 @@ namespace School_Management_System.Presentation.UserControls
 
                 col.Visible = show;
             }
+        }
+
+        private static void EnsureStudentDisplayColumns(DataTable dt)
+        {
+            if (dt == null)
+            {
+                return;
+            }
+
+            if (!dt.Columns.Contains("FullName"))
+            {
+                dt.Columns.Add("FullName", typeof(string));
+            }
+
+            foreach (DataRow row in dt.Rows)
+            {
+                row["FullName"] = BuildPersonName(
+                    Convert.ToString(row["FirstName"]),
+                    Convert.ToString(row["MiddleName"]),
+                    Convert.ToString(row["LastName"]));
+            }
+        }
+
+        private static string BuildPersonName(string firstName, string middleName, string lastName)
+        {
+            var givenName = (firstName ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(middleName))
+            {
+                givenName = (givenName + " " + middleName.Trim().Substring(0, 1).ToUpperInvariant() + ".").Trim();
+            }
+
+            var familyName = (lastName ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(givenName)) return familyName;
+            if (string.IsNullOrWhiteSpace(familyName)) return givenName;
+            return familyName + ", " + givenName;
+        }
+
+        private static void ConfigureCompactRecordGrid(DataGridView grid)
+        {
+            if (grid == null)
+            {
+                return;
+            }
+
+            grid.ColumnHeadersHeight = 36;
+            grid.RowTemplate.Height = 32;
+            grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+            grid.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
+            grid.DefaultCellStyle.Padding = new Padding(5, 0, 5, 0);
+            grid.DefaultCellStyle.Font = ThemeFonts.Label;
+            grid.ColumnHeadersDefaultCellStyle.Font = ThemeFonts.SubHeader;
         }
 
         private void PreviewSelected()
@@ -635,7 +677,7 @@ namespace School_Management_System.Presentation.UserControls
             finally
             {
                 UseWaitCursor = false;
-                _btnSave.Enabled = true;
+                _btnSave.Enabled = _isEditorActive;
             }
         }
 

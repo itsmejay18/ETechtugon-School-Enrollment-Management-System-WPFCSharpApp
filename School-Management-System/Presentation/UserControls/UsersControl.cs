@@ -67,7 +67,7 @@ namespace School_Management_System.Presentation.UserControls
                 SplitterDistance = 730,
                 BackColor = ThemeColors.Border
             };
-            LockSplitEditorPanel(_split, 500);
+            LockSplitEditorPanel(_split, 560);
 
             _grid = new DataGridView { Dock = DockStyle.Fill };
             ThemeManager.StyleDataGrid(_grid);
@@ -158,8 +158,8 @@ namespace School_Management_System.Presentation.UserControls
                 ColumnCount = 2,
                 RowCount = 1
             };
-            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
-            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 64));
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36));
             detailsLayout.Controls.Add(layout, 0, 0);
             detailsLayout.Controls.Add(photoPanel, 1, 0);
             _gb.Controls.Add(detailsLayout);
@@ -185,11 +185,11 @@ namespace School_Management_System.Presentation.UserControls
                 BackColor = ThemeColors.Background
             };
 
-            _btnUploadPhoto = new Button { Text = "Upload Photo", Dock = DockStyle.Top, Height = 36 };
+            _btnUploadPhoto = new Button { Text = "Upload Photo", Dock = DockStyle.Top, Height = 38 };
             ThemeManager.StyleButtonNeutral(_btnUploadPhoto);
             _btnUploadPhoto.Click += (s, e) => UploadPhoto();
 
-            _btnRemovePhoto = new Button { Text = "Remove Photo", Dock = DockStyle.Top, Height = 32 };
+            _btnRemovePhoto = new Button { Text = "Remove Photo", Dock = DockStyle.Top, Height = 38 };
             ThemeManager.StyleButtonDanger(_btnRemovePhoto);
             _btnRemovePhoto.Click += (s, e) => ClearPhoto();
 
@@ -201,7 +201,9 @@ namespace School_Management_System.Presentation.UserControls
 
         private Panel BuildToolbar()
         {
-            var toolbar = new Panel { Dock = DockStyle.Top, Height = 56, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
+            var toolbar = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = ThemeColors.Background, Padding = new Padding(0, 0, 0, 12) };
+            var card = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(12, 8, 12, 8) };
+            ThemeManager.StyleCardPanel(card);
             var strip = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
@@ -260,7 +262,8 @@ namespace School_Management_System.Presentation.UserControls
             strip.Controls.Add(_btnDelete);
             strip.Controls.Add(_btnSave);
             strip.Controls.Add(_btnCancel);
-            toolbar.Controls.Add(strip);
+            card.Controls.Add(strip);
+            toolbar.Controls.Add(card);
             return toolbar;
         }
 
@@ -529,7 +532,7 @@ namespace School_Management_System.Presentation.UserControls
             finally
             {
                 UseWaitCursor = false;
-                _btnSave.Enabled = true;
+                _btnSave.Enabled = _isEditorActive;
             }
         }
 

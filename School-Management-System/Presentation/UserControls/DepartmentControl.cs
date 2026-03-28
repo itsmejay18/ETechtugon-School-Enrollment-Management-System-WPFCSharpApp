@@ -133,43 +133,70 @@ namespace School_Management_System.Presentation.UserControls
 
         private Panel BuildToolbar()
         {
-            var toolbar = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
+            var toolbar = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = ThemeColors.Background, Padding = new Padding(0, 0, 0, 12) };
+            var card = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(12, 8, 12, 8) };
+            ThemeManager.StyleCardPanel(card);
 
-            _txtSearch = new TextBox { Width = 260, Location = new Point(0, 10) };
+            var strip = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = true,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+
+            var lblSearch = new Label
+            {
+                Text = "Search:",
+                AutoSize = false,
+                Width = 58,
+                Height = 32,
+                ForeColor = ThemeColors.MutedText,
+                Font = ThemeFonts.Label,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 2, 4, 0)
+            };
+
+            _txtSearch = new TextBox { Width = 260, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleInput(_txtSearch);
             _txtSearch.TextChanged += (s, e) => LoadGrid();
 
-            _btnRefresh = new Button { Text = "Refresh", Width = 96, Location = new Point(270, 8) };
+            _btnRefresh = new Button { Text = "Refresh", Width = 96, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonNeutral(_btnRefresh);
             _btnRefresh.Click += (s, e) => LoadGrid();
 
-            _btnAdd = new Button { Text = "Add", Width = 86, Location = new Point(384, 8) };
+            _btnAdd = new Button { Text = "Add", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonPrimary(_btnAdd);
             _btnAdd.Click += (s, e) => BeginAdd();
 
-            _btnEdit = new Button { Text = "Edit", Width = 86, Location = new Point(478, 8) };
+            _btnEdit = new Button { Text = "Edit", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonNeutral(_btnEdit);
             _btnEdit.Click += (s, e) => BeginEdit();
 
-            _btnDelete = new Button { Text = "Delete", Width = 86, Location = new Point(572, 8) };
+            _btnDelete = new Button { Text = "Delete", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonDanger(_btnDelete);
             _btnDelete.Click += (s, e) => DeleteCurrent();
 
-            _btnSave = new Button { Text = "Save", Width = 86, Location = new Point(666, 8) };
+            _btnSave = new Button { Text = "Save", Width = 86, Margin = new Padding(0, 0, 8, 0) };
             ThemeManager.StyleButtonPrimary(_btnSave);
             _btnSave.Click += (s, e) => Save();
 
-            _btnCancel = new Button { Text = "Cancel", Width = 86, Location = new Point(760, 8) };
+            _btnCancel = new Button { Text = "Cancel", Width = 86 };
             ThemeManager.StyleButtonNeutral(_btnCancel);
             _btnCancel.Click += (s, e) => CancelEdit();
 
-            toolbar.Controls.Add(_txtSearch);
-            toolbar.Controls.Add(_btnRefresh);
-            toolbar.Controls.Add(_btnAdd);
-            toolbar.Controls.Add(_btnEdit);
-            toolbar.Controls.Add(_btnDelete);
-            toolbar.Controls.Add(_btnSave);
-            toolbar.Controls.Add(_btnCancel);
+            strip.Controls.Add(lblSearch);
+            strip.Controls.Add(_txtSearch);
+            strip.Controls.Add(_btnRefresh);
+            strip.Controls.Add(_btnAdd);
+            strip.Controls.Add(_btnEdit);
+            strip.Controls.Add(_btnDelete);
+            strip.Controls.Add(_btnSave);
+            strip.Controls.Add(_btnCancel);
+            card.Controls.Add(strip);
+            toolbar.Controls.Add(card);
             return toolbar;
         }
 
@@ -336,7 +363,7 @@ namespace School_Management_System.Presentation.UserControls
             finally
             {
                 UseWaitCursor = false;
-                _btnSave.Enabled = true;
+                _btnSave.Enabled = _isEditorActive;
             }
         }
 

@@ -133,17 +133,31 @@ namespace School_Management_System.Presentation.UserControls
 
             _gb.Controls.Add(layout);
 
-            var toolbar = new Panel { Dock = DockStyle.Top, Height = 46, Padding = new Padding(0, 10, 0, 6), BackColor = ThemeColors.Background };
-            _btnCheckAll = new Button { Text = "Check All", Width = 110, Location = new Point(0, 8) };
+            var toolbar = new Panel { Dock = DockStyle.Top, Height = 64, Padding = new Padding(0, 0, 0, 12), BackColor = ThemeColors.Background };
+            var card = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(12, 8, 12, 8) };
+            ThemeManager.StyleCardPanel(card);
+            var strip = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                AutoScroll = true,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
+            };
+
+            _btnCheckAll = new Button { Text = "Check All", Width = 110, Margin = new Padding(0, 0, 10, 0) };
             ThemeManager.StyleButtonNeutral(_btnCheckAll);
             _btnCheckAll.Click += (s, e) => SetAllChecks(true);
 
-            _btnUncheckAll = new Button { Text = "Uncheck All", Width = 110, Location = new Point(120, 8) };
+            _btnUncheckAll = new Button { Text = "Uncheck All", Width = 110 };
             ThemeManager.StyleButtonNeutral(_btnUncheckAll);
             _btnUncheckAll.Click += (s, e) => SetAllChecks(false);
 
-            toolbar.Controls.Add(_btnCheckAll);
-            toolbar.Controls.Add(_btnUncheckAll);
+            strip.Controls.Add(_btnCheckAll);
+            strip.Controls.Add(_btnUncheckAll);
+            card.Controls.Add(strip);
+            toolbar.Controls.Add(card);
 
             _lvSubjects = new ListView
             {

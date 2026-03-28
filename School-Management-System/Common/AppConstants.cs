@@ -4,7 +4,7 @@ namespace School_Management_System.Common
 {
     public static class AppConstants
     {
-        public const string AppTitle = "School Management System";
+        public const string AppTitle = "School Enrollment Management System";
         public const string ConnectionStringName = "SchoolDb";
 
         public static class Roles
@@ -67,6 +67,11 @@ namespace School_Management_System.Common
 
             public const string BackupDirectory = "Backup.Directory";
             public const string BackupPreferredType = "Backup.PreferredType";
+
+            public const string TuitionPerUnit = "Billing.TuitionPerUnit";
+            public const string MiscellaneousFee = "Billing.MiscellaneousFee";
+            public const string RegistrationFee = "Billing.RegistrationFee";
+            public const string LaboratoryFee = "Billing.LaboratoryFee";
         }
 
         public static class ActivityActions
