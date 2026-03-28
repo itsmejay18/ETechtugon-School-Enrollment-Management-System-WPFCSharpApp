@@ -1,6 +1,49 @@
-ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `PhotoPath` varchar(260) DEFAULT NULL AFTER `DisplayName`;
-ALTER TABLE `faculty` ADD COLUMN IF NOT EXISTS `PhotoPath` varchar(260) DEFAULT NULL AFTER `Address`;
-ALTER TABLE `student` ADD COLUMN IF NOT EXISTS `PhotoPath` varchar(260) DEFAULT NULL AFTER `Address`;
+SET @schema_name = DATABASE();
+
+SET @sql = IF(
+    EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = @schema_name
+          AND table_name = 'users'
+          AND column_name = 'PhotoPath'
+    ),
+    'SET @migration_noop = 1',
+    'ALTER TABLE `users` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `DisplayName`'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+    EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = @schema_name
+          AND table_name = 'faculty'
+          AND column_name = 'PhotoPath'
+    ),
+    'SET @migration_noop = 1',
+    'ALTER TABLE `faculty` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `Address`'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = IF(
+    EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = @schema_name
+          AND table_name = 'student'
+          AND column_name = 'PhotoPath'
+    ),
+    'SET @migration_noop = 1',
+    'ALTER TABLE `student` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `Address`'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS `activitylog` (
   `ActivityLogId` int NOT NULL AUTO_INCREMENT,
@@ -17,4 +60,17 @@ CREATE TABLE IF NOT EXISTS `activitylog` (
   CONSTRAINT `FK_ActivityLog_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-ALTER TABLE `activitylog` ADD COLUMN IF NOT EXISTS `MachineName` varchar(100) DEFAULT NULL AFTER `Details`;
+SET @sql = IF(
+    EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = @schema_name
+          AND table_name = 'activitylog'
+          AND column_name = 'MachineName'
+    ),
+    'SET @migration_noop = 1',
+    'ALTER TABLE `activitylog` ADD COLUMN `MachineName` varchar(100) DEFAULT NULL AFTER `Details`'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

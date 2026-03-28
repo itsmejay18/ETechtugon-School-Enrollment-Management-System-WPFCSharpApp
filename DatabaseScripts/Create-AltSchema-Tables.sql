@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS sections (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS teachers (
+  
   teacher_id INT PRIMARY KEY,
   first_name VARCHAR(80) NOT NULL,
   last_name VARCHAR(80) NOT NULL,

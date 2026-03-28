@@ -72,14 +72,18 @@ namespace School_Management_System.DataLayer
                 return connectionString;
             }
 
+            FileLogger.LogInfo("DatabaseHelper.ResolveBestConnectionString: Online mode detected. Probing connection candidates.");
             foreach (var candidate in BuildOnlineCandidates(connectionString))
             {
+                FileLogger.LogInfo("DatabaseHelper.ResolveBestConnectionString: Trying " + DescribeConnection(candidate));
                 if (CanOpen(candidate))
                 {
+                    FileLogger.LogInfo("DatabaseHelper.ResolveBestConnectionString: Connected using " + DescribeConnection(candidate));
                     return candidate;
                 }
             }
 
+            FileLogger.LogInfo("DatabaseHelper.ResolveBestConnectionString: All online candidates failed. Falling back to original connection string.");
             return connectionString;
         }
 
@@ -153,6 +157,26 @@ namespace School_Management_System.DataLayer
             catch
             {
                 return false;
+            }
+        }
+
+        private static string DescribeConnection(string connectionString)
+        {
+            try
+            {
+                var builder = new MySqlConnectionStringBuilder(connectionString);
+                return string.Format(
+                    "Server={0};Port={1};Database={2};User={3};SslMode={4};Timeout={5}",
+                    builder.Server,
+                    builder.Port,
+                    builder.Database,
+                    builder.UserID,
+                    builder.SslMode,
+                    builder.ConnectionTimeout);
+            }
+            catch
+            {
+                return "<invalid connection string>";
             }
         }
 
