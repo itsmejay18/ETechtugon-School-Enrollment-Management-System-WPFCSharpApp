@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Xml.Serialization;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using School_Management_System.Common;
 using School_Management_System.DataLayer;
 using School_Management_System.DataLayer.Configuration;
@@ -1573,3 +1573,4 @@ ORDER BY k.ORDINAL_POSITION;";
         }
     }
 }
+

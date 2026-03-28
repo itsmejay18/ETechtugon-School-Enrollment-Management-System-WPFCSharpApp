@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Drawing;
 using System.Windows.Forms;
 using School_Management_System.Presentation.Theming;
 
@@ -13,6 +14,7 @@ namespace School_Management_System.Presentation.Base
             BackColor = ThemeColors.Background;
             ForeColor = ThemeColors.Text;
             Dock = DockStyle.Fill;
+            AutoScaleMode = AutoScaleMode.None;
         }
 
         protected override void OnCreateControl()
@@ -27,6 +29,14 @@ namespace School_Management_System.Presentation.Base
             base.OnControlAdded(e);
             if (e == null || e.Control == null || IsInDesigner) return;
             ThemeManager.ApplyPaletteToControlTree(e.Control);
+        }
+
+        protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+        {
+            if (IsInDesigner)
+            {
+                base.ScaleControl(factor, specified);
+            }
         }
 
         protected bool IsInDesigner

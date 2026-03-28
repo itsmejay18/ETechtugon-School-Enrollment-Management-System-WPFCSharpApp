@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using School_Management_System.DataLayer.Interfaces;
 using School_Management_System.Models;
 
@@ -64,3 +64,4 @@ ON DUPLICATE KEY UPDATE SettingValue = @Value;";
         }
     }
 }
+

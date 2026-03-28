@@ -30,13 +30,17 @@ namespace School_Management_System.Wpf.Views
         private void ApplyBrandingAssets()
         {
             var brandLogo = BrandingAssetLoader.LoadBrandLogo();
-            if (brandLogo == null)
+            var appIcon = BrandingAssetLoader.LoadAppIcon();
+
+            if (appIcon != null)
             {
-                return;
+                Icon = appIcon;
             }
 
-            Icon = brandLogo;
-            BrandLogoImage.Source = brandLogo;
+            if (brandLogo != null)
+            {
+                BrandLogoImage.Source = brandLogo;
+            }
         }
 
         private void PasswordInput_KeyDown(object sender, KeyEventArgs e)

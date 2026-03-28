@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Net;
 using System.Net.Sockets;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using School_Management_System.Common;
 
 namespace School_Management_System.DataLayer.Configuration
@@ -537,3 +537,4 @@ WHERE SettingKey = @ModeKey
         }
     }
 }
+

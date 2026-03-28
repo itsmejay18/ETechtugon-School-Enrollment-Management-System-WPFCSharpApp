@@ -1,7 +1,9 @@
 using System;
 using System.ComponentModel;
+using System.Drawing;
 using System.Windows.Forms;
 using School_Management_System.Presentation.Forms;
+using School_Management_System.Presentation.Helpers;
 using School_Management_System.Presentation.Theming;
 
 namespace School_Management_System.Presentation.Base
@@ -11,7 +13,21 @@ namespace School_Management_System.Presentation.Base
         protected BaseForm()
         {
             ThemeManager.ApplyBaseForm(this);
+            AutoScaleMode = AutoScaleMode.None;
             StartPosition = FormStartPosition.CenterScreen;
+
+            try
+            {
+                var appIcon = BrandAssets.CreateAppIcon();
+                if (appIcon != null)
+                {
+                    Icon = appIcon;
+                }
+            }
+            catch
+            {
+                // Branding assets are optional at runtime.
+            }
         }
 
         protected override void OnControlAdded(ControlEventArgs e)
@@ -26,6 +42,14 @@ namespace School_Management_System.Presentation.Base
             base.OnShown(e);
             if (IsInDesigner) return;
             ThemeManager.ApplyPaletteToControlTree(this);
+        }
+
+        protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+        {
+            if (IsInDesigner)
+            {
+                base.ScaleControl(factor, specified);
+            }
         }
 
         protected bool IsInDesigner

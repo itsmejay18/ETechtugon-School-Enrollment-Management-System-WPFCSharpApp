@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Data;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using School_Management_System.Common;
 
 namespace School_Management_System.DataLayer.Configuration
@@ -282,3 +282,4 @@ ON DUPLICATE KEY UPDATE
         }
     }
 }
+

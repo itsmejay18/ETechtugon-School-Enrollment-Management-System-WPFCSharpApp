@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Data;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using School_Management_System.DataLayer.Interfaces;
 
 namespace School_Management_System.DataLayer
@@ -147,3 +147,4 @@ VALUES (@CurriculumId, @SubjectId, UTC_TIMESTAMP());";
         }
     }
 }
+

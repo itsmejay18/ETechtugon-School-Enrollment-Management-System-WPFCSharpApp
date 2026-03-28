@@ -210,18 +210,78 @@ namespace School_Management_System.Wpf.Services
         private static string BuildFailureSummary(ConnectionProfile profile, string errorMessage)
         {
             var baseMessage = "Unable to connect using the " + profile.DisplayName + " profile.";
+            var hint = BuildConnectionHint(profile, errorMessage);
 
             if (string.Equals(profile.Mode, "Online", StringComparison.OrdinalIgnoreCase))
             {
-                return baseMessage + " Check internet access or hosted server availability, then try Refresh.";
+                return baseMessage + " " + hint;
             }
 
             if (string.Equals(profile.Mode, "Local", StringComparison.OrdinalIgnoreCase))
             {
-                return baseMessage + " Make sure the MySQL service is running on this computer.";
+                return baseMessage + " " + hint;
             }
 
-            return baseMessage + " Make sure the selected server is reachable on the network.";
+            return baseMessage + " " + hint;
+        }
+
+        private static string BuildConnectionHint(ConnectionProfile profile, string errorMessage)
+        {
+            var safeMessage = (errorMessage ?? string.Empty).Trim();
+            var lower = safeMessage.ToLowerInvariant();
+
+            if (string.Equals(profile.Mode, "Online", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lower.Contains("access denied"))
+                {
+                    return "Hostinger rejected the username/password or the current public IP is not allowed for remote MySQL access.";
+                }
+
+                if (lower.Contains("stream has failed") ||
+                    lower.Contains("timed out") ||
+                    lower.Contains("failed to respond") ||
+                    lower.Contains("unable to read data from the transport connection"))
+                {
+                    return "The hosted MySQL server at " + profile.Host + ":" + profile.Port +
+                           " is not completing the database handshake from this PC. Check Hostinger Remote MySQL access, verify the host/port/DB/user values, and confirm this public IP is allowed.";
+                }
+
+                if (lower.Contains("unknown database"))
+                {
+                    return "The online database name '" + profile.Database + "' was not found on the hosted server.";
+                }
+
+                return "Check internet access, hosted database availability, and Hostinger remote MySQL settings. " + TruncateError(safeMessage);
+            }
+
+            if (string.Equals(profile.Mode, "Local", StringComparison.OrdinalIgnoreCase))
+            {
+                if (lower.Contains("access denied"))
+                {
+                    return "Local MySQL rejected the username/password. Verify the configured local database credentials.";
+                }
+
+                return "Make sure the MySQL service is running on this computer. " + TruncateError(safeMessage);
+            }
+
+            if (lower.Contains("access denied"))
+            {
+                return "The selected network database rejected the username/password or remote host grants.";
+            }
+
+            return "Make sure the selected server is reachable on the network. " + TruncateError(safeMessage);
+        }
+
+        private static string TruncateError(string errorMessage)
+        {
+            if (string.IsNullOrWhiteSpace(errorMessage))
+            {
+                return string.Empty;
+            }
+
+            return errorMessage.Length > 180
+                ? errorMessage.Substring(0, 180) + "..."
+                : errorMessage;
         }
 
         public sealed class ConnectionProfile

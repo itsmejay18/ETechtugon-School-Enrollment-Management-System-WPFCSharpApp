@@ -7,8 +7,8 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $solutionPath = Join-Path $repoRoot "School-Management-System.sln"
-$projectOutDir = Join-Path $repoRoot "School-Management-System\bin\$Configuration"
-$exePath = Join-Path $projectOutDir "School-Management-System.exe"
+$projectOutDir = Join-Path $repoRoot "School-Management-System.Wpf\bin\$Configuration\net472"
+$exePath = Join-Path $projectOutDir "School-Management-System.Wpf.exe"
 $issPath = Join-Path $repoRoot "Installer\SchoolManagementSystem.iss"
 $distDir = Join-Path $repoRoot "dist\installer"
 

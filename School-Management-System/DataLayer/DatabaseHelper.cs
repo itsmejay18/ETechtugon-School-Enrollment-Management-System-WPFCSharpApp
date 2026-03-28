@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Configuration;
 using System.Net;
 using System.Net.Sockets;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Configuration;
 using School_Management_System.DataLayer.Logging;
@@ -438,3 +438,4 @@ namespace School_Management_System.DataLayer
         }
     }
 }
+

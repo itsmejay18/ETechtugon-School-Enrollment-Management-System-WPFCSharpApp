@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 using System.Data;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Interfaces;
 using School_Management_System.Models;
@@ -135,3 +135,4 @@ WHERE CourseId = @CourseId;";
         }
     }
 }
+

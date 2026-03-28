@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Drawing;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
+using MySqlConnector;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Configuration;
 using School_Management_System.Presentation.Base;
@@ -31,7 +31,7 @@ namespace School_Management_System.Presentation.Forms
         public ConnectionProfileForm()
         {
             Text = AppConstants.AppTitle + " - Database Connection";
-            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleMode = AutoScaleMode.None;
             FormBorderStyle = FormBorderStyle.Sizable;
             MaximizeBox = true;
             MinimizeBox = false;
@@ -890,3 +890,4 @@ namespace School_Management_System.Presentation.Forms
         }
     }
 }
+

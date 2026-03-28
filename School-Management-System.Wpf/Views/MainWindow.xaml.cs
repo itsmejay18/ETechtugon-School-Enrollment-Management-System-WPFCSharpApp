@@ -17,7 +17,7 @@ namespace School_Management_System.Wpf.Views
             if (database == null) throw new ArgumentNullException(nameof(database));
 
             InitializeComponent();
-            Icon = BrandingAssetLoader.LoadBrandLogo();
+            Icon = BrandingAssetLoader.LoadAppIcon();
 
             _dashboardForm = new DashboardForm(database);
             Loaded += MainWindow_Loaded;
