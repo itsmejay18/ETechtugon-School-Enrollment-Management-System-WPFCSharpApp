@@ -73,6 +73,7 @@ namespace School_Management_System.Presentation.UserControls
             ThemeManager.StyleDataGrid(_grid);
             _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             _grid.CellClick += (s, e) => PreviewSelected();
+            _grid.SelectionChanged += (s, e) => PreviewSelected();
 
             var left = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
             left.Controls.Add(_grid);
@@ -294,14 +295,9 @@ namespace School_Management_System.Presentation.UserControls
             _cmbRole.Enabled = active;
             _chkActive.Enabled = active;
             _txtPassword.ReadOnly = !active;
-            if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = true;
+            if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = active;
             if (_btnRemovePhoto != null) _btnRemovePhoto.Enabled = active && (_selectedPhotoBytes != null || _currentPhotoBytes != null);
-
-            _btnSave.Enabled = active;
-            _btnCancel.Enabled = active;
-            _btnAdd.Enabled = !active;
-            _btnEdit.Enabled = !active && _editingUserId > 0;
-            _btnDelete.Enabled = !active && _editingUserId > 0;
+            ApplyCrudButtonState(active, HasSelectedDataRow(_grid, "UserId"), _btnAdd, _btnEdit, _btnDelete, _btnSave, _btnCancel);
         }
 
         private void BeginAdd()
@@ -449,9 +445,14 @@ namespace School_Management_System.Presentation.UserControls
         private void PreviewSelected()
         {
             if (_isEditorActive) return;
-            if (_grid.CurrentRow == null) return;
+            if (!HasSelectedDataRow(_grid, "UserId"))
+            {
+                _editingUserId = 0;
+                SetEditorState(false);
+                return;
+            }
 
-            var row = _grid.CurrentRow;
+            var row = _grid.SelectedRows[0];
             if (row.Cells["UserId"] == null || row.Cells["UserId"].Value == null) return;
 
             _editingUserId = Convert.ToInt32(row.Cells["UserId"].Value);

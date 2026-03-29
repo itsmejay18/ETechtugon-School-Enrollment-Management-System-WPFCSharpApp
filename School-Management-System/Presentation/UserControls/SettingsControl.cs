@@ -268,7 +268,7 @@ namespace School_Management_System.Presentation.UserControls
             {
                 Text = "Global Term Settings",
                 Dock = DockStyle.Top,
-                Height = 176,
+                Height = 206,
                 Font = ThemeFonts.SubHeader,
                 ForeColor = ThemeColors.Text,
                 Padding = new Padding(12, 18, 12, 12),
@@ -285,9 +285,9 @@ namespace School_Management_System.Presentation.UserControls
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
 
             _cmbAcademicYear = new ComboBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input };
             ThemeManager.StyleComboBox(_cmbAcademicYear);
@@ -295,7 +295,7 @@ namespace School_Management_System.Presentation.UserControls
             _cmbSemester = new ComboBox { Dock = DockStyle.Fill, Font = ThemeFonts.Input };
             ThemeManager.StyleComboBox(_cmbSemester);
 
-            _btnSaveTerm = new Button { Text = "Save Active Term", Width = 170, Height = 32, Anchor = AnchorStyles.Left };
+            _btnSaveTerm = new Button { Text = "Save Active Term", Width = 170, Height = 34, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 0, 0) };
             ThemeManager.StyleButtonPrimary(_btnSaveTerm);
             _btnSaveTerm.Click += (s, e) => SaveTermSettings();
 
@@ -315,7 +315,7 @@ namespace School_Management_System.Presentation.UserControls
             {
                 Text = "Enrollment Billing Defaults",
                 Dock = DockStyle.Top,
-                Height = 252,
+                Height = 318,
                 Font = ThemeFonts.SubHeader,
                 ForeColor = ThemeColors.Text,
                 Padding = new Padding(12, 18, 12, 12),
@@ -332,19 +332,26 @@ namespace School_Management_System.Presentation.UserControls
             };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
 
             _txtTuitionPerUnit = MakeTextBox();
             _txtMiscellaneousFee = MakeTextBox();
             _txtRegistrationFee = MakeTextBox();
             _txtLaboratoryFee = MakeTextBox();
 
-            _btnSaveBillingSettings = new Button { Text = "Save Billing Defaults", Width = 176, Height = 32, Anchor = AnchorStyles.Left | AnchorStyles.Top };
+            _btnSaveBillingSettings = new Button
+            {
+                Text = "Save Billing Defaults",
+                Width = 176,
+                Height = 34,
+                Anchor = AnchorStyles.Left,
+                Margin = new Padding(0, 8, 0, 0)
+            };
             ThemeManager.StyleButtonPrimary(_btnSaveBillingSettings);
             _btnSaveBillingSettings.Click += (s, e) => SaveBillingSettings();
 
@@ -355,7 +362,7 @@ namespace School_Management_System.Presentation.UserControls
                 Font = ThemeFonts.Label,
                 ForeColor = ThemeColors.MutedText,
                 TextAlign = ContentAlignment.MiddleLeft,
-                AutoEllipsis = true
+                AutoEllipsis = false
             };
 
             layout.Controls.Add(MakeLabel("Tuition Per Unit"), 0, 0);

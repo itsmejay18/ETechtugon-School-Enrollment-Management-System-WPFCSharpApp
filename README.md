@@ -1,5 +1,8 @@
 # School Management System (WinForms, .NET Framework 4.7.2)
 
+## User manual
+End-user documentation is available in [USER_MANUAL.md](USER_MANUAL.md).
+
 ## What is implemented now
 - Database profiles: `Local`, `Wired`, `Wireless`, `Online (Hostinger)`
 - Full, Incremental, and Differential backups (`.smsbak`)

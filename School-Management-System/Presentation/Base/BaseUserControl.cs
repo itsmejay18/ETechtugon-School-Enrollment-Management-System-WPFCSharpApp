@@ -49,6 +49,68 @@ namespace School_Management_System.Presentation.Base
             }
         }
 
+        protected static bool HasSelectedDataRow(DataGridView grid, string keyColumnName = null)
+        {
+            if (grid == null || grid.SelectedRows.Count == 0)
+            {
+                return false;
+            }
+
+            var row = grid.SelectedRows[0];
+            if (row == null || row.IsNewRow)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(keyColumnName))
+            {
+                return true;
+            }
+
+            if (row.DataGridView == null || !row.DataGridView.Columns.Contains(keyColumnName))
+            {
+                return false;
+            }
+
+            var value = row.Cells[keyColumnName].Value;
+            return value != null && value != DBNull.Value && !string.IsNullOrWhiteSpace(Convert.ToString(value));
+        }
+
+        protected static bool HasSelectedListItem(ListView listView)
+        {
+            return listView != null && listView.SelectedItems.Count > 0 && listView.SelectedItems[0] != null;
+        }
+
+        protected static void ApplyCrudButtonState(
+            bool active,
+            bool hasSelection,
+            Button addButton,
+            Button editButton,
+            Button deleteButton,
+            Button saveButton,
+            Button cancelButton,
+            params Button[] extraSelectionButtons)
+        {
+            if (saveButton != null) saveButton.Enabled = active;
+            if (cancelButton != null) cancelButton.Enabled = active;
+            if (addButton != null) addButton.Enabled = !active;
+            if (editButton != null) editButton.Enabled = !active && hasSelection;
+            if (deleteButton != null) deleteButton.Enabled = !active && hasSelection;
+
+            if (extraSelectionButtons == null)
+            {
+                return;
+            }
+
+            foreach (var button in extraSelectionButtons)
+            {
+                if (button != null)
+                {
+                    button.Enabled = !active && hasSelection;
+                }
+            }
+        }
+
         protected static void LockSplitEditorPanel(SplitContainer split, int editorPanelWidth, int minGridWidth = 200)
         {
             if (split == null) return;

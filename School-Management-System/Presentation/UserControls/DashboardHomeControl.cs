@@ -57,12 +57,13 @@ namespace School_Management_System.Presentation.UserControls
         private void BuildUi()
         {
             BackColor = ThemeColors.Background;
+            AutoScroll = true;
             UiHelper.EnableDoubleBuffering(this);
 
             _rootLayout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, BackColor = ThemeColors.Background, Padding = new Padding(0, 4, 0, 0) };
-            _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 136));
-            _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-            _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 178));
+            _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 118));
+            _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+            _rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 134));
             _rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             _cardsLayout = new TableLayoutPanel { Dock = DockStyle.Fill, BackColor = ThemeColors.Background, Padding = new Padding(0, 0, 0, 14) };
@@ -89,27 +90,27 @@ namespace School_Management_System.Presentation.UserControls
         {
             var host = CreateHost(new Padding(0, 0, 0, 14));
             var card = CreateCard();
-            var accent = new Panel { Dock = DockStyle.Top, Height = 5, BackColor = ThemeColors.Secondary };
+            var accent = new Panel { Dock = DockStyle.Top, Height = 4, BackColor = ThemeColors.Secondary };
 
-            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Padding = new Padding(24, 18, 24, 18) };
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Padding = new Padding(18, 12, 18, 12) };
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 68));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32));
 
             var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Color.Transparent, Margin = new Padding(0) };
             left.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            left.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
+            left.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
             left.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            left.Controls.Add(new Label { Dock = DockStyle.Fill, Text = "Dashboard overview", Font = new Font("Segoe UI Semibold", 18F, FontStyle.Bold), ForeColor = ThemeColors.Text, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) }, 0, 0);
-            left.Controls.Add(new Label { Dock = DockStyle.Fill, Text = "A cleaner operational view for the current database with live counts and quick trends.", Font = new Font("Segoe UI", 10F), ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.TopLeft, Margin = new Padding(0, 2, 0, 0) }, 0, 1);
+            left.Controls.Add(new Label { Dock = DockStyle.Fill, Text = "Dashboard overview", Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold), ForeColor = ThemeColors.Text, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) }, 0, 0);
+            left.Controls.Add(new Label { Dock = DockStyle.Fill, Text = "A cleaner operational view for the current database with live counts and quick trends.", Font = new Font("Segoe UI", 9.5F), ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.TopLeft, Margin = new Padding(0, 2, 0, 0) }, 0, 1);
 
             var right = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = Color.Transparent, Margin = new Padding(0) };
             right.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            right.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+            right.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
             right.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             var chips = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.RightToLeft, WrapContents = false, BackColor = Color.Transparent, Padding = new Padding(0, 0, 0, 4), Margin = new Padding(0) };
-            chips.Controls.Add(CreateChip(DateTime.Now.ToString("MMM dd, yyyy"), ThemeColors.Secondary, ThemeColors.Text, DockStyle.None, 0, 28));
-            chips.Controls.Add(CreateChip("Live overview", ThemeColors.ChartGreen, ThemeColors.Text, DockStyle.None, 0, 28));
-            _lblHeroTotal = new Label { Dock = DockStyle.Fill, Font = new Font("Segoe UI Semibold", 18F, FontStyle.Bold), ForeColor = ThemeColors.Text, TextAlign = ContentAlignment.MiddleRight, Text = "0 tracked records", Margin = new Padding(0) };
+            chips.Controls.Add(CreateChip(DateTime.Now.ToString("MMM dd, yyyy"), ThemeColors.Secondary, ThemeColors.Text, DockStyle.None, 0, 24));
+            chips.Controls.Add(CreateChip("Live overview", ThemeColors.ChartGreen, ThemeColors.Text, DockStyle.None, 0, 24));
+            _lblHeroTotal = new Label { Dock = DockStyle.Fill, Font = new Font("Segoe UI Semibold", 15F, FontStyle.Bold), ForeColor = ThemeColors.Text, TextAlign = ContentAlignment.TopRight, Text = "0 tracked records", Margin = new Padding(0, 2, 0, 0) };
             right.Controls.Add(chips, 0, 0);
             right.Controls.Add(_lblHeroTotal, 0, 1);
 
@@ -132,24 +133,24 @@ namespace School_Management_System.Presentation.UserControls
         {
             var host = CreateHost(new Padding(0, 0, 14, 0));
             var card = CreateCard();
-            var strip = new Panel { Dock = DockStyle.Top, Height = 5, BackColor = accent };
-            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Padding = new Padding(18, 16, 18, 16) };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70));
+            var strip = new Panel { Dock = DockStyle.Top, Height = 4, BackColor = accent };
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Padding = new Padding(14, 10, 14, 10) };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
-            var icon = new PictureBox { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 10, 0), SizeMode = PictureBoxSizeMode.CenterImage, Image = IconFactory.CreateCircleIcon(accent, iconKind, 54) };
+            var icon = new PictureBox { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 8, 0), SizeMode = PictureBoxSizeMode.CenterImage, Image = IconFactory.CreateCircleIcon(accent, iconKind, 36) };
             var text = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, BackColor = Color.Transparent, Margin = new Padding(0) };
             text.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
-            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
-            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 22));
-            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
-            text.Controls.Add(new Label { Dock = DockStyle.Fill, Text = title, Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold), ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) }, 0, 0);
-            valueLabel = new Label { Dock = DockStyle.Fill, Text = "0", Font = new Font("Segoe UI Semibold", 22F, FontStyle.Bold), ForeColor = ThemeColors.Text, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) };
+            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 16));
+            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 18));
+            text.Controls.Add(new Label { Dock = DockStyle.Fill, Text = title, Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold), ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) }, 0, 0);
+            valueLabel = new Label { Dock = DockStyle.Fill, Text = "0", Font = new Font("Segoe UI Semibold", 15F, FontStyle.Bold), ForeColor = ThemeColors.Text, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) };
             text.Controls.Add(valueLabel, 0, 1);
-            text.Controls.Add(new Label { Dock = DockStyle.Fill, Text = subtitle, Font = new Font("Segoe UI", 9.5F), ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) }, 0, 2);
-            var chipHost = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Padding = new Padding(0, 6, 0, 0), Margin = new Padding(0) };
-            chipHost.Controls.Add(CreateChip("Current", Blend(accent, 0.88f), accent, DockStyle.Left, 84, 26));
+            text.Controls.Add(new Label { Dock = DockStyle.Fill, Text = subtitle, Font = new Font("Segoe UI", 8.6F), ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) }, 0, 2);
+            var chipHost = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Padding = new Padding(0, 2, 0, 0), Margin = new Padding(0) };
+            chipHost.Controls.Add(CreateChip("Current", Blend(accent, 0.88f), accent, DockStyle.Left, 62, 18));
             text.Controls.Add(chipHost, 0, 3);
 
             layout.Controls.Add(icon, 0, 0);
@@ -181,24 +182,24 @@ namespace School_Management_System.Presentation.UserControls
 
         private Panel CreateChartHeader(string title, string subtitle, IconKind iconKind, Color accent, string badge)
         {
-            var header = new Panel { Dock = DockStyle.Top, Height = 80, BackColor = ThemeColors.CardBackground, Padding = new Padding(18, 14, 18, 10) };
+            var header = new Panel { Dock = DockStyle.Top, Height = 62, BackColor = ThemeColors.CardBackground, Padding = new Padding(14, 10, 14, 8) };
             header.Controls.Add(new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = Blend(ThemeColors.Border, 0.2f) });
 
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, BackColor = Color.Transparent, Margin = new Padding(0) };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 36));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 28));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 104));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 84));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            var icon = new PictureBox { Dock = DockStyle.Fill, Image = IconFactory.CreateGlyphIcon(iconKind, 20, accent), SizeMode = PictureBoxSizeMode.CenterImage, Margin = new Padding(0) };
+            var icon = new PictureBox { Dock = DockStyle.Fill, Image = IconFactory.CreateGlyphIcon(iconKind, 16, accent), SizeMode = PictureBoxSizeMode.CenterImage, Margin = new Padding(0) };
             var text = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Padding = new Padding(8, 0, 0, 0), BackColor = Color.Transparent, Margin = new Padding(0) };
             text.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 26));
+            text.RowStyles.Add(new RowStyle(SizeType.Absolute, 20));
             text.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            text.Controls.Add(new Label { Dock = DockStyle.Fill, Text = title, Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold), ForeColor = ThemeColors.Text, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) }, 0, 0);
-            text.Controls.Add(new Label { Dock = DockStyle.Fill, Text = subtitle, Font = new Font("Segoe UI", 9.3F), ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.TopLeft, Margin = new Padding(0) }, 0, 1);
+            text.Controls.Add(new Label { Dock = DockStyle.Fill, Text = title, Font = new Font("Segoe UI Semibold", 10.5F, FontStyle.Bold), ForeColor = ThemeColors.Text, TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0) }, 0, 0);
+            text.Controls.Add(new Label { Dock = DockStyle.Fill, Text = subtitle, Font = new Font("Segoe UI", 8.6F), ForeColor = ThemeColors.MutedText, TextAlign = ContentAlignment.TopLeft, Margin = new Padding(0) }, 0, 1);
             var badgeHost = new Panel { Dock = DockStyle.Fill, BackColor = Color.Transparent, Margin = new Padding(0) };
-            badgeHost.Controls.Add(CreateChip(badge, Blend(accent, 0.9f), accent, DockStyle.Right, 94, 30));
+            badgeHost.Controls.Add(CreateChip(badge, Blend(accent, 0.9f), accent, DockStyle.Right, 74, 24));
 
             layout.Controls.Add(icon, 0, 0);
             layout.Controls.Add(text, 1, 0);
@@ -209,7 +210,7 @@ namespace School_Management_System.Presentation.UserControls
 
         private Panel CreateChartSurface()
         {
-            var panel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(16, 8, 16, 16) };
+            var panel = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(12, 6, 12, 12) };
             UiHelper.EnableDoubleBuffering(panel);
             return panel;
         }
@@ -217,8 +218,8 @@ namespace School_Management_System.Presentation.UserControls
         private void ApplyResponsiveLayout()
         {
             var width = Math.Max(ClientSize.Width, Width);
-            var columns = width >= 1500 ? 4 : width >= 980 ? 2 : 1;
-            var stackCharts = width < 1360;
+            var columns = width >= 1020 ? 4 : width >= 640 ? 2 : 1;
+            var stackCharts = width < 980;
 
             _cardsLayout.SuspendLayout();
             _cardsLayout.Controls.Clear();
@@ -230,7 +231,7 @@ namespace School_Management_System.Presentation.UserControls
             _cardsLayout.RowCount = rows;
             for (var i = 0; i < rows; i++) _cardsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / rows));
             for (var i = 0; i < _statCards.Count; i++) _cardsLayout.Controls.Add(_statCards[i], i % columns, i / columns);
-            _rootLayout.RowStyles[2].Height = rows * 178;
+            _rootLayout.RowStyles[2].Height = rows * 134;
             _cardsLayout.ResumeLayout();
 
             _analyticsLayout.SuspendLayout();
@@ -446,7 +447,7 @@ namespace School_Management_System.Presentation.UserControls
             };
             if (width > 0) panel.Width = width;
             UiHelper.ApplyRoundedCorners(panel, 12);
-            panel.Controls.Add(new Label { Dock = DockStyle.Fill, Text = text, Font = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold), ForeColor = foreground, TextAlign = ContentAlignment.MiddleCenter });
+            panel.Controls.Add(new Label { Dock = DockStyle.Fill, Text = text, Font = new Font("Segoe UI Semibold", 7.8F, FontStyle.Bold), ForeColor = foreground, TextAlign = ContentAlignment.MiddleCenter });
             return panel;
         }
 

@@ -6,9 +6,10 @@
         Height="820"
         MinWidth="1024"
         MinHeight="680"
+        ResizeMode="CanMinimize"
         Background="{StaticResource WindowBackgroundBrush}"
         WindowStartupLocation="CenterScreen"
-        WindowState="Maximized"
+        WindowState="Normal"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
     <Window.Resources>

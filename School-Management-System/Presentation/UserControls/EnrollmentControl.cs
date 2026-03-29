@@ -11,6 +11,7 @@ using School_Management_System.Common;
 using School_Management_System.Models;
 using School_Management_System.Presentation.Base;
 using School_Management_System.Presentation.Forms;
+using School_Management_System.Presentation.Helpers;
 using School_Management_System.Presentation.Theming;
 
 namespace School_Management_System.Presentation.UserControls
@@ -74,6 +75,8 @@ namespace School_Management_System.Presentation.UserControls
 
         private readonly PrintDocument _printDocument = new PrintDocument();
         private string _printText;
+        private string[] _printLines = Array.Empty<string>();
+        private int _printLineIndex;
         private bool _enrollmentSaved;
         private decimal _tuitionPerUnit;
         private decimal _miscellaneousFee;
@@ -316,6 +319,7 @@ namespace School_Management_System.Presentation.UserControls
                     return;
                 }
                 BuildSummary(details, false);
+                UpdatePrintButtonState();
                 ShowStep(3);
             };
 
@@ -843,14 +847,22 @@ namespace School_Management_System.Presentation.UserControls
             }
 
             _lblSummary.Text = sb.ToString();
+            UpdatePrintButtonState();
         }
 
-        private void SaveEnrollment()
+        private bool SaveEnrollment(bool promptToConfirm = true, bool showSavedMessage = true)
         {
-            if (!HasRuntimeServices()) return;
+            if (!HasRuntimeServices()) return false;
 
             try
             {
+                var details = BuildEnrollmentDetailsFromChecked();
+                if (details.Count == 0)
+                {
+                    ThemedMessageBox.ShowError(this, "Please select at least one subject.", "Enrollment");
+                    return false;
+                }
+
                 var courseId = GetSelectedInt(_cmbCourse);
                 var ayId = GetSelectedInt(_cmbAcademicYear);
                 var ylId = GetSelectedInt(_cmbYearLevel);
@@ -869,8 +881,6 @@ namespace School_Management_System.Presentation.UserControls
                     }
                 }
 
-                var details = BuildEnrollmentDetailsFromChecked();
-
                 var enrollment = new Enrollment
                 {
                     EnrollmentNumber = _enrollmentNumber ?? _enrollmentService.GetNextEnrollmentNumber(),
@@ -888,12 +898,12 @@ namespace School_Management_System.Presentation.UserControls
                 if (!vr.IsValid)
                 {
                     ThemedMessageBox.ShowError(this, vr.ToString(), "Validation");
-                    return;
+                    return false;
                 }
 
-                if (ThemedMessageBox.ShowConfirm(this, "Save this enrollment?", "Confirm") != DialogResult.OK)
+                if (promptToConfirm && ThemedMessageBox.ShowConfirm(this, "Save this enrollment?", "Confirm") != DialogResult.OK)
                 {
-                    return;
+                    return false;
                 }
 
                 UseWaitCursor = true;
@@ -903,19 +913,25 @@ namespace School_Management_System.Presentation.UserControls
                 _enrollmentSaved = true;
                 _enrollmentNumber = enrollment.EnrollmentNumber;
                 BuildSummary(details, true);
-                _btnPrint.Enabled = true;
                 _btnBack3.Text = "New Enrollment";
-                ThemedMessageBox.ShowInfo(this, "Enrollment saved successfully.\n\n" + enrollment.EnrollmentNumber, "Saved");
+                if (showSavedMessage)
+                {
+                    ThemedMessageBox.ShowInfo(this, "Enrollment saved successfully.\n\n" + enrollment.EnrollmentNumber, "Saved");
+                }
+
+                return true;
             }
             catch (Exception ex)
             {
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("EnrollmentControl.SaveEnrollment", ex);
                 ThemedMessageBox.ShowError(this, Messages.UnexpectedError);
+                return false;
             }
             finally
             {
                 UseWaitCursor = false;
                 _btnSave.Enabled = !_enrollmentSaved;
+                UpdatePrintButtonState();
             }
         }
 
@@ -963,18 +979,50 @@ namespace School_Management_System.Presentation.UserControls
             _lblSummary.Text = "Summary";
             _btnBack3.Text = "Back";
             _btnSave.Enabled = true;
-            _btnPrint.Enabled = false;
+            UpdatePrintButtonState();
         }
 
         private void WirePrinting()
         {
+            _printDocument.DocumentName = "Certificate of Registration";
+            _printDocument.OriginAtMargins = true;
+            _printDocument.DefaultPageSettings.Margins = new Margins(45, 45, 45, 45);
+
+            _printDocument.BeginPrint += (s, e) =>
+            {
+                _printLines = (_printText ?? string.Empty)
+                    .Replace("\r\n", "\n")
+                    .Replace('\r', '\n')
+                    .Split(new[] { '\n' }, StringSplitOptions.None);
+
+                _printLineIndex = 0;
+            };
+
             _printDocument.PrintPage += (s, e) =>
             {
-                var text = _printText ?? string.Empty;
+                var lineHeight = ThemeFonts.Input.GetHeight(e.Graphics) + 4f;
+                var y = (float)e.MarginBounds.Top;
+
                 using (var brush = new SolidBrush(ThemeColors.Text))
                 {
-                    e.Graphics.DrawString(text, ThemeFonts.Input, brush, new RectangleF(40, 40, e.MarginBounds.Width, e.MarginBounds.Height));
+                    while (_printLineIndex < _printLines.Length)
+                    {
+                        var line = _printLines[_printLineIndex] ?? string.Empty;
+                        var lineBounds = new RectangleF(e.MarginBounds.Left, y, e.MarginBounds.Width, lineHeight * 1.5f);
+
+                        e.Graphics.DrawString(line, ThemeFonts.Input, brush, lineBounds);
+
+                        _printLineIndex++;
+                        y += lineHeight;
+
+                        if (y + lineHeight > e.MarginBounds.Bottom)
+                        {
+                            break;
+                        }
+                    }
                 }
+
+                e.HasMorePages = _printLineIndex < _printLines.Length;
             };
         }
 
@@ -984,8 +1032,15 @@ namespace School_Management_System.Presentation.UserControls
             {
                 if (!_enrollmentSaved)
                 {
-                    ThemedMessageBox.ShowError(this, "Print COR is only available after a successful enrollment save.", "Print");
-                    return;
+                    if (ThemedMessageBox.ShowConfirm(this, "The enrollment must be saved before printing the COR.\n\nSave it now?", "Print COR") != DialogResult.OK)
+                    {
+                        return;
+                    }
+
+                    if (!SaveEnrollment(false, false))
+                    {
+                        return;
+                    }
                 }
 
                 _printText = _lblSummary.Text ?? string.Empty;
@@ -995,11 +1050,8 @@ namespace School_Management_System.Presentation.UserControls
                     return;
                 }
 
-                using (var preview = new PrintPreviewDialog())
+                using (var preview = new CorPrintPreviewForm(_printDocument))
                 {
-                    preview.Document = _printDocument;
-                    preview.Width = 900;
-                    preview.Height = 700;
                     preview.ShowDialog();
                 }
             }
@@ -1007,6 +1059,122 @@ namespace School_Management_System.Presentation.UserControls
             {
                 School_Management_System.DataLayer.Logging.FileLogger.LogError("EnrollmentControl.PrintSummary", ex);
                 ThemedMessageBox.ShowError(this, Messages.UnexpectedError);
+            }
+        }
+
+        private void UpdatePrintButtonState()
+        {
+            if (_btnPrint == null)
+            {
+                return;
+            }
+
+            var hasSummary =
+                _lblSummary != null &&
+                !string.IsNullOrWhiteSpace(_lblSummary.Text) &&
+                !string.Equals(_lblSummary.Text.Trim(), "Summary", StringComparison.OrdinalIgnoreCase);
+
+            _btnPrint.Enabled = hasSummary;
+        }
+
+        private sealed class CorPrintPreviewForm : Form
+        {
+            public CorPrintPreviewForm(PrintDocument document)
+            {
+                if (document == null) throw new ArgumentNullException(nameof(document));
+
+                Text = "Certificate of Registration Preview";
+                StartPosition = FormStartPosition.CenterScreen;
+                MinimumSize = new Size(960, 720);
+                Size = new Size(1120, 820);
+                BackColor = ThemeColors.Background;
+                ShowInTaskbar = false;
+
+                var icon = BrandAssets.CreateAppIcon();
+                if (icon != null)
+                {
+                    Icon = icon;
+                }
+
+                var header = new Panel
+                {
+                    Dock = DockStyle.Top,
+                    Height = 56,
+                    Padding = new Padding(16, 10, 16, 10),
+                    BackColor = ThemeColors.CardBackground
+                };
+
+                var title = new Label
+                {
+                    Dock = DockStyle.Left,
+                    Width = 320,
+                    Text = "Preview before printing",
+                    Font = ThemeFonts.SubHeader,
+                    ForeColor = ThemeColors.Text,
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+
+                var actions = new FlowLayoutPanel
+                {
+                    Dock = DockStyle.Right,
+                    FlowDirection = FlowDirection.RightToLeft,
+                    WrapContents = false,
+                    AutoSize = true,
+                    Padding = new Padding(0),
+                    Margin = new Padding(0)
+                };
+
+                var btnClose = new Button { Text = "Close", Width = 110 };
+                ThemeManager.StyleButtonNeutral(btnClose);
+                btnClose.Click += (s, e) => Close();
+
+                var btnPrint = new Button { Text = "Print", Width = 110 };
+                ThemeManager.StyleButtonPrimary(btnPrint);
+                btnPrint.Click += (s, e) =>
+                {
+                    try
+                    {
+                        using (var dialog = new PrintDialog())
+                        {
+                            dialog.AllowSomePages = false;
+                            dialog.UseEXDialog = true;
+                            dialog.Document = document;
+
+                            if (dialog.ShowDialog(this) == DialogResult.OK)
+                            {
+                                document.Print();
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        School_Management_System.DataLayer.Logging.FileLogger.LogError("EnrollmentControl.CorPrintPreviewForm.Print", ex);
+                        ThemedMessageBox.ShowError(this, "Unable to print the Certificate of Registration.", "Print");
+                    }
+                };
+
+                actions.Controls.Add(btnClose);
+                actions.Controls.Add(btnPrint);
+
+                var preview = new PrintPreviewControl
+                {
+                    Dock = DockStyle.Fill,
+                    Document = document,
+                    AutoZoom = true,
+                    BackColor = Color.White,
+                    UseAntiAlias = true
+                };
+
+                header.Controls.Add(actions);
+                header.Controls.Add(title);
+                Controls.Add(preview);
+                Controls.Add(header);
+
+                Shown += (s, e) =>
+                {
+                    Activate();
+                    BringToFront();
+                };
             }
         }
 

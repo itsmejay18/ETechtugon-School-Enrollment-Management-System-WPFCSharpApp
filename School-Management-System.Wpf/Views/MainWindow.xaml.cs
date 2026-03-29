@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Windows;
 using School_Management_System.DataLayer;
 using School_Management_System.Presentation.Forms;
@@ -22,12 +23,15 @@ namespace School_Management_System.Wpf.Views
             _dashboardForm = new DashboardForm(database);
             Loaded += MainWindow_Loaded;
             Closed += MainWindow_Closed;
+            SystemParameters.StaticPropertyChanged += SystemParameters_StaticPropertyChanged;
         }
 
         public bool LogoutRequested { get; private set; }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            ApplyWorkAreaBounds();
+
             if (DashboardHost.Child != null)
             {
                 return;
@@ -43,6 +47,14 @@ namespace School_Management_System.Wpf.Views
 
             DashboardHost.Child = _dashboardForm;
             _dashboardForm.Show();
+        }
+
+        private void SystemParameters_StaticPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SystemParameters.WorkArea))
+            {
+                ApplyWorkAreaBounds();
+            }
         }
 
         private void DashboardForm_LogoutRequested(object sender, EventArgs e)
@@ -62,6 +74,7 @@ namespace School_Management_System.Wpf.Views
 
         private void MainWindow_Closed(object sender, EventArgs e)
         {
+            SystemParameters.StaticPropertyChanged -= SystemParameters_StaticPropertyChanged;
             _dashboardForm.LogoutRequested -= DashboardForm_LogoutRequested;
             _dashboardForm.FormClosed -= DashboardForm_FormClosed;
 
@@ -74,6 +87,19 @@ namespace School_Management_System.Wpf.Views
             {
                 _dashboardForm.Dispose();
             }
+        }
+
+        private void ApplyWorkAreaBounds()
+        {
+            var workArea = SystemParameters.WorkArea;
+
+            WindowState = WindowState.Normal;
+            Left = workArea.Left;
+            Top = workArea.Top;
+            Width = Math.Max(MinWidth, workArea.Width);
+            Height = Math.Max(MinHeight, workArea.Height);
+            MaxWidth = workArea.Width;
+            MaxHeight = workArea.Height;
         }
     }
 }

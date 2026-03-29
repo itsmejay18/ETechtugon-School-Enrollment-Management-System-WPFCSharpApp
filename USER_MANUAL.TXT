@@ -1,0 +1,731 @@
+# School Enrollment Management System User Manual
+
+## Scope
+This manual documents the current end-user behavior of the main WinForms application in `School-Management-System`. The repository also contains a WPF project, but the fully implemented day-to-day workflows still come from the WinForms system.
+
+## 1. System Overview
+The School Enrollment Management System is used to:
+
+- maintain student and faculty records
+- build academic setup data such as departments, courses, year levels, sections, subjects, and curricula
+- assign class schedules
+- process student enrollment
+- print a Certificate of Registration (COR) after enrollment is saved
+- manage database profiles, backups, and audit logs
+
+## 2. User Roles
+The current build recognizes these roles:
+
+- `Admin`
+- `Registrar`
+- `Faculty`
+
+Important role behavior in the current system:
+
+- All signed-in users can open the main sidebar modules.
+- Only `Admin` users can manage `User Management` and the `Database` administration tools inside `Settings`.
+- Self-registration only creates `Registrar` or `Faculty` accounts.
+- Admin accounts are created and maintained from `Settings > User Management`.
+
+### 2.1 Dashboard Access Per Role
+Important implementation note:
+
+- the current dashboard keeps the same main sidebar for all signed-in roles
+- role-based restrictions are applied mainly inside `Settings`
+
+#### Admin dashboard role
+Primary objective:
+
+- administer the whole system
+- manage users and passwords
+- configure the database connection profiles
+- run backups and restores
+- review user activity logs
+- oversee academic setup and enrollment operations
+
+Dashboard focus:
+
+- use all sidebar modules
+- use all `Settings` tabs, including `Database` and `User Management`
+
+#### Registrar dashboard role
+Primary objective:
+
+- manage day-to-day enrollment operations
+- maintain student and faculty records
+- maintain academic setup data
+- prepare schedules and process COR printing
+
+Dashboard focus:
+
+- use all main sidebar modules for daily operations
+- use `Settings` for academic and system setup
+- `Database` and `User Management` remain admin-only
+
+#### Faculty dashboard role
+Primary objective:
+
+- review teaching assignments and schedules
+- monitor faculty profile details
+- view operational school data needed for instruction support
+
+Dashboard focus:
+
+- the current build still shows the same main sidebar modules
+- operationally, faculty users are expected to focus on `Dashboard`, `Faculty`, `Schedule`, and `Calendar`
+- `Database` and `User Management` remain admin-only
+
+### 2.2 Dashboard Objects Per Role
+`Object` below means the dashboard module, settings area, or major data group that a role can work with in the current build.
+
+| Dashboard object | Admin | Registrar | Faculty | Notes |
+| --- | --- | --- | --- | --- |
+| Dashboard | Yes | Yes | Yes | Same dashboard home for all roles |
+| Students | Yes | Yes | Yes | No role-specific lock in current build |
+| Faculty | Yes | Yes | Yes | Includes faculty profile and assignments |
+| Enrollment | Yes | Yes | Yes | Enrollment wizard is visible to all signed-in users |
+| Schedule | Yes | Yes | Yes | Opens the schedule workspace |
+| Calendar | Yes | Yes | Yes | Opens the same workspace as `Schedule` |
+| Settings > System | Yes | Yes | Yes | Active term and billing defaults |
+| Settings > Departments | Yes | Yes | Yes | Academic setup tab |
+| Settings > Courses | Yes | Yes | Yes | Academic setup tab |
+| Settings > Year Levels | Yes | Yes | Yes | Academic setup tab |
+| Settings > Sections | Yes | Yes | Yes | Academic setup tab |
+| Settings > Subjects | Yes | Yes | Yes | Academic setup tab |
+| Settings > Curriculum | Yes | Yes | Yes | Academic setup tab |
+| Settings > Database | Yes | No | No | Non-admin users only see an access notice |
+| Settings > User Management | Yes | No | No | Non-admin users only see a placeholder message |
+
+### 2.3 Primary Objects Managed By Each Role
+#### Admin
+Primary objects:
+
+- user accounts
+- roles and passwords
+- database profiles
+- backup files
+- restore operations
+- user activity logs
+- active term and billing defaults
+- all academic setup objects
+- students, faculty, enrollment, and schedules
+
+#### Registrar
+Primary objects:
+
+- students
+- faculty records
+- enrollment records
+- schedules
+- sections
+- curriculum
+- subjects
+- courses
+- departments
+- year levels
+- active term and billing defaults
+
+#### Faculty
+Primary objects:
+
+- faculty profile details
+- assigned schedules
+- calendar view of classes
+- operational student and enrollment information visible in the current build
+
+Important note:
+
+- although faculty users can still see the broader dashboard modules in the current implementation, database administration and user-account management remain restricted to admins
+
+## 3. Recommended First-Time Setup Order
+Use this order when preparing a fresh database:
+
+1. Confirm the database is reachable and the schema is installed.
+2. Sign in as an administrator.
+3. Open `Settings > System` and set the active school year and semester.
+4. Open `Settings > System` and set billing defaults.
+5. Build the academic structure in this order:
+   `Departments`, `Courses`, `Year Levels`, `Sections`, `Subjects`, `Curriculum`
+6. Add or import `Students`.
+7. Add `Faculty`.
+8. Create class schedules in `Schedule`.
+9. Process enrollment in `Enrollment`.
+10. Create a backup after setup is complete.
+
+## 4. Signing In
+When the application starts, the login screen shows:
+
+- the active database profile summary
+- a `Quick Login Account` dropdown
+- username and password fields
+- `Remember me`
+- `Log in`
+- `Create new account`
+
+### Login steps
+1. Confirm the database profile shown on the login page is correct.
+2. Enter your `Username` and `Password`.
+3. Click `Log in`.
+
+### Quick Login
+If the seeded demo users exist in the database, the quick login list can prefill:
+
+- `Admin`
+- `Faculty`
+- `Registrar`
+
+### Self-registration
+Use `Create new account` to register a new non-admin account.
+
+Registration requires:
+
+- `Username`
+- `Role`
+- `Password`
+- `Confirm Password`
+
+Notes:
+
+- `Display Name` is optional.
+- Only `Registrar` and `Faculty` can be selected here.
+- Password and confirmation must match.
+- A working database connection is required before registration can complete.
+
+### Password recovery
+The `Forgot password?` link tells the user to contact an administrator. There is no self-service reset flow.
+
+## 5. Demo or Seeded Accounts
+If you loaded the seeded sample data, these default accounts may exist:
+
+- `admin` / `admin123`
+- `registrar` / `registrar123`
+- `faculty1` / `faculty123`
+
+Change seeded passwords before production use.
+
+## 6. Main Layout and Navigation
+After sign-in, the dashboard opens with:
+
+- a left sidebar for navigation
+- a top header showing the current page and signed-in user
+- a content area where each module loads
+
+Main sidebar entries:
+
+- `Dashboard`
+- `Students`
+- `Faculty`
+- `Enrollment`
+- `Schedule`
+- `Calendar`
+- `Settings`
+
+### Common patterns used across record-maintenance screens
+Most maintenance screens use the same interaction model:
+
+- `Search` filters the grid
+- `Refresh` reloads data
+- `Add` or `New Student` starts a blank record
+- `Edit` unlocks the selected record
+- `Delete` removes the selected record
+- `Save` commits changes
+- `Cancel` leaves edit mode
+- clicking a row previews it on the right panel
+
+## 7. Dashboard
+The dashboard provides a quick operational summary of the current database:
+
+- active student count
+- active faculty count
+- active course count
+- active subject count
+- a trend chart
+- a distribution chart
+
+Use it as an overview screen only. Record maintenance happens in the other modules.
+
+## 8. Students Module
+The `Students` screen is used to create, edit, and review student records.
+
+### Available fields
+- `Student No.` (auto-generated for new records)
+- `First Name *`
+- `Last Name *`
+- `Middle Name`
+- `Gender`
+- `Birth Date`
+- `Email`
+- `Phone`
+- `Address`
+- optional photo
+
+### Required validation
+- `Student Number`
+- `First Name`
+- `Last Name`
+- `Email` must be valid if supplied
+
+### Typical workflow
+1. Click `New Student`.
+2. Complete the required fields.
+3. Optionally upload a photo using `Upload Photo`.
+4. Click `Save`.
+
+### Enrollment history panel
+The right-side lower panel shows `Enrolled Subjects & Grades` for the selected student.
+
+This view includes:
+
+- enrollment number
+- subject
+- units
+- grade
+- section
+- term
+- schedule
+
+Important note:
+
+- this list is filtered by the active school year and semester saved in `Settings > System`
+
+## 9. Faculty Module
+The `Faculty` screen manages faculty records and shows teaching assignments.
+
+### Available fields
+- `Faculty No.` (auto-generated for new records)
+- `First Name *`
+- `Last Name *`
+- `Middle Name`
+- `Email`
+- `Phone`
+- `Hire Date`
+- `Address`
+- optional photo
+
+### Required validation
+- `Faculty Code`
+- `First Name`
+- `Last Name`
+- `Email` must be valid if supplied
+
+### Faculty profile area
+When a faculty member is selected, the profile panel shows:
+
+- name
+- faculty number
+- status
+- contact details
+- hire date
+- assignment count
+- assigned subjects and schedules
+
+### Opening the full profile window
+You can open the full faculty profile by:
+
+- clicking `Profile`
+- double-clicking a faculty row
+
+The profile window shows the faculty photo and complete assignment list.
+
+## 10. Enrollment Module
+The `Enrollment` module is a 3-step wizard.
+
+### Before enrolling a student
+Make sure these setup items already exist:
+
+- course
+- year level
+- academic year
+- semester
+- section
+- subjects
+- curriculum for irregular enrollment, or class schedules for regular enrollment
+- billing defaults in `Settings > System`
+
+### Step 1: Select the student
+1. Search for the student.
+2. Click `Select` in the student grid.
+3. Click `Next`.
+
+### Step 2: Load subjects
+Choose:
+
+- `Course`
+- `Acad. Yr`
+- `Year`
+- `Sem`
+- `Section`
+
+Then choose one of the enrollment modes:
+
+- `By Section (Regular)`
+- `By Subject (Irregular)`
+
+#### By Section (Regular)
+This loads subjects from the selected section's class schedule.
+
+Behavior:
+
+- the system synchronizes course, year level, academic year, and semester from the selected section
+- all scheduled subjects are checked by default
+- if no class schedule exists, the module shows `No class schedule found for this section.`
+
+#### By Subject (Irregular)
+This loads subjects from the saved curriculum for the selected course, year level, semester, and academic year.
+
+Behavior:
+
+- all curriculum subjects are checked by default
+- users can uncheck subjects before continuing
+- if no curriculum exists, the module shows `No curriculum found for this selection. Please set up Curriculum first.`
+
+### Step 3: Confirm and save
+The summary screen displays:
+
+- enrollment number
+- student
+- course
+- academic year
+- year level
+- semester
+- section
+- enrollment type
+- selected subjects
+- total units
+- tuition
+- miscellaneous fee
+- registration fee
+- laboratory fee
+- total assessment
+
+Billing values come from `Settings > System > Enrollment Billing Defaults`.
+
+### Save and print
+- Click `Save Enrollment` to post the enrollment.
+- Click `Print COR` only after the save succeeds.
+
+Important notes:
+
+- the system will not allow save if no student or no subject is selected
+- `Print COR` is disabled until enrollment is saved successfully
+- after saving, the `Back` button changes to `New Enrollment`
+
+## 11. Schedule and Calendar Module
+The `Schedule` and `Calendar` sidebar items currently open the same workspace.
+
+This workspace combines:
+
+- a section selector
+- a list of saved schedules
+- a schedule editor
+- a monthly calendar view with generated class dates
+
+### Section handling
+- the section dropdown is filtered by the active school year and semester when those are set
+- `Reload` refreshes the section list
+
+### Schedule editor fields
+- `Subject`
+- `Day(s)`
+- `Start Time`
+- `End Time`
+- `Room`
+- `Remarks`
+
+### Required validation
+- `Section`
+- `Subject`
+- `Academic Year`
+- `Semester`
+- `Start Time` must be earlier than `End Time`
+
+### Typical workflow
+1. Select a section.
+2. Click `Add`.
+3. Enter the schedule details.
+4. Click `Save`.
+
+### Calendar behavior
+The calendar panel automatically generates class occurrences for the selected month based on the saved `Day(s)` value.
+
+Use:
+
+- `<` and `>` to change month
+- `Today` to return to the current date
+
+The calendar bolds dates that contain generated classes. Selecting a date shows the class list for that day.
+
+## 12. Settings Module
+`Settings` contains system setup, database administration, and academic structure tabs.
+
+### 12.1 System Tab
+The `System` tab contains two areas.
+
+#### Global Term Settings
+Use this area to set:
+
+- `Current School Year`
+- `Current Semester`
+
+Click `Save Active Term` to apply the current academic term. Other modules use this value for defaults and filtering.
+
+#### Enrollment Billing Defaults
+Use this area to set:
+
+- `Tuition Per Unit`
+- `Miscellaneous Fee`
+- `Registration Fee`
+- `Laboratory Fee`
+
+Click `Save Billing Defaults` after editing values.
+
+Validation:
+
+- all amounts must be valid non-negative numbers
+
+### 12.2 Database Tab
+This tab is `Admin` only. Non-admin users see an access notice instead of the tools.
+
+#### Database Connection Profiles
+The system stores four profiles:
+
+- `Local`
+- `Wired`
+- `Wireless`
+- `Online`
+
+Each profile stores:
+
+- host or IP
+- port
+- database
+- username
+- password
+
+Online-specific options:
+
+- `Online TLS`
+- CA bundle path using `Browse CA`
+
+Available actions:
+
+- `Save Profile`
+- `Test Connection`
+- `Apply Runtime`
+
+Important notes:
+
+- `Save Profile` stores all profile rows and the active mode
+- `Test Connection` tests the currently selected active mode
+- `Apply Runtime` switches the current app session to the selected mode
+- host, database, username, and a valid numeric port are required for each saved profile
+
+#### Backup and Restore
+The backup tools support:
+
+- `Full`
+- `Incremental`
+- `Differential`
+
+Backup controls:
+
+- backup type selector
+- backup folder
+- `Browse`
+- `Open`
+- `Save Backup Settings`
+- `Create Backup`
+- `Restore Backup`
+- `Cancel`
+
+Important behavior:
+
+- backup files use the `.smsbak` extension
+- restore creates a safety `Full` backup before applying the selected restore
+- incremental restore depends on its parent backup chain
+- backup packages are encrypted and integrity-checked in the current format
+- legacy backup loading is still supported
+
+#### User Logs
+The audit log area supports:
+
+- `From` and `To` date filters
+- `Action` filter
+- `User` filter
+- `Max` row count
+- `Refresh`
+- `Export`
+
+Tracked action types include:
+
+- login success
+- login failure
+- logout
+- full backup
+- incremental backup
+- differential backup
+- restore
+- backup errors
+- restore errors
+
+`Export` saves the filtered log list to a CSV file.
+
+### 12.3 Academic Setup Tabs
+These tabs are available from inside `Settings`.
+
+#### Departments
+Fields:
+
+- `Department Code *`
+- `Department Name *`
+- `Description`
+
+Use this tab to create and maintain departments.
+
+#### Courses
+Fields:
+
+- `Course Code *`
+- `Course Name *`
+- `Department`
+- `Description`
+
+Use this tab to create and maintain courses. Department is optional in the current build.
+
+#### Year Levels
+Fields:
+
+- `Year Level *`
+- `Display Order`
+
+Use this tab to define the year-level list and sorting order.
+
+#### Sections
+Fields:
+
+- `Section Name *`
+- `Course *`
+- `Year Level *`
+- `Academic Year *`
+- `Semester *`
+- `Capacity`
+
+Important behavior:
+
+- new sections default to the active school year and semester
+- sections are tied to course, year level, academic year, and semester
+
+#### Subjects
+Fields:
+
+- `Subject Code *`
+- `Subject Name *`
+- `Units *`
+- `Course`
+
+Validation:
+
+- units must be greater than `0`
+
+#### Curriculum
+Use this tab to define which subjects belong to a curriculum for a specific:
+
+- course
+- academic year
+- year level
+- semester
+
+Behavior:
+
+- the curriculum record is created automatically when you select a valid combination
+- all course subjects are shown with checkboxes
+- checked items are included in the curriculum
+- `Check All` and `Uncheck All` update the saved curriculum
+- total units update automatically
+
+### 12.4 User Management
+This tab is `Admin` only.
+
+Fields:
+
+- `Username *`
+- `Display Name`
+- `Role *`
+- `Active`
+- `Password`
+- optional photo
+
+Available roles:
+
+- `Admin`
+- `Registrar`
+- `Faculty`
+
+Important behavior:
+
+- for new users, password is required
+- for existing users, leaving password blank keeps the current password
+- entering a new password for an existing user resets that user's password on save
+- clicking `Delete` in this tab disables the account by setting it inactive
+
+## 13. Operational Notes
+Keep these behaviors in mind while using the system:
+
+- `Settings > Database` and `Settings > User Management` are the only clearly admin-restricted areas
+- student enrollment history on the `Students` screen follows the active term
+- the schedule section list also follows the active term when one is saved
+- the `Calendar` sidebar item is currently another entry point to the same schedule workspace
+- the login page can show database connection errors before sign-in if the selected profile is unreachable
+
+## 14. Troubleshooting
+### Cannot log in
+Possible causes:
+
+- database server is offline
+- wrong host, port, database, username, or password
+- remote MySQL access is blocked
+
+What to do:
+
+1. Ask an admin to open `Settings > Database`.
+2. Verify the active profile and run `Test Connection`.
+3. Save or apply the correct runtime profile.
+
+### Registration does not work
+Possible causes:
+
+- database is unreachable
+- passwords do not match
+- username already exists
+
+### Enrollment cannot load subjects
+If using `By Section (Regular)`:
+
+- make sure the selected section already has class schedules
+
+If using `By Subject (Irregular)`:
+
+- make sure the curriculum exists for the selected course, year level, semester, and academic year
+
+### Print COR is unavailable
+`Print COR` only works after a successful enrollment save.
+
+### Restore fails
+Possible causes:
+
+- wrong backup encryption key
+- missing parent backup for an incremental chain
+- corrupted or incomplete backup package
+
+### Existing user cannot sign in
+Possible causes:
+
+- the account was disabled from `User Management`
+- the password was reset by an administrator
+
+## 15. Quick Reference
+### Best setup flow
+`System term` -> `Billing defaults` -> `Departments` -> `Courses` -> `Year Levels` -> `Sections` -> `Subjects` -> `Curriculum` -> `Faculty` -> `Schedule` -> `Students` -> `Enrollment` -> `Backup`
+
+### Best daily-use flow
+`Log in` -> `Dashboard` -> `Students` or `Faculty` updates -> `Enrollment` -> `Schedule` review -> `Backup` as needed

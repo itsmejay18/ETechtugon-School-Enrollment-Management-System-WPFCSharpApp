@@ -570,7 +570,12 @@ namespace School_Management_System.Presentation.UserControls
         private void PreviewSelected()
         {
             if (_isEditorActive) return;
-            if (_lvSchedules.SelectedItems.Count == 0) return;
+            if (!HasSelectedListItem(_lvSchedules))
+            {
+                _editingScheduleId = 0;
+                SetEditorState(false);
+                return;
+            }
             var item = _lvSchedules.SelectedItems[0];
             if (item.Tag == null) return;
 
@@ -627,12 +632,7 @@ namespace School_Management_System.Presentation.UserControls
             _dtEnd.Enabled = active;
             _txtRoom.ReadOnly = !active;
             _txtRemarks.ReadOnly = !active;
-
-            _btnSave.Enabled = active;
-            _btnCancel.Enabled = active;
-            _btnAdd.Enabled = !active;
-            _btnEdit.Enabled = !active && _editingScheduleId > 0;
-            _btnDelete.Enabled = !active && _editingScheduleId > 0;
+            ApplyCrudButtonState(active, HasSelectedListItem(_lvSchedules), _btnAdd, _btnEdit, _btnDelete, _btnSave, _btnCancel);
         }
 
         private void ChangeCalendarMonth(int offset)

@@ -83,6 +83,7 @@ namespace School_Management_System.Presentation.UserControls
             ThemeManager.StyleDataGrid(_grid);
             _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             _grid.CellClick += (s, e) => PreviewSelected();
+            _grid.SelectionChanged += (s, e) => PreviewSelected();
 
             var left = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
             left.Controls.Add(_grid);
@@ -304,12 +305,7 @@ namespace School_Management_System.Presentation.UserControls
             _cmbAcademicYear.Enabled = active;
             _cmbSemester.Enabled = active;
             _numCapacity.Enabled = active;
-
-            _btnSave.Enabled = active;
-            _btnCancel.Enabled = active;
-            _btnAdd.Enabled = !active;
-            _btnEdit.Enabled = !active && _editingSectionId > 0;
-            _btnDelete.Enabled = !active && _editingSectionId > 0;
+            ApplyCrudButtonState(active, HasSelectedDataRow(_grid, "SectionId"), _btnAdd, _btnEdit, _btnDelete, _btnSave, _btnCancel);
         }
 
         private void BeginAdd()
@@ -385,9 +381,14 @@ namespace School_Management_System.Presentation.UserControls
         private void PreviewSelected()
         {
             if (_isEditorActive) return;
-            if (_grid.CurrentRow == null) return;
+            if (!HasSelectedDataRow(_grid, "SectionId"))
+            {
+                _editingSectionId = 0;
+                SetEditorState(false);
+                return;
+            }
 
-            var row = _grid.CurrentRow;
+            var row = _grid.SelectedRows[0];
             if (row.Cells["SectionId"] == null || row.Cells["SectionId"].Value == null) return;
 
             _editingSectionId = Convert.ToInt32(row.Cells["SectionId"].Value);

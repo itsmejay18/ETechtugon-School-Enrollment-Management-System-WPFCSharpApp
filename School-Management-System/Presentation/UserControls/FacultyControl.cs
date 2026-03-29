@@ -87,7 +87,7 @@ namespace School_Management_System.Presentation.UserControls
                 SplitterDistance = 730,
                 BackColor = ThemeColors.Border
             };
-            LockSplitEditorPanel(_split, 500, 360);
+            LockSplitEditorPanel(_split, 560, 250);
 
             _grid = new DataGridView { Dock = DockStyle.Fill };
             ThemeManager.StyleDataGrid(_grid);
@@ -95,6 +95,7 @@ namespace School_Management_System.Presentation.UserControls
             _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             _grid.CellClick += (s, e) => PreviewSelected();
             _grid.CellDoubleClick += (s, e) => OpenProfileWindow();
+            _grid.SelectionChanged += (s, e) => PreviewSelected();
 
             var left = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
             left.Controls.Add(_grid);
@@ -114,7 +115,13 @@ namespace School_Management_System.Presentation.UserControls
             rightLayout.Controls.Add(_gbDetails, 0, 0);
             rightLayout.Controls.Add(_gbProfile, 0, 1);
 
-            var right = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10) };
+            var right = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = ThemeColors.CardBackground,
+                Padding = new Padding(10),
+                AutoScroll = true
+            };
             right.Controls.Add(rightLayout);
             _split.Panel2.Controls.Add(right);
 
@@ -145,18 +152,18 @@ namespace School_Management_System.Presentation.UserControls
                 RowCount = 10,
                 Padding = new Padding(6, 4, 6, 4)
             };
-            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 108));
+            formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 116));
             formLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 86));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 98));
             formLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+            formLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
 
             _txtFacultyCode = MakeTextBox(readOnly: true);
             _txtFirstName = MakeTextBox();
@@ -204,8 +211,8 @@ namespace School_Management_System.Presentation.UserControls
                 ColumnCount = 2,
                 RowCount = 1
             };
-            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 64));
-            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36));
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            detailsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 166));
             detailsLayout.Controls.Add(formLayout, 0, 0);
             detailsLayout.Controls.Add(photoPanel, 1, 0);
 
@@ -228,7 +235,7 @@ namespace School_Management_System.Presentation.UserControls
             var summaryCard = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 132,
+                Height = 140,
                 Padding = new Padding(14, 12, 14, 12),
                 BackColor = ThemeColors.Surface
             };
@@ -336,7 +343,7 @@ namespace School_Management_System.Presentation.UserControls
 
         private Panel BuildToolbar()
         {
-            var toolbar = new Panel { Dock = DockStyle.Top, Height = 60, BackColor = ThemeColors.Background, Padding = new Padding(0, 0, 0, 10) };
+            var toolbar = new Panel { Dock = DockStyle.Top, Height = 66, BackColor = ThemeColors.Background, Padding = new Padding(0, 0, 0, 10) };
             var card = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.CardBackground, Padding = new Padding(10, 8, 10, 8) };
             ThemeManager.StyleCardPanel(card);
             var strip = new FlowLayoutPanel
@@ -409,12 +416,18 @@ namespace School_Management_System.Presentation.UserControls
 
         private Panel BuildPhotoPanel()
         {
-            var panel = new Panel { Dock = DockStyle.Fill, Padding = new Padding(6, 0, 0, 0), BackColor = ThemeColors.CardBackground };
+            var panel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(8, 0, 0, 0),
+                BackColor = ThemeColors.CardBackground,
+                MinimumSize = new Size(158, 0)
+            };
 
             _picPhoto = new PictureBox
             {
                 Dock = DockStyle.Top,
-                Height = 156,
+                Height = 148,
                 SizeMode = PictureBoxSizeMode.Zoom,
                 BorderStyle = BorderStyle.FixedSingle,
                 BackColor = ThemeColors.Background
@@ -465,15 +478,9 @@ namespace School_Management_System.Presentation.UserControls
             _txtPhone.ReadOnly = !active;
             _txtAddress.ReadOnly = !active;
             _dtHireDate.Enabled = active;
-            if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = true;
+            if (_btnUploadPhoto != null) _btnUploadPhoto.Enabled = active;
             if (_btnRemovePhoto != null) _btnRemovePhoto.Enabled = active && (_selectedPhotoBytes != null || _currentPhotoBytes != null);
-
-            _btnSave.Enabled = active;
-            _btnCancel.Enabled = active;
-            _btnAdd.Enabled = !active;
-            _btnEdit.Enabled = !active && _editingFacultyId > 0;
-            _btnProfile.Enabled = !active && _editingFacultyId > 0;
-            _btnDelete.Enabled = !active && _editingFacultyId > 0;
+            ApplyCrudButtonState(active, HasSelectedDataRow(_grid, "FacultyId"), _btnAdd, _btnEdit, _btnDelete, _btnSave, _btnCancel, _btnProfile);
         }
 
         private void BeginAdd()
@@ -644,9 +651,14 @@ namespace School_Management_System.Presentation.UserControls
         private void PreviewSelected()
         {
             if (_isEditorActive) return;
-            if (_grid.CurrentRow == null) return;
+            if (!HasSelectedDataRow(_grid, "FacultyId"))
+            {
+                _editingFacultyId = 0;
+                SetEditorState(false);
+                return;
+            }
 
-            var row = _grid.CurrentRow;
+            var row = _grid.SelectedRows[0];
             if (row.Cells["FacultyId"] == null || row.Cells["FacultyId"].Value == null) return;
 
             _editingFacultyId = Convert.ToInt32(row.Cells["FacultyId"].Value);
