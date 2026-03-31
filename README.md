@@ -1,7 +1,7 @@
 # School Management System (WinForms, .NET Framework 4.7.2)
 
 ## User manual
-End-user documentation is available in [USER_MANUAL.md](USER_MANUAL.md).
+End-user documentation is available in [USER_MANUAL.TXT](USER_MANUAL.TXT).
 
 ## What is implemented now
 - Database profiles: `Local`, `Wired`, `Wireless`, `Online (Hostinger)`
@@ -11,6 +11,7 @@ End-user documentation is available in [USER_MANUAL.md](USER_MANUAL.md).
 - User activity logs (filter + CSV export)
 - Runtime schema migration runner on login
 - Database passwords in `SystemSetting` are stored protected (DPAPI)
+- XML + JSON student/enrollment integration service with NUnit coverage for well-formedness and merge validation
 
 ## Quick setup
 1. Create database schema:
@@ -112,3 +113,5 @@ dotnet test .\School-Management-System.Tests\School-Management-System.Tests.cspr
 - `School-Management-System/DataLayer`: MySQL data access
 - `School-Management-System/Models`: domain models
 - `DatabaseScripts/`: bootstrap, patch, and migration scripts
+
+Technical integration note: [DATA_INTEGRATION_NOTES.md](DATA_INTEGRATION_NOTES.md)
