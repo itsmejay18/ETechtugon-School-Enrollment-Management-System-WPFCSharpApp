@@ -55,7 +55,7 @@ namespace School_Management_System.Wpf
                 var bootstrapper = AppBootstrapper.CreateForCurrentMode();
                 UserSession.Start(loginViewModel.AuthenticatedUser);
 
-                var window = new MainWindow(bootstrapper.Database);
+                var window = new MainWindow(bootstrapper, loginViewModel.AuthenticatedUser);
                 MainWindow = window;
 
                 try

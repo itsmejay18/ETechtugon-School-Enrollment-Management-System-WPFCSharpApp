@@ -54,17 +54,37 @@ namespace School_Management_System.Wpf.ViewModels
 
         public string ClientSerialNumber
         {
-            get { return "SEMS-PH-2026-LCL-8472"; }
+            get { return SchoolBranding.ClientSerialNumber; }
         }
 
         public string SupportGmail
         {
-            get { return "schoolenrollmentms@gmail.com"; }
+            get { return SchoolBranding.SupportEmail; }
         }
 
         public string SupportPhoneNumber
         {
-            get { return "+63 917 845 2186"; }
+            get { return SchoolBranding.SupportPhoneNumber; }
+        }
+
+        public string ApplicationTitle
+        {
+            get { return SchoolBranding.ApplicationTitle; }
+        }
+
+        public string ApplicationTagline
+        {
+            get { return SchoolBranding.ApplicationTagline; }
+        }
+
+        public string LoginHeadline
+        {
+            get { return "Cleaner sign-in, same school workflow."; }
+        }
+
+        public string LoginBody
+        {
+            get { return "Use the same accounts, quick presets, and database profiles from the existing school system inside the native WPF shell."; }
         }
 
         public string Username

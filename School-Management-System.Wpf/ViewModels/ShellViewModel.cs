@@ -1,33 +1,57 @@
+using System;
+using School_Management_System.DataLayer.Configuration;
+using School_Management_System.Models;
 using School_Management_System.Wpf.Infrastructure;
 using School_Management_System.Wpf.Services;
+using School_Management_System.Wpf.ViewModels.Calendar;
 using School_Management_System.Wpf.ViewModels.Courses;
-using School_Management_System.Models;
-using System;
+using School_Management_System.Wpf.ViewModels.Enrollment;
+using School_Management_System.Wpf.ViewModels.Faculty;
+using School_Management_System.Wpf.ViewModels.Schedule;
+using School_Management_System.Wpf.ViewModels.Shared;
+using School_Management_System.Wpf.ViewModels.Students;
 
 namespace School_Management_System.Wpf.ViewModels
 {
     public sealed class ShellViewModel : ViewModelBase
     {
+        private readonly Action _logoutAction;
         private object _currentModule;
         private string _currentModuleTitle;
         private string _currentModuleSubtitle;
         private string _activeModuleKey;
 
-        public ShellViewModel(AppBootstrapper bootstrapper, User currentUser, Action closeAction)
+        public ShellViewModel(AppBootstrapper bootstrapper, User currentUser, Action logoutAction)
         {
-            CurrentUser = currentUser;
-            _closeAction = closeAction;
+            if (bootstrapper == null) throw new ArgumentNullException(nameof(bootstrapper));
 
-            var courseManagement = new CourseManagementViewModel(
+            CurrentUser = currentUser;
+            _logoutAction = logoutAction;
+
+            Dashboard = new DashboardHomeViewModel(bootstrapper, currentUser);
+            Settings = new SettingsViewModel(bootstrapper, currentUser);
+            Students = new StudentDirectoryViewModel(
+                bootstrapper.StudentService,
+                bootstrapper.SystemSettingService);
+            Faculty = new FacultyDirectoryViewModel(
+                bootstrapper.FacultyService,
+                bootstrapper.ClassScheduleService);
+            Enrollment = new EnrollmentWorkspaceViewModel(
+                bootstrapper.StudentService,
+                bootstrapper.EnrollmentService,
                 bootstrapper.CourseService,
-                bootstrapper.DepartmentService);
-            Settings = new SettingsViewModel(courseManagement, currentUser);
-            Dashboard = new DashboardHomeViewModel();
-            Students = new ModulePlaceholderViewModel("Students", "Students stays as a top-level navigation item, just like the WinForms dashboard.", "The WPF UI conversion for Students is next after core settings tabs.");
-            Faculty = new ModulePlaceholderViewModel("Faculty", "Faculty stays as a top-level navigation item, just like the WinForms dashboard.", "The WPF UI conversion for Faculty will preserve the same list and profile workflow.");
-            Enrollment = new ModulePlaceholderViewModel("Enrollment", "Enrollment stays as a top-level navigation item, just like the WinForms dashboard.", "The WPF UI conversion for Enrollment will keep the same student -> subjects -> confirm flow.");
-            Schedule = new ModulePlaceholderViewModel("Schedule", "Schedule stays as a top-level navigation item, just like the WinForms dashboard.", "The WPF UI conversion will keep the same schedule and room workflow.");
-            Calendar = new ModulePlaceholderViewModel("Calendar", "Calendar stays as a top-level navigation item, just like the WinForms dashboard.", "The WPF UI conversion will keep the calendar view reachable from the same sidebar.");
+                bootstrapper.LookupService,
+                bootstrapper.SectionService,
+                bootstrapper.CurriculumService,
+                bootstrapper.ClassScheduleService,
+                bootstrapper.SystemSettingService);
+            Schedule = new ScheduleBoardViewModel(
+                bootstrapper.SectionService,
+                bootstrapper.FacultyService,
+                bootstrapper.ClassScheduleService);
+            Calendar = new AcademicCalendarViewModel(
+                bootstrapper.LookupService,
+                bootstrapper.SectionService);
 
             ShowDashboardCommand = new RelayCommand(ShowDashboard);
             ShowStudentsCommand = new RelayCommand(ShowStudents);
@@ -36,21 +60,43 @@ namespace School_Management_System.Wpf.ViewModels
             ShowScheduleCommand = new RelayCommand(ShowSchedule);
             ShowCalendarCommand = new RelayCommand(ShowCalendar);
             ShowSettingsCommand = new RelayCommand(ShowSettings);
+            BackCommand = new RelayCommand(ShowDashboard, () => CanGoBack);
             LogoutCommand = new RelayCommand(Logout);
 
             ShowDashboard();
         }
 
-        private readonly Action _closeAction;
-
         public string ApplicationTitle
         {
-            get { return "School Enrollment Management System"; }
+            get { return SchoolBranding.ApplicationTitle; }
         }
 
         public string ApplicationSubtitle
         {
-            get { return "SYSTEM"; }
+            get { return SchoolBranding.ShellWorkspaceTagline; }
+        }
+
+        public string SupportSummary
+        {
+            get { return SchoolBranding.SupportEmail + "  |  " + SchoolBranding.SupportPhoneNumber; }
+        }
+
+        public string CurrentModeDisplay
+        {
+            get
+            {
+                var mode = ConnectionModeHelper.GetCurrentMode("Online");
+                return ConnectionModeHelper.GetDisplayName(mode);
+            }
+        }
+
+        public string CurrentModeSummary
+        {
+            get
+            {
+                var mode = ConnectionModeHelper.GetCurrentMode("Online");
+                return ConnectionModeHelper.GetLoginSummary(mode);
+            }
         }
 
         public User CurrentUser { get; private set; }
@@ -64,20 +110,41 @@ namespace School_Management_System.Wpf.ViewModels
                     return "Guest User";
                 }
 
-                var displayName = string.IsNullOrWhiteSpace(CurrentUser.DisplayName)
+                return string.IsNullOrWhiteSpace(CurrentUser.DisplayName)
                     ? CurrentUser.Username
                     : CurrentUser.DisplayName;
-
-                return displayName + " (" + (CurrentUser.Role ?? "User") + ")";
             }
         }
 
+        public string CurrentUserRole
+        {
+            get
+            {
+                if (CurrentUser == null || string.IsNullOrWhiteSpace(CurrentUser.Role))
+                {
+                    return "User";
+                }
+
+                return CurrentUser.Role;
+            }
+        }
+
+        public string WorkspaceLabel
+        {
+            get { return CurrentUserRole + " workspace"; }
+        }
+
+        public bool CanGoBack
+        {
+            get { return !string.Equals(ActiveModuleKey, "dashboard", StringComparison.OrdinalIgnoreCase); }
+        }
+
         public DashboardHomeViewModel Dashboard { get; private set; }
-        public ModulePlaceholderViewModel Students { get; private set; }
-        public ModulePlaceholderViewModel Faculty { get; private set; }
-        public ModulePlaceholderViewModel Enrollment { get; private set; }
-        public ModulePlaceholderViewModel Schedule { get; private set; }
-        public ModulePlaceholderViewModel Calendar { get; private set; }
+        public StudentDirectoryViewModel Students { get; private set; }
+        public FacultyDirectoryViewModel Faculty { get; private set; }
+        public EnrollmentWorkspaceViewModel Enrollment { get; private set; }
+        public ScheduleBoardViewModel Schedule { get; private set; }
+        public AcademicCalendarViewModel Calendar { get; private set; }
         public SettingsViewModel Settings { get; private set; }
 
         public object CurrentModule
@@ -111,48 +178,52 @@ namespace School_Management_System.Wpf.ViewModels
         public RelayCommand ShowScheduleCommand { get; private set; }
         public RelayCommand ShowCalendarCommand { get; private set; }
         public RelayCommand ShowSettingsCommand { get; private set; }
+        public RelayCommand BackCommand { get; private set; }
         public RelayCommand LogoutCommand { get; private set; }
 
         private void ShowDashboard()
         {
-            Activate("dashboard", Dashboard, "Dashboard", "The WPF shell now follows the same dashboard-first flow as the WinForms application.");
+            Dashboard.RefreshMetrics();
+            Dashboard.RefreshClock();
+            Activate("dashboard", Dashboard, "Launch board", "Dashboard tiles, live counts, and academic workspace status.");
         }
 
         private void ShowStudents()
         {
-            Activate("students", Students, "Students", "Students remains a main navigation item, matching the WinForms dashboard.");
+            Activate("students", Students, "Students", "Student records, profiles, and enrollment entry points.");
         }
 
         private void ShowFaculty()
         {
-            Activate("faculty", Faculty, "Faculty", "Faculty remains a main navigation item, matching the WinForms dashboard.");
+            Activate("faculty", Faculty, "Faculty", "Faculty records and teaching staff management.");
         }
 
         private void ShowEnrollment()
         {
-            Activate("enrollment", Enrollment, "Enrollment", "Enrollment remains a main navigation item, matching the WinForms dashboard.");
+            Activate("enrollment", Enrollment, "Enrollment", "Enrollment intake and student subject confirmation.");
         }
 
         private void ShowSchedule()
         {
-            Activate("schedule", Schedule, "Schedule", "Schedule remains a main navigation item, matching the WinForms dashboard.");
+            Activate("schedule", Schedule, "Schedule", "Section scheduling, room usage, and faculty load.");
         }
 
         private void ShowCalendar()
         {
-            Activate("calendar", Calendar, "Calendar", "Calendar remains a main navigation item, matching the WinForms dashboard.");
+            Activate("calendar", Calendar, "Calendar", "Academic dates, reminders, and school timeline planning.");
         }
 
         private void ShowSettings()
         {
-            Activate("settings", Settings, "Settings", "Courses and other academic setup stay inside Settings tabs, matching the WinForms workflow.");
+            Activate("settings", Settings, "Settings", "Academic setup, course maintenance, and configuration.");
         }
 
         private void Logout()
         {
-            if (_closeAction != null)
+            var action = _logoutAction;
+            if (action != null)
             {
-                _closeAction();
+                action();
             }
         }
 
@@ -162,6 +233,11 @@ namespace School_Management_System.Wpf.ViewModels
             CurrentModule = module;
             CurrentModuleTitle = title;
             CurrentModuleSubtitle = subtitle;
+            OnPropertyChanged(nameof(CanGoBack));
+            if (BackCommand != null)
+            {
+                BackCommand.RaiseCanExecuteChanged();
+            }
         }
     }
 }

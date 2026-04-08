@@ -54,7 +54,7 @@
                                FontWeight="SemiBold"
                                Foreground="{StaticResource PrimaryBrush}" />
                     <TextBlock Margin="0,8,0,0"
-                               Text="Course maintenance stays in Settings, matching the WinForms workflow. The editor and list are now rendered in WPF while still using the same existing service layer."
+                               Text="Course maintenance now runs inside the native WPF settings workspace while preserving the current validation and service layer."
                                TextWrapping="Wrap"
                                Foreground="{StaticResource MutedTextBrush}" />
                 </StackPanel>
@@ -63,7 +63,7 @@
                         Padding="12,8"
                         CornerRadius="999"
                         Background="#D7F7F4">
-                    <TextBlock Text="Same backend logic"
+                    <TextBlock Text="Native WPF editor"
                                FontWeight="SemiBold"
                                Foreground="{StaticResource PrimaryBrush}" />
                 </Border>

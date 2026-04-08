@@ -1,72 +1,93 @@
+using System;
+using System.Linq;
 using School_Management_System.Models;
+using School_Management_System.Wpf.Services;
 using School_Management_System.Wpf.ViewModels.Courses;
+using School_Management_System.Wpf.ViewModels.Settings;
+using School_Management_System.Wpf.ViewModels.Shared;
 
 namespace School_Management_System.Wpf.ViewModels
 {
     public sealed class SettingsViewModel : Infrastructure.ViewModelBase
     {
-        public SettingsViewModel(CourseManagementViewModel courseManagement, User currentUser)
+        public SettingsViewModel(AppBootstrapper bootstrapper, User currentUser)
         {
-            CourseManagement = courseManagement;
+            if (bootstrapper == null) throw new ArgumentNullException(nameof(bootstrapper));
+
             IsAdmin = currentUser != null &&
-                      string.Equals(currentUser.Role, "Admin", System.StringComparison.OrdinalIgnoreCase);
+                      string.Equals(currentUser.Role, "Admin", StringComparison.OrdinalIgnoreCase);
 
-            SystemModule = new ModulePlaceholderViewModel(
-                "System",
-                "Global term settings stay in Settings, just like the WinForms app.",
-                "This tab will be converted next in WPF without moving it out of the Settings module.");
+            CourseManagement = new CourseManagementViewModel(
+                bootstrapper.CourseService,
+                bootstrapper.DepartmentService);
 
-            DatabaseModule = new ModulePlaceholderViewModel(
-                "Database",
-                IsAdmin
-                    ? "Database connection profiles, backup tools, and logs remain under Settings."
-                    : "Database configuration remains hidden from regular users.",
-                IsAdmin
-                    ? "This will stay admin-only in WPF, matching the WinForms behavior."
-                    : "Only administrators can view or edit database settings.");
+            SystemModule = new DataTableWorkspaceViewModel(
+                "System settings",
+                "School-wide settings are now loaded from the systemsetting table instead of a placeholder card.",
+                "Search setting key or value",
+                search => WpfUiDataHelper.CreateSettingsTable(bootstrapper.SystemSettingService.GetAll(), search));
+            SystemModule.Refresh();
 
-            DepartmentsModule = new ModulePlaceholderViewModel(
+            DatabaseModule = new DataTableWorkspaceViewModel(
+                "Database activity",
+                "Recent audit and connection activity is loaded directly from the activity log service.",
+                "Search username or action",
+                search => WpfUiDataHelper.CreateActivityLogTable(
+                    bootstrapper.ActivityLogService.Search(null, null, search, null, 150)));
+            DatabaseModule.Refresh();
+
+            DepartmentsModule = new DataTableWorkspaceViewModel(
                 "Departments",
-                "Departments will remain a tab inside Settings.",
-                "UI conversion pending. Backend logic stays unchanged.");
+                "Department records are loaded from the active academic database.",
+                "Search departments",
+                bootstrapper.DepartmentService.GetDepartments);
+            DepartmentsModule.Refresh();
 
-            YearLevelsModule = new ModulePlaceholderViewModel(
-                "Year Levels",
-                "Year Levels will remain a tab inside Settings.",
-                "UI conversion pending. Backend logic stays unchanged.");
+            YearLevelsModule = new DataTableWorkspaceViewModel(
+                "Year levels",
+                "Year level records are loaded from the active academic database.",
+                "Search year levels",
+                bootstrapper.YearLevelService.GetYearLevels);
+            YearLevelsModule.Refresh();
 
-            SectionsModule = new ModulePlaceholderViewModel(
+            SectionsModule = new DataTableWorkspaceViewModel(
                 "Sections",
-                "Sections will remain a tab inside Settings.",
-                "UI conversion pending. Backend logic stays unchanged.");
+                "Section records are loaded from the active academic database.",
+                "Search sections",
+                bootstrapper.SectionService.GetSections);
+            SectionsModule.Refresh();
 
-            SubjectsModule = new ModulePlaceholderViewModel(
+            SubjectsModule = new DataTableWorkspaceViewModel(
                 "Subjects",
-                "Subjects will remain a tab inside Settings.",
-                "UI conversion pending. Backend logic stays unchanged.");
+                "Subject catalog rows are loaded from the live database.",
+                "Search subjects",
+                bootstrapper.SubjectService.GetSubjects);
+            SubjectsModule.Refresh();
 
-            CurriculumModule = new ModulePlaceholderViewModel(
-                "Curriculum",
-                "Curriculum will remain a tab inside Settings.",
-                "UI conversion pending. Backend logic stays unchanged.");
+            CurriculumModule = new CurriculumExplorerViewModel(
+                bootstrapper.CurriculumService,
+                bootstrapper.CourseService,
+                bootstrapper.LookupService);
 
-            UserManagementModule = new ModulePlaceholderViewModel(
-                "User Management",
+            UserManagementModule = new DataTableWorkspaceViewModel(
+                "User management",
                 IsAdmin
-                    ? "User management stays under Settings for administrators."
-                    : "Only administrators can manage users and passwords.",
-                "UI conversion pending. Backend logic stays unchanged.");
+                    ? "User accounts are loaded from the users table for read-only review inside the WPF shell."
+                    : "User account records are visible here in read-only mode for this session.",
+                "Search usernames or roles",
+                bootstrapper.UserManagementService.GetUsers);
+            UserManagementModule.Refresh();
         }
 
         public bool IsAdmin { get; private set; }
         public CourseManagementViewModel CourseManagement { get; private set; }
-        public ModulePlaceholderViewModel SystemModule { get; private set; }
-        public ModulePlaceholderViewModel DatabaseModule { get; private set; }
-        public ModulePlaceholderViewModel DepartmentsModule { get; private set; }
-        public ModulePlaceholderViewModel YearLevelsModule { get; private set; }
-        public ModulePlaceholderViewModel SectionsModule { get; private set; }
-        public ModulePlaceholderViewModel SubjectsModule { get; private set; }
-        public ModulePlaceholderViewModel CurriculumModule { get; private set; }
-        public ModulePlaceholderViewModel UserManagementModule { get; private set; }
+        public DataTableWorkspaceViewModel SystemModule { get; private set; }
+        public DataTableWorkspaceViewModel DatabaseModule { get; private set; }
+        public DataTableWorkspaceViewModel DepartmentsModule { get; private set; }
+        public DataTableWorkspaceViewModel YearLevelsModule { get; private set; }
+        public DataTableWorkspaceViewModel SectionsModule { get; private set; }
+        public DataTableWorkspaceViewModel SubjectsModule { get; private set; }
+        public CurriculumExplorerViewModel CurriculumModule { get; private set; }
+        public DataTableWorkspaceViewModel UserManagementModule { get; private set; }
     }
 }

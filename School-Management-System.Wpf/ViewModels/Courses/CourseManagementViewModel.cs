@@ -196,13 +196,13 @@ namespace School_Management_System.Wpf.ViewModels.Courses
                     SelectedCourse = null;
                     ResetEditorFields();
                     IsEditorActive = false;
-                    StatusMessage = "No courses found. Click Add to create the first course in the WPF module.";
+                    StatusMessage = "No courses found. Click Add to create the first course in this workspace.";
                     return;
                 }
 
                 var match = Courses.FirstOrDefault(c => c.CourseId == selectedCourseId) ?? Courses.FirstOrDefault();
                 SelectedCourse = match;
-                StatusMessage = "Courses loaded from the existing WinForms service layer.";
+                StatusMessage = "Courses loaded successfully from the current school database.";
             }
             catch (Exception ex)
             {

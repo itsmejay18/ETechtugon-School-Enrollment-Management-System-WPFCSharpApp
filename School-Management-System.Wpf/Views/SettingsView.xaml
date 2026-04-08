@@ -21,7 +21,7 @@
                            FontWeight="Bold"
                            Foreground="{StaticResource TextBrush}" />
                 <TextBlock Margin="0,8,0,0"
-                           Text="The WPF app now keeps academic setup inside Settings, matching the WinForms workflow."
+                           Text="Academic setup, system controls, and course maintenance now stay together inside one native WPF settings workspace."
                            TextWrapping="Wrap"
                            Foreground="{StaticResource MutedTextBrush}" />
             </StackPanel>

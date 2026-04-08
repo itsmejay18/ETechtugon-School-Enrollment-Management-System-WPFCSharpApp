@@ -11,7 +11,9 @@ namespace School_Management_System.Wpf.Views
         public LoginWindow()
         {
             InitializeComponent();
+            SourceInitialized += LoginWindow_SourceInitialized;
             Loaded += LoginWindow_Loaded;
+            Activated += LoginWindow_Activated;
             ApplyBrandingAssets();
         }
 
@@ -25,6 +27,19 @@ namespace School_Management_System.Wpf.Views
             ApplyQuickLoginPreset();
             UsernameInput.Focus();
             UsernameInput.SelectAll();
+        }
+
+        private void LoginWindow_SourceInitialized(object sender, System.EventArgs e)
+        {
+            WindowFullscreenHelper.ApplyMonitorBounds(this, true);
+        }
+
+        private void LoginWindow_Activated(object sender, System.EventArgs e)
+        {
+            if (Topmost && WindowState != WindowState.Minimized)
+            {
+                WindowFullscreenHelper.ApplyMonitorBounds(this, true);
+            }
         }
 
         private void ApplyBrandingAssets()

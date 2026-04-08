@@ -1,19 +1,386 @@
 <Window x:Class="School_Management_System.Wpf.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:wf="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:vmCalendar="clr-namespace:School_Management_System.Wpf.ViewModels.Calendar"
+        xmlns:vmEnrollment="clr-namespace:School_Management_System.Wpf.ViewModels.Enrollment"
+        xmlns:vmFaculty="clr-namespace:School_Management_System.Wpf.ViewModels.Faculty"
+        xmlns:vmSchedule="clr-namespace:School_Management_System.Wpf.ViewModels.Schedule"
+        xmlns:vmSettings="clr-namespace:School_Management_System.Wpf.ViewModels.Settings"
+        xmlns:vmShared="clr-namespace:School_Management_System.Wpf.ViewModels.Shared"
+        xmlns:vmStudents="clr-namespace:School_Management_System.Wpf.ViewModels.Students"
+        xmlns:vm="clr-namespace:School_Management_System.Wpf.ViewModels"
+        xmlns:viewsCalendar="clr-namespace:School_Management_System.Wpf.Views.Calendar"
+        xmlns:viewsEnrollment="clr-namespace:School_Management_System.Wpf.Views.Enrollment"
+        xmlns:viewsFaculty="clr-namespace:School_Management_System.Wpf.Views.Faculty"
+        xmlns:viewsSchedule="clr-namespace:School_Management_System.Wpf.Views.Schedule"
+        xmlns:viewsSettingsExtra="clr-namespace:School_Management_System.Wpf.Views.Settings"
+        xmlns:viewsShared="clr-namespace:School_Management_System.Wpf.Views.Shared"
+        xmlns:viewsStudents="clr-namespace:School_Management_System.Wpf.Views.Students"
+        xmlns:views="clr-namespace:School_Management_System.Wpf.Views"
         Title="School Enrollment Management System"
-        Width="1440"
-        Height="900"
-        MinWidth="1180"
-        MinHeight="760"
-        ResizeMode="CanMinimize"
+        Width="1500"
+        Height="920"
+        MinWidth="1240"
+        MinHeight="780"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        BorderThickness="0"
         Background="{StaticResource WindowBackgroundBrush}"
-        WindowStartupLocation="Manual"
+        WindowStartupLocation="CenterScreen"
         WindowState="Normal"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0"
+                            CornerRadius="0"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="8"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <DataTemplate DataType="{x:Type vm:DashboardHomeViewModel}">
+            <views:DashboardHomeView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:ModulePlaceholderViewModel}">
+            <views:ModulePlaceholderView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmStudents:StudentDirectoryViewModel}">
+            <viewsStudents:StudentDirectoryView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmFaculty:FacultyDirectoryViewModel}">
+            <viewsFaculty:FacultyDirectoryView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmSchedule:ScheduleBoardViewModel}">
+            <viewsSchedule:ScheduleBoardView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmEnrollment:EnrollmentWorkspaceViewModel}">
+            <viewsEnrollment:EnrollmentWorkspaceView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmCalendar:AcademicCalendarViewModel}">
+            <viewsCalendar:AcademicCalendarView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmShared:DataTableWorkspaceViewModel}">
+            <viewsShared:DataTableWorkspaceView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmSettings:CurriculumExplorerViewModel}">
+            <viewsSettingsExtra:CurriculumExplorerView />
+        </DataTemplate>
+
+        <LinearGradientBrush x:Key="SchoolShellHeaderBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#FF0F4E8C" Offset="0" />
+            <GradientStop Color="#FF1D5FA8" Offset="0.55" />
+            <GradientStop Color="#FF3686D0" Offset="1" />
+        </LinearGradientBrush>
+
+        <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#18FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.82" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CloseTitleBarButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#FFE81123" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HeaderActionButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="#FF15436E" />
+            <Setter Property="Background" Value="#FFFFFFFF" />
+            <Setter Property="BorderBrush" Value="#FFC8DCF0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Padding" Value="16,9" />
+            <Setter Property="MinWidth" Value="102" />
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="16">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#FFF4FAFF" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="#FF6BAEE4" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.88" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HeaderPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource HeaderActionButtonStyle}">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#FF1D5FA8" />
+            <Setter Property="BorderBrush" Value="#FF1D5FA8" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="18">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#FF0F4E8C" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="#FF0F4E8C" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Grid Background="{StaticResource WindowBackgroundBrush}">
-        <wf:WindowsFormsHost x:Name="DashboardHost" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="94" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                Background="{StaticResource SchoolShellHeaderBrush}"
+                MouseLeftButtonDown="TitleBar_OnMouseLeftButtonDown">
+            <Grid Margin="16,10,14,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Border Width="60"
+                            Height="60"
+                            Background="#13528E"
+                            BorderBrush="#2FFFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="18">
+                        <Image x:Name="ShellBrandLogoImage"
+                               Margin="9"
+                               Stretch="Uniform" />
+                    </Border>
+
+                    <StackPanel Margin="14,2,0,0"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ApplicationTitle}"
+                                   Foreground="White"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   MaxWidth="520"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Text="{Binding ApplicationSubtitle}"
+                                   Foreground="#EAF6FF"
+                                   FontSize="13"
+                                   MaxWidth="520"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Right"
+                            Margin="12,0,12,0">
+                    <Border Margin="0,0,10,0"
+                            Padding="14,8"
+                            CornerRadius="16"
+                            Background="#18FFFFFF"
+                            BorderBrush="#2CFFFFFF"
+                            BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="{Binding CurrentUserDisplay}"
+                                       Foreground="White"
+                                       FontSize="13"
+                                       FontWeight="Bold"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Text="{Binding CurrentModeDisplay}"
+                                       Foreground="#EAF6FF"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </Border>
+
+                    <Button Command="{Binding BackCommand}"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource HeaderActionButtonStyle}"
+                            Visibility="{Binding CanGoBack, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="Segoe MDL2 Assets"
+                                       FontSize="13"
+                                       Text="&#xE72B;" />
+                            <TextBlock Margin="10,0,0,0"
+                                       Text="Back" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding ShowDashboardCommand}"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource HeaderActionButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="Segoe MDL2 Assets"
+                                       FontSize="13"
+                                       Text="&#xE80F;" />
+                            <TextBlock Margin="10,0,0,0"
+                                       Text="Dashboard" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding ShowSettingsCommand}"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource HeaderActionButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="Segoe MDL2 Assets"
+                                       FontSize="13"
+                                       Text="&#xE713;" />
+                            <TextBlock Margin="10,0,0,0"
+                                       Text="Settings" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding LogoutCommand}"
+                            Style="{StaticResource HeaderPrimaryButtonStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontFamily="Segoe MDL2 Assets"
+                                       FontSize="13"
+                                       Text="&#xE8AC;" />
+                            <TextBlock Margin="10,0,0,0"
+                                       Text="Log out" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top">
+                    <Button Width="38"
+                            Height="30"
+                            Margin="0,0,4,0"
+                            Click="MinimizeButton_OnClick"
+                            Focusable="False"
+                            Style="{StaticResource TitleBarButtonStyle}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="10"
+                                   Text="&#xE921;" />
+                    </Button>
+
+                    <Button Width="38"
+                            Height="30"
+                            Margin="0,0,4,0"
+                            Click="MaximizeRestoreButton_OnClick"
+                            Focusable="False"
+                            Style="{StaticResource TitleBarButtonStyle}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                        <TextBlock x:Name="MaximizeRestoreIcon"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="10"
+                                   Text="&#xE922;" />
+                    </Button>
+
+                    <Button Width="38"
+                            Height="30"
+                            Click="CloseButton_OnClick"
+                            Focusable="False"
+                            Style="{StaticResource CloseTitleBarButtonStyle}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="10"
+                                   Text="&#xE8BB;" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Background="#FFF4F9FF">
+            <ContentControl Content="{Binding CurrentModule}">
+                <ContentControl.Style>
+                    <Style TargetType="ContentControl">
+                        <Setter Property="Margin" Value="22" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ActiveModuleKey}" Value="dashboard">
+                                <Setter Property="Margin" Value="0" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ContentControl.Style>
+            </ContentControl>
+        </Border>
     </Grid>
 </Window>

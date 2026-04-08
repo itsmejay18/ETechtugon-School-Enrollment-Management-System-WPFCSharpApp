@@ -358,7 +358,7 @@ Choose:
 
 Then choose one of the enrollment modes:
 
-- `By Section (Regular)`
+- `By Section (Regular)`fzr
 - `By Subject (Irregular)`
 
 #### By Section (Regular)

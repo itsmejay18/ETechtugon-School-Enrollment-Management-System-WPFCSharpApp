@@ -12,21 +12,54 @@ namespace School_Management_System.Wpf.Services
     {
         private AppBootstrapper(
             DatabaseHelper database,
+            StudentService studentService,
+            FacultyService facultyService,
             CourseService courseService,
+            SubjectService subjectService,
             DepartmentService departmentService,
+            YearLevelService yearLevelService,
+            SectionService sectionService,
+            LookupService lookupService,
+            CurriculumService curriculumService,
+            SystemSettingService systemSettingService,
+            UserManagementService userManagementService,
+            EnrollmentService enrollmentService,
+            ClassScheduleService classScheduleService,
             AuthService authService,
             ActivityLogService activityLogService)
         {
             Database = database;
+            StudentService = studentService;
+            FacultyService = facultyService;
             CourseService = courseService;
+            SubjectService = subjectService;
             DepartmentService = departmentService;
+            YearLevelService = yearLevelService;
+            SectionService = sectionService;
+            LookupService = lookupService;
+            CurriculumService = curriculumService;
+            SystemSettingService = systemSettingService;
+            UserManagementService = userManagementService;
+            EnrollmentService = enrollmentService;
+            ClassScheduleService = classScheduleService;
             AuthService = authService;
             ActivityLogService = activityLogService;
         }
 
         public DatabaseHelper Database { get; private set; }
+        public StudentService StudentService { get; private set; }
+        public FacultyService FacultyService { get; private set; }
         public CourseService CourseService { get; private set; }
+        public SubjectService SubjectService { get; private set; }
         public DepartmentService DepartmentService { get; private set; }
+        public YearLevelService YearLevelService { get; private set; }
+        public SectionService SectionService { get; private set; }
+        public LookupService LookupService { get; private set; }
+        public CurriculumService CurriculumService { get; private set; }
+        public SystemSettingService SystemSettingService { get; private set; }
+        public UserManagementService UserManagementService { get; private set; }
+        public EnrollmentService EnrollmentService { get; private set; }
+        public ClassScheduleService ClassScheduleService { get; private set; }
         public AuthService AuthService { get; private set; }
         public ActivityLogService ActivityLogService { get; private set; }
 
@@ -58,16 +91,38 @@ namespace School_Management_System.Wpf.Services
 
             SchemaMigrationRunner.EnsureCurrent(database);
 
+            IStudentData studentData = new StudentData(database);
+            IFacultyData facultyData = new FacultyData(database);
             IDepartmentData departmentData = new DepartmentData(database);
             ICourseData courseData = new CourseData(database);
+            ISubjectData subjectData = new SubjectData(database);
+            IYearLevelData yearLevelData = new YearLevelData(database);
+            ISectionData sectionData = new SectionData(database);
+            ILookupData lookupData = new LookupData(database);
+            ICurriculumData curriculumData = new CurriculumData(database);
+            ISystemSettingData systemSettingData = new SystemSettingData(database);
+            IUserManagementData userManagementData = new UserManagementData(database);
+            IEnrollmentData enrollmentData = new EnrollmentData(database);
+            IClassScheduleData classScheduleData = new ClassScheduleData(database);
             IUserData userData = new UserData(database);
             IActivityLogData activityLogData = new ActivityLogData(database);
             var activityLogService = new ActivityLogService(activityLogData);
 
             return new AppBootstrapper(
                 database,
+                new StudentService(studentData),
+                new FacultyService(facultyData),
                 new CourseService(courseData),
+                new SubjectService(subjectData),
                 new DepartmentService(departmentData),
+                new YearLevelService(yearLevelData),
+                new SectionService(sectionData),
+                new LookupService(lookupData),
+                new CurriculumService(curriculumData),
+                new SystemSettingService(systemSettingData),
+                new UserManagementService(userManagementData),
+                new EnrollmentService(enrollmentData),
+                new ClassScheduleService(classScheduleData),
                 new AuthService(userData, activityLogService),
                 activityLogService);
         }
