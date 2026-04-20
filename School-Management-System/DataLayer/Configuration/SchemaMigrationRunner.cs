@@ -8,30 +8,19 @@ namespace School_Management_System.DataLayer.Configuration
     public static class SchemaMigrationRunner
     {
         private static readonly object Sync = new object();
-        private static bool _initialized;
 
         public static void EnsureCurrent(DatabaseHelper db)
         {
             if (db == null) throw new ArgumentNullException(nameof(db));
-            if (_initialized)
-            {
-                return;
-            }
 
             lock (Sync)
             {
-                if (_initialized)
-                {
-                    return;
-                }
-
                 EnsureMigrationTable(db);
                 ApplyMigration2026030701(db);
                 ApplyMigration2026030702(db);
                 ApplyMigration2026030703(db);
                 ApplyMigration2026031501(db);
-
-                _initialized = true;
+                ApplyMigration2026041701(db);
             }
         }
 
@@ -184,6 +173,95 @@ SET
             MarkApplied(db, migrationId, "Normalize semester catalog to 1st and 2nd semester only.");
         }
 
+        private static void ApplyMigration2026041701(DatabaseHelper db)
+        {
+            const string migrationId = "2026041701";
+            if (IsApplied(db, migrationId))
+            {
+                return;
+            }
+
+            EnsureBrandingProfileTable(db);
+
+            const string seedSql = @"
+INSERT INTO `brandingprofile`
+(
+  `BrandingProfileId`,
+  `CompanyName`,
+  `ApplicationTagline`,
+  `ShellWorkspaceTagline`,
+  `DashboardTitle`,
+  `DashboardSubtitle`,
+  `LoginHeadline`,
+  `LoginBody`,
+  `LoginFormTitle`,
+  `LoginFormSubtitle`,
+  `FeatureOneTitle`,
+  `FeatureOneBody`,
+  `FeatureTwoTitle`,
+  `FeatureTwoBody`,
+  `FeatureThreeTitle`,
+  `FeatureThreeBody`,
+  `ClientSerialNumber`,
+  `SupportEmail`,
+  `SupportPhoneNumber`,
+  `CompanyAddress`,
+  `UpdatedAt`
+)
+SELECT
+  @BrandingProfileId,
+  @CompanyName,
+  @ApplicationTagline,
+  @ShellWorkspaceTagline,
+  @DashboardTitle,
+  @DashboardSubtitle,
+  @LoginHeadline,
+  @LoginBody,
+  @LoginFormTitle,
+  @LoginFormSubtitle,
+  @FeatureOneTitle,
+  @FeatureOneBody,
+  @FeatureTwoTitle,
+  @FeatureTwoBody,
+  @FeatureThreeTitle,
+  @FeatureThreeBody,
+  @ClientSerialNumber,
+  @SupportEmail,
+  @SupportPhoneNumber,
+  @CompanyAddress,
+  UTC_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `brandingprofile` LIMIT 1);";
+
+            db.ExecuteNonQuery(
+                seedSql,
+                CommandType.Text,
+                new[]
+                {
+                    new MySqlParameter("@BrandingProfileId", BrandingDefaults.ProfileId),
+                    new MySqlParameter("@CompanyName", BrandingDefaults.CompanyName),
+                    new MySqlParameter("@ApplicationTagline", BrandingDefaults.ApplicationTagline),
+                    new MySqlParameter("@ShellWorkspaceTagline", BrandingDefaults.ShellWorkspaceTagline),
+                    new MySqlParameter("@DashboardTitle", BrandingDefaults.DashboardTitle),
+                    new MySqlParameter("@DashboardSubtitle", BrandingDefaults.DashboardSubtitle),
+                    new MySqlParameter("@LoginHeadline", BrandingDefaults.LoginHeadline),
+                    new MySqlParameter("@LoginBody", BrandingDefaults.LoginBody),
+                    new MySqlParameter("@LoginFormTitle", BrandingDefaults.LoginFormTitle),
+                    new MySqlParameter("@LoginFormSubtitle", BrandingDefaults.LoginFormSubtitle),
+                    new MySqlParameter("@FeatureOneTitle", BrandingDefaults.FeatureOneTitle),
+                    new MySqlParameter("@FeatureOneBody", BrandingDefaults.FeatureOneBody),
+                    new MySqlParameter("@FeatureTwoTitle", BrandingDefaults.FeatureTwoTitle),
+                    new MySqlParameter("@FeatureTwoBody", BrandingDefaults.FeatureTwoBody),
+                    new MySqlParameter("@FeatureThreeTitle", BrandingDefaults.FeatureThreeTitle),
+                    new MySqlParameter("@FeatureThreeBody", BrandingDefaults.FeatureThreeBody),
+                    new MySqlParameter("@ClientSerialNumber", BrandingDefaults.ClientSerialNumber),
+                    new MySqlParameter("@SupportEmail", BrandingDefaults.SupportEmail),
+                    new MySqlParameter("@SupportPhoneNumber", BrandingDefaults.SupportPhoneNumber),
+                    new MySqlParameter("@CompanyAddress", BrandingDefaults.CompanyAddress)
+                });
+
+            MarkApplied(db, migrationId, "Ensure brandingprofile table and seeded landing-screen branding data.");
+        }
+
         private static void EnsureActivityLogTable(DatabaseHelper db)
         {
             const string existsSql = @"
@@ -215,6 +293,39 @@ CREATE TABLE IF NOT EXISTS `activitylog` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
 
             db.ExecuteNonQuery(createSql, CommandType.Text, null);
+        }
+
+        private static void EnsureBrandingProfileTable(DatabaseHelper db)
+        {
+            const string sql = @"
+CREATE TABLE IF NOT EXISTS `brandingprofile` (
+  `BrandingProfileId` int NOT NULL,
+  `CompanyName` varchar(160) NOT NULL,
+  `ApplicationTagline` varchar(255) DEFAULT NULL,
+  `ShellWorkspaceTagline` varchar(255) DEFAULT NULL,
+  `DashboardTitle` varchar(255) DEFAULT NULL,
+  `DashboardSubtitle` varchar(255) DEFAULT NULL,
+  `LoginHeadline` varchar(255) DEFAULT NULL,
+  `LoginBody` text DEFAULT NULL,
+  `LoginFormTitle` varchar(160) DEFAULT NULL,
+  `LoginFormSubtitle` varchar(255) DEFAULT NULL,
+  `FeatureOneTitle` varchar(160) DEFAULT NULL,
+  `FeatureOneBody` varchar(255) DEFAULT NULL,
+  `FeatureTwoTitle` varchar(160) DEFAULT NULL,
+  `FeatureTwoBody` varchar(255) DEFAULT NULL,
+  `FeatureThreeTitle` varchar(160) DEFAULT NULL,
+  `FeatureThreeBody` varchar(255) DEFAULT NULL,
+  `ClientSerialNumber` varchar(120) DEFAULT NULL,
+  `SupportEmail` varchar(160) DEFAULT NULL,
+  `SupportPhoneNumber` varchar(80) DEFAULT NULL,
+  `CompanyAddress` varchar(255) DEFAULT NULL,
+  `BrandLogoData` longblob,
+  `CompactLogoData` longblob,
+  `UpdatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  PRIMARY KEY (`BrandingProfileId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
+
+            db.ExecuteNonQuery(sql, CommandType.Text, null);
         }
 
         private static void EnsureColumnExists(DatabaseHelper db, string tableName, string columnName, string alterSql)

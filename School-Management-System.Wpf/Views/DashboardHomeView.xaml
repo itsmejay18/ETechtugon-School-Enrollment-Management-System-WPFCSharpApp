@@ -202,50 +202,22 @@
                 Grid.Column="4"
                 Grid.ColumnSpan="2"
                 Margin="1"
-                Background="{StaticResource BrandTileBrush}"
+                Background="#FFF4FAFF"
                 BorderBrush="#FFBDD8F0"
                 BorderThickness="1"
-                Padding="20">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="84" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Border Width="72"
-                        Height="72"
-                        VerticalAlignment="Top"
-                        Background="#FFFFFFFF"
-                        BorderBrush="#FFBDD8F0"
-                        BorderThickness="1"
-                        CornerRadius="18">
-                    <Image x:Name="HeroBrandLogoImage"
-                           Margin="12"
-                           Stretch="Uniform" />
-                </Border>
-
-                <StackPanel Grid.Column="1"
-                            Margin="14,0,0,0"
-                            VerticalAlignment="Top">
-                    <TextBlock Text="{Binding ApplicationTitle}"
-                               FontSize="16.5"
-                               LineHeight="22"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource TextBrush}"
-                               TextWrapping="Wrap" />
-                    <TextBlock Margin="0,8,0,0"
-                               Text="{Binding DashboardTileSummary}"
-                               FontSize="11.8"
-                               LineHeight="17"
-                               TextWrapping="Wrap"
-                               Foreground="{StaticResource MutedTextBrush}" />
-                    <TextBlock Margin="0,14,0,0"
-                               Text="{Binding OperatorLine}"
-                               FontSize="13.5"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource PrimaryBrush}" />
-                </StackPanel>
-            </Grid>
+                Padding="14">
+            <Border Background="White"
+                    BorderBrush="#FFBDD8F0"
+                    BorderThickness="1"
+                    CornerRadius="18"
+                    Padding="10"
+                    SnapsToDevicePixels="True">
+                <Image x:Name="HeroBrandLogoImage"
+                       Stretch="Uniform"
+                       HorizontalAlignment="Stretch"
+                       VerticalAlignment="Stretch"
+                       RenderOptions.BitmapScalingMode="HighQuality" />
+            </Border>
         </Border>
 
         <Border Grid.Row="3"

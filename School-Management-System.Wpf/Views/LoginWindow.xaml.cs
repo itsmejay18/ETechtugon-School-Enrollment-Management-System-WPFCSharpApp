@@ -13,7 +13,9 @@ namespace School_Management_System.Wpf.Views
             InitializeComponent();
             SourceInitialized += LoginWindow_SourceInitialized;
             Loaded += LoginWindow_Loaded;
+            Unloaded += LoginWindow_Unloaded;
             Activated += LoginWindow_Activated;
+            SchoolBranding.BrandingChanged += SchoolBranding_BrandingChanged;
             ApplyBrandingAssets();
         }
 
@@ -27,6 +29,11 @@ namespace School_Management_System.Wpf.Views
             ApplyQuickLoginPreset();
             UsernameInput.Focus();
             UsernameInput.SelectAll();
+        }
+
+        private void LoginWindow_Unloaded(object sender, RoutedEventArgs e)
+        {
+            SchoolBranding.BrandingChanged -= SchoolBranding_BrandingChanged;
         }
 
         private void LoginWindow_SourceInitialized(object sender, System.EventArgs e)
@@ -176,6 +183,11 @@ namespace School_Management_System.Wpf.Views
             {
                 VisiblePasswordInput.Text = safePassword;
             }
+        }
+
+        private void SchoolBranding_BrandingChanged(object sender, System.EventArgs e)
+        {
+            ApplyBrandingAssets();
         }
     }
 }

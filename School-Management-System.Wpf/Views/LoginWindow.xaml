@@ -147,17 +147,18 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Border Width="96"
-                                    Height="96"
-                                    CornerRadius="24"
-                                    Background="White">
+                            <Grid Width="320"
+                                  Height="128"
+                                  VerticalAlignment="Center">
                                 <Image x:Name="BrandLogoImage"
                                        Stretch="Uniform"
-                                       Margin="8" />
-                            </Border>
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                            </Grid>
 
                             <StackPanel Grid.Column="1"
-                                        Margin="18,8,0,0">
+                                        Margin="26,10,0,0">
                                 <TextBlock Text="{Binding ApplicationTitle}"
                                            FontSize="24"
                                            FontWeight="Bold"
@@ -208,11 +209,11 @@
                                             CornerRadius="3" />
                                     <StackPanel Grid.Column="1"
                                                 Margin="14,0,0,0">
-                                        <TextBlock Text="Quick presets stay available"
+                                        <TextBlock Text="{Binding FeatureOneTitle}"
                                                    FontSize="16"
                                                    FontWeight="SemiBold"
                                                    Foreground="White" />
-                                        <TextBlock Text="Admin, Faculty, and Registrar credentials can still prefill instantly."
+                                        <TextBlock Text="{Binding FeatureOneBody}"
                                                    Margin="0,6,0,0"
                                                    TextWrapping="Wrap"
                                                    FontSize="13.5"
@@ -229,11 +230,11 @@
                                             CornerRadius="3" />
                                     <StackPanel Grid.Column="1"
                                                 Margin="14,0,0,0">
-                                        <TextBlock Text="Database profile stays visible"
+                                        <TextBlock Text="{Binding FeatureTwoTitle}"
                                                    FontSize="16"
                                                    FontWeight="SemiBold"
                                                    Foreground="White" />
-                                        <TextBlock Text="Choose Local, Network, Wi-Fi, or Online before you continue to the dashboard."
+                                        <TextBlock Text="{Binding FeatureTwoBody}"
                                                    Margin="0,6,0,0"
                                                    TextWrapping="Wrap"
                                                    FontSize="13.5"
@@ -250,11 +251,11 @@
                                             CornerRadius="3" />
                                     <StackPanel Grid.Column="1"
                                                 Margin="14,0,0,0">
-                                        <TextBlock Text="Simpler layout, better focus"
+                                        <TextBlock Text="{Binding FeatureThreeTitle}"
                                                    FontSize="16"
                                                    FontWeight="SemiBold"
                                                    Foreground="White" />
-                                        <TextBlock Text="The form is quieter now, with clearer grouping and less visual clutter."
+                                        <TextBlock Text="{Binding FeatureThreeBody}"
                                                    Margin="0,6,0,0"
                                                    TextWrapping="Wrap"
                                                    FontSize="13.5"
@@ -365,14 +366,14 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Text="Welcome back"
+                                <TextBlock Text="{Binding LoginFormTitle}"
                                            FontSize="32"
                                            FontWeight="Bold"
                                            Foreground="{StaticResource TextBrush}" />
 
                                 <TextBlock Grid.Row="1"
                                            Margin="0,10,0,0"
-                                           Text="Sign in with a quick preset or your existing school account."
+                                           Text="{Binding LoginFormSubtitle}"
                                            TextWrapping="Wrap"
                                            FontSize="15"
                                            Foreground="{StaticResource MutedTextBrush}" />

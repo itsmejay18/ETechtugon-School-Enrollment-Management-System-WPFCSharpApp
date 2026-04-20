@@ -1,4 +1,5 @@
 <UserControl x:Class="School_Management_System.Wpf.Views.Students.StudentDirectoryView"
+             x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
@@ -17,72 +18,119 @@
             <Setter Property="Background" Value="White" />
         </Style>
 
-        <Style x:Key="DetailCardStyle" TargetType="Border">
+        <Style x:Key="FieldCardStyle" TargetType="Border">
             <Setter Property="Background" Value="#FFF8FBFF" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Padding" Value="12" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Margin" Value="0,0,12,12" />
+        </Style>
+
+        <Style x:Key="FieldTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="FieldComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="MinHeight" Value="44" />
+        </Style>
+
+        <Style x:Key="FieldDatePickerStyle" TargetType="DatePicker">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="MinHeight" Value="44" />
+        </Style>
+
+        <Style x:Key="ModalActionButtonStyle" TargetType="Button" BasedOn="{StaticResource NeutralButtonStyle}">
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+        </Style>
+
+        <Style x:Key="ModalPrimaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+        </Style>
+
+        <Style x:Key="ModalDangerActionButtonStyle" TargetType="Button" BasedOn="{StaticResource DangerButtonStyle}">
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Margin" Value="0,0,10,0" />
         </Style>
     </UserControl.Resources>
 
-    <Border Style="{StaticResource CardBorderStyle}">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+    <Grid>
+        <Border Style="{StaticResource CardBorderStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-            <Grid Margin="0,0,0,18">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="340" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel>
-                    <TextBlock Text="Student directory"
-                               FontSize="26"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource TextBrush}" />
-                    <TextBlock Margin="0,8,0,0"
-                               Text="Live student records, selected profile details, and current-term enrolled subjects."
-                               TextWrapping="Wrap"
-                               Foreground="{StaticResource MutedTextBrush}" />
-                </StackPanel>
-
-                <Grid Grid.Column="1">
+                <Grid Margin="0,0,0,18">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="660" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBox Margin="0,0,10,0"
-                             Padding="12,8"
-                             VerticalContentAlignment="Center"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-                    <Button Grid.Column="1"
-                            Margin="0,0,10,0"
-                            Padding="18,10"
-                            Style="{StaticResource NeutralButtonStyle}"
-                            Command="{Binding SearchCommand}"
-                            Content="Search" />
-                    <Button Grid.Column="2"
-                            Padding="18,10"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Command="{Binding RefreshCommand}"
-                            Content="Refresh" />
+                    <StackPanel>
+                        <TextBlock Text="Student directory"
+                                   FontSize="26"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource TextBrush}" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="Add starts beside the filter, while selected students open in a modal where Edit and Delete are handled."
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+                    </StackPanel>
+
+                    <Grid Grid.Column="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Margin="0,0,10,0"
+                                 MinWidth="180"
+                                 Style="{StaticResource ToolbarTextBoxStyle}"
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1"
+                                Margin="0,0,10,0"
+                                Style="{StaticResource NeutralButtonStyle}"
+                                Command="{Binding SearchCommand}"
+                                Content="Search" />
+                        <Button Grid.Column="2"
+                                Margin="0,0,10,0"
+                                Style="{StaticResource NeutralButtonStyle}"
+                                Command="{Binding RefreshCommand}"
+                                Content="Refresh" />
+                        <Button Grid.Column="3"
+                                Margin="0,0,10,0"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding AddCommand}"
+                                Content="Add student" />
+                        <Button Grid.Column="4"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding OpenDetailsCommand}"
+                                Content="Open profile" />
+                    </Grid>
                 </Grid>
-            </Grid>
 
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.25*" />
-                    <ColumnDefinition Width="0.95*" />
-                </Grid.ColumnDefinitions>
-
-                <Border Style="{StaticResource CardBorderStyle}"
+                <Border Grid.Row="1"
+                        Style="{StaticResource CardBorderStyle}"
                         Padding="18">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -104,125 +152,331 @@
                         <DataGrid Grid.Row="1"
                                   AutoGenerateColumns="True"
                                   ItemsSource="{Binding Records}"
-                                  SelectedItem="{Binding SelectedRecord, Mode=TwoWay}" />
+                                  SelectedItem="{Binding SelectedRecord, Mode=TwoWay}"
+                                  MouseDoubleClick="RecordsGrid_OnMouseDoubleClick" />
                     </Grid>
                 </Border>
+            </Grid>
+        </Border>
 
-                <Grid Grid.Column="1"
-                      Margin="18,0,0,0">
+        <Popup IsOpen="{Binding IsDetailsModalOpen, Mode=OneWay}"
+               AllowsTransparency="True"
+               Placement="Center"
+               PlacementTarget="{Binding ElementName=Root}"
+               PopupAnimation="Fade"
+               StaysOpen="True">
+            <Border Margin="40"
+                    MaxWidth="1240"
+                    MaxHeight="860"
+                    Style="{StaticResource ModalCardBorderStyle}">
+                <Grid>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="1.02*" />
-                        <RowDefinition Height="0.98*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <Border Style="{StaticResource CardBorderStyle}"
-                            Padding="18">
+                    <Border Padding="30,28,30,24"
+                            BorderBrush="{StaticResource BorderBrushSoft}"
+                            BorderThickness="0,0,0,1">
                         <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="96" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="96" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                            <Border Width="84"
+                                    Height="84"
+                                    CornerRadius="24"
+                                    BorderBrush="{StaticResource BorderBrushSoft}"
+                                    BorderThickness="1"
+                                    Background="#FFF4F9FF">
+                                <Grid>
+                                    <Image Source="{Binding StudentPhoto}"
+                                           Stretch="UniformToFill"
+                                           Visibility="{Binding HasPhoto, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <TextBlock HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="34"
+                                               Foreground="{StaticResource PrimaryBrush}"
+                                               Text="&#xE77B;"
+                                               Visibility="{Binding HasPhoto, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                </Grid>
+                            </Border>
 
-                                <Border Width="84"
-                                        Height="84"
-                                        CornerRadius="18"
-                                        BorderBrush="{StaticResource BorderBrushSoft}"
-                                        BorderThickness="1"
-                                        Background="#FFF4F9FF">
-                                    <Grid>
-                                        <Image Source="{Binding StudentPhoto}"
-                                               Stretch="UniformToFill"
-                                               Visibility="{Binding HasPhoto, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                        <TextBlock HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   FontFamily="Segoe MDL2 Assets"
-                                                   FontSize="34"
-                                                   Foreground="{StaticResource PrimaryBrush}"
-                                                   Text="&#xE77B;"
-                                                   Visibility="{Binding HasPhoto, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-                                    </Grid>
-                                </Border>
-
-                                <StackPanel Grid.Column="1"
-                                            Margin="14,0,0,0"
-                                            VerticalAlignment="Center">
-                                    <TextBlock Text="Selected student"
-                                               FontSize="20"
-                                               FontWeight="Bold"
-                                               Foreground="{StaticResource TextBrush}" />
-                                    <TextBlock Margin="0,6,0,0"
-                                               Text="{Binding ProfileSummary}"
-                                               TextWrapping="Wrap"
-                                               Foreground="{StaticResource MutedTextBrush}" />
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1"
-                                       Margin="0,18,0,10"
-                                       Text="Profile fields"
-                                       FontSize="15"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource PrimaryBrush}" />
-
-                            <ScrollViewer Grid.Row="2"
-                                          VerticalScrollBarVisibility="Auto">
-                                <ItemsControl ItemsSource="{Binding DetailFields}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Style="{StaticResource DetailCardStyle}">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Label}"
-                                                               FontSize="12.5"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{StaticResource PrimaryBrush}" />
-                                                    <TextBlock Margin="0,6,0,0"
-                                                               Text="{Binding Value}"
-                                                               TextWrapping="Wrap"
-                                                               Foreground="{StaticResource TextBrush}" />
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="1"
-                            Margin="0,18,0,0"
-                            Style="{StaticResource CardBorderStyle}"
-                            Padding="18">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-
-                            <StackPanel Margin="0,0,0,12">
-                                <TextBlock Text="Current term enrolled subjects"
-                                           FontSize="20"
+                            <StackPanel Grid.Column="1"
+                                        Margin="16,0,0,0"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="{Binding DetailsModalTitle}"
+                                           FontSize="30"
                                            FontWeight="Bold"
                                            Foreground="{StaticResource TextBrush}" />
-                                <TextBlock Margin="0,6,0,0"
-                                           Text="This table is loaded from the same active academic term settings used by the school system."
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="{Binding DetailsModalSubtitle}"
                                            TextWrapping="Wrap"
                                            Foreground="{StaticResource MutedTextBrush}" />
                             </StackPanel>
 
-                            <DataGrid Grid.Row="1"
-                                      AutoGenerateColumns="True"
-                                      ItemsSource="{Binding EnrolledSubjects}" />
+                            <StackPanel Grid.Column="2"
+                                        Margin="18,0,0,0"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Top"
+                                        Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Button Style="{StaticResource ModalActionButtonStyle}"
+                                        Command="{Binding EditCommand}"
+                                        Content="Edit" />
+                                <Button Style="{StaticResource ModalDangerActionButtonStyle}"
+                                        Command="{Binding DeleteCommand}"
+                                        Content="Delete" />
+                            </StackPanel>
+
+                            <Button Grid.Column="3"
+                                    Margin="18,0,0,0"
+                                    VerticalAlignment="Top"
+                                    Style="{StaticResource ModalCloseButtonStyle}"
+                                    Command="{Binding CloseModalCommand}" />
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1"
+                                  Padding="30,24,30,24"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <Border Style="{StaticResource ModalSectionBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Student form"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource TextBrush}" />
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="{Binding ModalStatusMessage}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+
+                                    <StackPanel Margin="0,18,0,0"
+                                                Orientation="Horizontal"
+                                                Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Button Style="{StaticResource ModalActionButtonStyle}"
+                                                Command="{Binding UploadPhotoCommand}"
+                                                Content="Upload photo" />
+                                        <Button Style="{StaticResource ModalDangerActionButtonStyle}"
+                                                Command="{Binding RemovePhotoCommand}"
+                                                Content="Remove photo" />
+                                    </StackPanel>
+
+                                    <Grid Margin="0,18,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <Border Style="{StaticResource FieldCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="Student Number"
+                                                           FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                                <TextBox Margin="0,8,0,0"
+                                                         Style="{StaticResource FieldTextBoxStyle}"
+                                                         IsReadOnly="True"
+                                                         Text="{Binding StudentNumber}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Column="1"
+                                                Style="{StaticResource FieldCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="First Name"
+                                                           FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                                <TextBox Margin="0,8,0,0"
+                                                         Style="{StaticResource FieldTextBoxStyle}"
+                                                         IsReadOnly="{Binding IsEditorReadOnly}"
+                                                         Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="1"
+                                                Style="{StaticResource FieldCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="Last Name"
+                                                           FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                                <TextBox Margin="0,8,0,0"
+                                                         Style="{StaticResource FieldTextBoxStyle}"
+                                                         IsReadOnly="{Binding IsEditorReadOnly}"
+                                                         Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="1"
+                                                Grid.Column="1"
+                                                Style="{StaticResource FieldCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="Middle Name"
+                                                           FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                                <TextBox Margin="0,8,0,0"
+                                                         Style="{StaticResource FieldTextBoxStyle}"
+                                                         IsReadOnly="{Binding IsEditorReadOnly}"
+                                                         Text="{Binding MiddleName, UpdateSourceTrigger=PropertyChanged}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="2"
+                                                Style="{StaticResource FieldCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="Gender"
+                                                           FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                                <ComboBox Margin="0,8,0,0"
+                                                          Style="{StaticResource FieldComboBoxStyle}"
+                                                          IsEnabled="{Binding IsEditorActive}"
+                                                          ItemsSource="{Binding GenderOptions}"
+                                                          SelectedItem="{Binding SelectedGender, UpdateSourceTrigger=PropertyChanged}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="2"
+                                                Grid.Column="1"
+                                                Style="{StaticResource FieldCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="Birth Date"
+                                                           FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                                <DatePicker Margin="0,8,0,0"
+                                                            Style="{StaticResource FieldDatePickerStyle}"
+                                                            IsEnabled="{Binding IsEditorActive}"
+                                                            SelectedDate="{Binding BirthDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="3"
+                                                Style="{StaticResource FieldCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="Email"
+                                                           FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                                <TextBox Margin="0,8,0,0"
+                                                         Style="{StaticResource FieldTextBoxStyle}"
+                                                         IsReadOnly="{Binding IsEditorReadOnly}"
+                                                         Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="3"
+                                                Grid.Column="1"
+                                                Style="{StaticResource FieldCardStyle}">
+                                            <StackPanel>
+                                                <TextBlock Text="Phone"
+                                                           FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                                <TextBox Margin="0,8,0,0"
+                                                         Style="{StaticResource FieldTextBoxStyle}"
+                                                         IsReadOnly="{Binding IsEditorReadOnly}"
+                                                         Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="4"
+                                                Grid.ColumnSpan="2"
+                                                Style="{StaticResource FieldCardStyle}"
+                                                Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <TextBlock Text="Address"
+                                                           FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                                <TextBox Margin="0,8,0,0"
+                                                         Height="110"
+                                                         AcceptsReturn="True"
+                                                         TextWrapping="Wrap"
+                                                         VerticalScrollBarVisibility="Auto"
+                                                         Style="{StaticResource FieldTextBoxStyle}"
+                                                         IsReadOnly="{Binding IsEditorReadOnly}"
+                                                         Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource ModalSectionBorderStyle}"
+                                    Margin="0">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="Current term enrolled subjects"
+                                                   FontSize="18"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource TextBrush}" />
+                                        <TextBlock Margin="0,8,0,0"
+                                                   Text="Subject rows stay visible in the modal for existing students. New students will show this section after they are saved and enrolled."
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource MutedTextBrush}" />
+                                    </StackPanel>
+
+                                    <DataGrid Grid.Row="1"
+                                              Height="280"
+                                              AutoGenerateColumns="True"
+                                              ItemsSource="{Binding EnrolledSubjects}" />
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="2"
+                            Padding="24"
+                            BorderBrush="{StaticResource BorderBrushSoft}"
+                            BorderThickness="0,1,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="{Binding ModalStatusMessage}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+
+                            <StackPanel Grid.Column="1"
+                                        Margin="18,0,0,0"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Button Style="{StaticResource ModalActionButtonStyle}"
+                                        Command="{Binding CancelCommand}"
+                                        Content="Cancel" />
+                                <Button Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding SaveCommand}"
+                                        Content="Save" />
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </Grid>
-            </Grid>
-        </Grid>
-    </Border>
+            </Border>
+        </Popup>
+    </Grid>
 </UserControl>

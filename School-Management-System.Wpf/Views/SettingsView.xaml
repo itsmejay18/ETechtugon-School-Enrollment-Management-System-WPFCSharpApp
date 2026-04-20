@@ -1,21 +1,77 @@
 <UserControl x:Class="School_Management_System.Wpf.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:viewsCourses="clr-namespace:School_Management_System.Wpf.Views.Courses">
+             xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
+             xmlns:vmCourses="clr-namespace:School_Management_System.Wpf.ViewModels.Courses"
+             xmlns:vmSettings="clr-namespace:School_Management_System.Wpf.ViewModels.Settings"
+             xmlns:viewsCourses="clr-namespace:School_Management_System.Wpf.Views.Courses"
+             xmlns:viewsSettings="clr-namespace:School_Management_System.Wpf.Views.Settings">
     <UserControl.Resources>
-        <DataTemplate x:Key="PlaceholderTemplate">
-            <ContentControl Content="{Binding}" />
+        <DataTemplate DataType="{x:Type vmCourses:CourseManagementViewModel}">
+            <viewsCourses:CourseManagementView />
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmSettings:CompanyBrandingViewModel}">
+            <viewsSettings:CompanyBrandingView />
+        </DataTemplate>
+
+        <Style x:Key="TopSectionNavListStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+        </Style>
+
+        <Style x:Key="TopSectionNavItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Padding" Value="10,9" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="Background" Value="#FFFFFFFF" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="16"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#FFF4FAFF" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="#FF7CB6E8" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#FF1D5FA8" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="#FF1D5FA8" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Border Style="{StaticResource CardBorderStyle}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel Margin="0,0,0,18">
+            <StackPanel Margin="0,0,0,16">
                 <TextBlock Text="Settings"
                            FontSize="26"
                            FontWeight="Bold"
@@ -26,35 +82,74 @@
                            Foreground="{StaticResource MutedTextBrush}" />
             </StackPanel>
 
-            <TabControl Grid.Row="1">
-                <TabItem Header="System">
-                    <ContentControl Content="{Binding SystemModule}" />
-                </TabItem>
-                <TabItem Header="Database">
-                    <ContentControl Content="{Binding DatabaseModule}" />
-                </TabItem>
-                <TabItem Header="Departments">
-                    <ContentControl Content="{Binding DepartmentsModule}" />
-                </TabItem>
-                <TabItem Header="Courses">
-                    <viewsCourses:CourseManagementView DataContext="{Binding CourseManagement}" />
-                </TabItem>
-                <TabItem Header="Year Levels">
-                    <ContentControl Content="{Binding YearLevelsModule}" />
-                </TabItem>
-                <TabItem Header="Sections">
-                    <ContentControl Content="{Binding SectionsModule}" />
-                </TabItem>
-                <TabItem Header="Subjects">
-                    <ContentControl Content="{Binding SubjectsModule}" />
-                </TabItem>
-                <TabItem Header="Curriculum">
-                    <ContentControl Content="{Binding CurriculumModule}" />
-                </TabItem>
-                <TabItem Header="User Management">
-                    <ContentControl Content="{Binding UserManagementModule}" />
-                </TabItem>
-            </TabControl>
+            <Grid Grid.Row="1"
+                  Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ListBox Style="{StaticResource TopSectionNavListStyle}"
+                         HorizontalAlignment="Stretch"
+                         ItemContainerStyle="{StaticResource TopSectionNavItemStyle}"
+                         ItemsSource="{Binding Sections}"
+                         SelectedItem="{Binding SelectedSection, Mode=TwoWay}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <primitives:UniformGrid Columns="10" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="22" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock x:Name="GlyphBlock"
+                                           VerticalAlignment="Center"
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="13"
+                                           Foreground="{StaticResource PrimaryBrush}"
+                                           Text="{Binding Glyph}" />
+
+                                <TextBlock x:Name="TitleBlock"
+                                           Grid.Column="1"
+                                           Margin="8,0,0,0"
+                                           VerticalAlignment="Center"
+                                           FontSize="13"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource TextBrush}"
+                                           Text="{Binding Title}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                                    <Setter TargetName="GlyphBlock" Property="Foreground" Value="White" />
+                                    <Setter TargetName="TitleBlock" Property="Foreground" Value="White" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Border Grid.Column="1"
+                        Margin="8,0,0,0"
+                        Padding="10,7"
+                        VerticalAlignment="Top"
+                        CornerRadius="14"
+                        Background="#FFF4F9FF"
+                        BorderBrush="{StaticResource BorderBrushSoft}"
+                        BorderThickness="1">
+                    <TextBlock Text="{Binding SectionCountText}"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}" />
+                </Border>
+            </Grid>
+
+            <ContentControl Grid.Row="2"
+                            Content="{Binding SelectedSectionModule}" />
         </Grid>
     </Border>
 </UserControl>

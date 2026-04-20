@@ -26,6 +26,7 @@ namespace School_Management_System.Wpf.Views
 
         private void DashboardHomeView_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
+            SchoolBranding.BrandingChanged += SchoolBranding_BrandingChanged;
             ApplyBrandingAssets();
             RefreshDashboard();
             _clockTimer.Start();
@@ -34,6 +35,7 @@ namespace School_Management_System.Wpf.Views
         private void DashboardHomeView_Unloaded(object sender, System.Windows.RoutedEventArgs e)
         {
             _clockTimer.Stop();
+            SchoolBranding.BrandingChanged -= SchoolBranding_BrandingChanged;
         }
 
         private void ClockTimer_Tick(object sender, EventArgs e)
@@ -57,11 +59,12 @@ namespace School_Management_System.Wpf.Views
 
         private void ApplyBrandingAssets()
         {
-            var logo = BrandingAssetLoader.LoadBrandLogo();
-            if (logo != null)
-            {
-                HeroBrandLogoImage.Source = logo;
-            }
+            HeroBrandLogoImage.Source = BrandingAssetLoader.LoadCompanyLogo();
+        }
+
+        private void SchoolBranding_BrandingChanged(object sender, EventArgs e)
+        {
+            ApplyBrandingAssets();
         }
     }
 }

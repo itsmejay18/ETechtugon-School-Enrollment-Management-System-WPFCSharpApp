@@ -43,7 +43,6 @@
                 </StackPanel>
 
                 <Button Grid.Column="1"
-                        Padding="18,10"
                         Style="{StaticResource PrimaryButtonStyle}"
                         Command="{Binding RefreshCommand}"
                         Content="Refresh all" />

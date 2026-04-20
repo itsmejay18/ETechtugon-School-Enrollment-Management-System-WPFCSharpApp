@@ -9,7 +9,7 @@ using School_Management_System.Wpf.Infrastructure;
 
 namespace School_Management_System.Wpf.ViewModels.Courses
 {
-    public sealed class CourseManagementViewModel : ViewModelBase
+    public sealed class CourseManagementViewModel : ViewModelBase, Shared.IModalStateHost
     {
         private readonly CourseService _courseService;
         private readonly DepartmentService _departmentService;
@@ -21,6 +21,7 @@ namespace School_Management_System.Wpf.ViewModels.Courses
         private string _description;
         private DepartmentOptionViewModel _selectedDepartment;
         private bool _isEditorActive;
+        private bool _isEditorModalOpen;
         private string _statusMessage;
         private int _editingCourseId;
 
@@ -77,6 +78,8 @@ namespace School_Management_System.Wpf.ViewModels.Courses
                         PreviewSelected();
                     }
 
+                    OnPropertyChanged(nameof(EditorModalTitle));
+                    OnPropertyChanged(nameof(EditorModalSubtitle));
                     RaiseCommandStates();
                 }
             }
@@ -115,9 +118,28 @@ namespace School_Management_System.Wpf.ViewModels.Courses
                 {
                     OnPropertyChanged(nameof(IsEditorReadOnly));
                     OnPropertyChanged(nameof(EditorModeText));
+                    OnPropertyChanged(nameof(EditorModalTitle));
+                    OnPropertyChanged(nameof(EditorModalSubtitle));
                     RaiseCommandStates();
                 }
             }
+        }
+
+        public bool IsEditorModalOpen
+        {
+            get { return _isEditorModalOpen; }
+            private set
+            {
+                if (SetProperty(ref _isEditorModalOpen, value))
+                {
+                    OnPropertyChanged(nameof(IsModalOpen));
+                }
+            }
+        }
+
+        public bool IsModalOpen
+        {
+            get { return IsEditorModalOpen; }
         }
 
         public bool IsEditorReadOnly
@@ -132,6 +154,36 @@ namespace School_Management_System.Wpf.ViewModels.Courses
                 return IsEditorActive
                     ? "Editing is enabled. Save to commit changes or Cancel to return to preview mode."
                     : "Preview mode. Select a row to inspect details, then click Edit to modify.";
+            }
+        }
+
+        public string EditorModalTitle
+        {
+            get
+            {
+                if (_editingCourseId == 0)
+                {
+                    return "New course";
+                }
+
+                return SelectedCourse == null || string.IsNullOrWhiteSpace(SelectedCourse.CourseName)
+                    ? "Edit course"
+                    : SelectedCourse.CourseName;
+            }
+        }
+
+        public string EditorModalSubtitle
+        {
+            get
+            {
+                if (_editingCourseId == 0)
+                {
+                    return "Create a new course record inside the modal editor.";
+                }
+
+                return SelectedCourse == null || string.IsNullOrWhiteSpace(SelectedCourse.CourseCode)
+                    ? "Update the selected course information."
+                    : SelectedCourse.CourseCode + " is ready for editing in the modal workspace.";
             }
         }
 
@@ -196,12 +248,18 @@ namespace School_Management_System.Wpf.ViewModels.Courses
                     SelectedCourse = null;
                     ResetEditorFields();
                     IsEditorActive = false;
+                    IsEditorModalOpen = false;
                     StatusMessage = "No courses found. Click Add to create the first course in this workspace.";
                     return;
                 }
 
                 var match = Courses.FirstOrDefault(c => c.CourseId == selectedCourseId) ?? Courses.FirstOrDefault();
                 SelectedCourse = match;
+                if (!IsEditorActive)
+                {
+                    IsEditorModalOpen = false;
+                }
+
                 StatusMessage = "Courses loaded successfully from the current school database.";
             }
             catch (Exception ex)
@@ -220,6 +278,7 @@ namespace School_Management_System.Wpf.ViewModels.Courses
             SelectedCourse = null;
             ResetEditorFields();
             IsEditorActive = true;
+            IsEditorModalOpen = true;
             StatusMessage = "Creating a new course.";
         }
 
@@ -233,12 +292,14 @@ namespace School_Management_System.Wpf.ViewModels.Courses
             _editingCourseId = SelectedCourse.CourseId;
             PreviewSelected();
             IsEditorActive = true;
+            IsEditorModalOpen = true;
             StatusMessage = "Editing course " + SelectedCourse.CourseCode + ".";
         }
 
         private void CancelEdit()
         {
             IsEditorActive = false;
+            IsEditorModalOpen = false;
 
             if (SelectedCourse != null)
             {
@@ -311,6 +372,7 @@ namespace School_Management_System.Wpf.ViewModels.Courses
                 }
 
                 IsEditorActive = false;
+                IsEditorModalOpen = false;
                 RefreshCourses();
                 SelectedCourse = Courses.FirstOrDefault(c => c.CourseId == selectedCourseId) ?? Courses.FirstOrDefault();
             }

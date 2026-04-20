@@ -95,6 +95,39 @@ namespace School_Management_System.Wpf.Services
             return true;
         }
 
+        public BrandingProfile LoadBranding(ConnectionProfile profile)
+        {
+            if (profile == null)
+            {
+                var defaults = BrandingProfile.CreateDefault();
+                SchoolBranding.Apply(defaults);
+                return defaults;
+            }
+
+            try
+            {
+                ApplyRuntimeSelection(profile);
+
+                var database = DatabaseHelper.FromConfig();
+                string errorMessage;
+                if (!database.TestConnection(out errorMessage))
+                {
+                    SchoolBranding.Reset();
+                    return SchoolBranding.Current;
+                }
+
+                SchemaMigrationRunner.EnsureCurrent(database);
+                var branding = new BrandingProfileService(new BrandingProfileData(database)).GetCurrent();
+                SchoolBranding.Apply(branding);
+                return branding;
+            }
+            catch
+            {
+                SchoolBranding.Reset();
+                return SchoolBranding.Current;
+            }
+        }
+
         private static ConnectionProfile BuildLocalProfile()
         {
             return new ConnectionProfile(

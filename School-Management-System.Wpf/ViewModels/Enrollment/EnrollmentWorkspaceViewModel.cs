@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
@@ -6,8 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using School_Management_System.BusinessLayer.Services;
+using School_Management_System.Common;
 using School_Management_System.Models;
 using School_Management_System.Wpf.Infrastructure;
+using School_Management_System.Wpf.Views.Enrollment;
 using School_Management_System.Wpf.ViewModels.Shared;
 
 namespace School_Management_System.Wpf.ViewModels.Enrollment
@@ -34,6 +37,8 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         private string _statusMessage;
         private string _selectedStudentSummary;
         private string _summaryText;
+        private bool _enrollmentSaved;
+        private string _savedEnrollmentNumber;
 
         public EnrollmentWorkspaceViewModel(StudentService studentService, EnrollmentService enrollmentService, CourseService courseService, LookupService lookupService, SectionService sectionService, CurriculumService curriculumService, ClassScheduleService classScheduleService, SystemSettingService systemSettingService)
         {
@@ -57,6 +62,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             RefreshLookupsCommand = new RelayCommand(RefreshLookups);
             LoadSubjectsCommand = new RelayCommand(LoadSubjects);
             SaveEnrollmentCommand = new RelayCommand(SaveEnrollment, () => CanSaveEnrollment);
+            PrintCorCommand = new RelayCommand(PrintCor, () => CanPrintCor);
 
             UseSectionMode = true;
             SelectedStudentSummary = "Select a student to begin building an enrollment.";
@@ -75,6 +81,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         public RelayCommand RefreshLookupsCommand { get; private set; }
         public RelayCommand LoadSubjectsCommand { get; private set; }
         public RelayCommand SaveEnrollmentCommand { get; private set; }
+        public RelayCommand PrintCorCommand { get; private set; }
 
         public string StudentSearchText { get { return _studentSearchText; } set { SetProperty(ref _studentSearchText, value); } }
         public DataView StudentRecords { get { return _studentRecords; } private set { SetProperty(ref _studentRecords, value); } }
@@ -85,6 +92,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             {
                 if (SetProperty(ref _selectedStudent, value))
                 {
+                    InvalidateSavedEnrollment();
                     UpdateSelectedStudentSummary();
                     RaiseCommandStates();
                 }
@@ -125,7 +133,8 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         public string SummaryText { get { return _summaryText; } private set { SetProperty(ref _summaryText, value); } }
         public string TotalUnitsText { get { return AvailableSubjects.Where(s => s.IsSelected).Sum(s => s.Units) + " total unit(s) selected"; } }
         public string EnrollmentNumberPreview { get { return _enrollmentService.GetNextEnrollmentNumber(); } }
-        public bool CanSaveEnrollment { get { return SelectedStudent != null && AvailableSubjects.Any(s => s.IsSelected); } }
+        public bool CanSaveEnrollment { get { return !_enrollmentSaved && SelectedStudent != null && AvailableSubjects.Any(s => s.IsSelected); } }
+        public bool CanPrintCor { get { return SelectedStudent != null && AvailableSubjects.Any(s => s.IsSelected); } }
 
         private void LoadStudents()
         {
@@ -184,6 +193,8 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
 
         private void LoadSubjects()
         {
+            InvalidateSavedEnrollment();
+
             foreach (var item in AvailableSubjects)
             {
                 item.PropertyChanged -= SubjectItem_PropertyChanged;
@@ -265,11 +276,16 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
 
         private void SaveEnrollment()
         {
-            if (!CanSaveEnrollment || SelectedStudent == null) return;
+            TrySaveEnrollment(true);
+        }
+
+        private bool TrySaveEnrollment(bool showSavedMessage)
+        {
+            if (!CanSaveEnrollment || SelectedStudent == null) return false;
 
             try
             {
-                var details = AvailableSubjects.Where(s => s.IsSelected).Select(s => new EnrollmentDetail { SubjectId = s.SubjectId, Units = s.Units, ClassScheduleId = s.ClassScheduleId }).ToList();
+                var details = BuildSelectedEnrollmentDetails();
                 var enrollment = new School_Management_System.Models.Enrollment
                 {
                     EnrollmentNumber = _enrollmentService.GetNextEnrollmentNumber(),
@@ -287,17 +303,27 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                 if (!validation.IsValid)
                 {
                     MessageBox.Show(validation.ToString(), "Enrollment Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
+                    return false;
                 }
 
                 _enrollmentService.Save(enrollment, details);
+                _enrollmentSaved = true;
+                _savedEnrollmentNumber = enrollment.EnrollmentNumber;
                 StatusMessage = "Enrollment saved successfully as " + enrollment.EnrollmentNumber + ".";
                 SummaryText = BuildSummaryText(enrollment.EnrollmentNumber);
-                MessageBox.Show("Enrollment saved successfully.\n\n" + enrollment.EnrollmentNumber, "Enrollment Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+                RaiseCommandStates();
+
+                if (showSavedMessage)
+                {
+                    MessageBox.Show("Enrollment saved successfully.\n\n" + enrollment.EnrollmentNumber, "Enrollment Saved", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+
+                return true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Enrollment", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
             }
         }
 
@@ -317,7 +343,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
 
         private void BuildSummary()
         {
-            SummaryText = BuildSummaryText(EnrollmentNumberPreview);
+            SummaryText = BuildSummaryText(_enrollmentSaved ? _savedEnrollmentNumber : EnrollmentNumberPreview);
         }
 
         private string BuildSummaryText(string enrollmentNumber)
@@ -331,6 +357,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             sb.AppendLine("Semester: " + (SelectedSemester == null ? "(none)" : SelectedSemester.Title));
             sb.AppendLine("Section: " + (SelectedSection == null ? "(none)" : SelectedSection.Title));
             sb.AppendLine("Selection Mode: " + (UseSectionMode ? "By Section" : "By Subject"));
+            sb.AppendLine("Status: " + (_enrollmentSaved ? "Posted / Ready for COR printing" : "Pending save"));
             sb.AppendLine("Subjects Selected: " + AvailableSubjects.Count(s => s.IsSelected));
             sb.AppendLine("Total Units: " + AvailableSubjects.Where(s => s.IsSelected).Sum(s => s.Units));
             return sb.ToString().Trim();
@@ -346,16 +373,182 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         {
             if (string.Equals(e.PropertyName, nameof(EnrollmentSubjectOptionViewModel.IsSelected), StringComparison.Ordinal))
             {
+                InvalidateSavedEnrollment();
                 OnPropertyChanged(nameof(TotalUnitsText));
                 BuildSummary();
                 RaiseCommandStates();
             }
         }
 
+        private void PrintCor()
+        {
+            if (!CanPrintCor)
+            {
+                return;
+            }
+
+            try
+            {
+                if (!_enrollmentSaved)
+                {
+                    var saveFirst = MessageBox.Show(
+                        "The enrollment must be saved before printing the COR.\n\nSave it now?",
+                        "Print COR",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+                    if (saveFirst != MessageBoxResult.Yes)
+                    {
+                        return;
+                    }
+
+                    if (!TrySaveEnrollment(false))
+                    {
+                        return;
+                    }
+                }
+
+                var corData = BuildCorPreviewData(_savedEnrollmentNumber ?? EnrollmentNumberPreview, true);
+                if (corData == null || (corData.Subjects.Count == 0 && corData.SummaryRows.Count == 0))
+                {
+                    MessageBox.Show("Nothing to print yet. Select a student and subjects first.", "Print COR", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                var preview = new CorPrintPreviewWindow(corData)
+                {
+                    Owner = Application.Current != null ? Application.Current.MainWindow : null
+                };
+
+                preview.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unable to print the Certificate of Registration.\n\n" + ex.Message, "Print COR", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void RaiseCommandStates()
         {
             SaveEnrollmentCommand.RaiseCanExecuteChanged();
+            PrintCorCommand.RaiseCanExecuteChanged();
             OnPropertyChanged(nameof(CanSaveEnrollment));
+            OnPropertyChanged(nameof(CanPrintCor));
+        }
+
+        private void InvalidateSavedEnrollment()
+        {
+            _enrollmentSaved = false;
+            _savedEnrollmentNumber = null;
+        }
+
+        private List<EnrollmentDetail> BuildSelectedEnrollmentDetails()
+        {
+            return AvailableSubjects
+                .Where(s => s.IsSelected)
+                .Select(s => new EnrollmentDetail
+                {
+                    SubjectId = s.SubjectId,
+                    Units = s.Units,
+                    ClassScheduleId = s.ClassScheduleId
+                })
+                .ToList();
+        }
+
+        private CorPrintPreviewData BuildCorPreviewData(string enrollmentNumber, bool includeSavedNotice)
+        {
+            var details = AvailableSubjects.Where(s => s.IsSelected).ToList();
+            if (SelectedStudent == null || details.Count == 0)
+            {
+                return null;
+            }
+
+            var totalUnits = details.Sum(s => s.Units);
+            var tuitionPerUnit = _systemSettingService.GetDecimal(AppConstants.SettingKeys.TuitionPerUnit, 650m);
+            var miscellaneousFee = _systemSettingService.GetDecimal(AppConstants.SettingKeys.MiscellaneousFee, 1850m);
+            var registrationFee = _systemSettingService.GetDecimal(AppConstants.SettingKeys.RegistrationFee, 350m);
+            var laboratoryFee = _systemSettingService.GetDecimal(AppConstants.SettingKeys.LaboratoryFee, 0m);
+            var tuitionAmount = totalUnits * tuitionPerUnit;
+            var totalAssessment = tuitionAmount + miscellaneousFee + registrationFee + laboratoryFee;
+
+            var studentNumber = SelectedStudent == null ? string.Empty : Convert.ToString(SelectedStudent["StudentNumber"]);
+            var studentName = SelectedStudent == null
+                ? string.Empty
+                : Convert.ToString(SelectedStudent["LastName"]) + ", " + Convert.ToString(SelectedStudent["FirstName"]);
+
+            var data = new CorPrintPreviewData();
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Enrollment Number", Value = enrollmentNumber ?? string.Empty });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Student Number", Value = studentNumber });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Student Name", Value = studentName });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Course", Value = SelectedCourse == null ? string.Empty : SelectedCourse.DisplayName });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Academic Year", Value = SelectedAcademicYear == null ? string.Empty : SelectedAcademicYear.Title });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Year Level", Value = SelectedYearLevel == null ? string.Empty : SelectedYearLevel.Title });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Semester", Value = SelectedSemester == null ? string.Empty : SelectedSemester.Title });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Section", Value = SelectedSection == null ? string.Empty : SelectedSection.DisplayName });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Enrollment Type", Value = UseSectionMode ? "By Section (Regular)" : "By Subject (Irregular)" });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Status", Value = includeSavedNotice ? "Posted / Ready for COR printing" : "Pending save" });
+
+            foreach (var subject in details)
+            {
+                data.Subjects.Add(new CorPrintSubjectRow
+                {
+                    Code = subject.SubjectCode,
+                    Subject = subject.SubjectName,
+                    Units = subject.Units.ToString(),
+                    Schedule = string.IsNullOrWhiteSpace(subject.ScheduleText) ? "-" : subject.ScheduleText
+                });
+            }
+
+            data.AssessmentRows.Add(new CorPrintAssessmentRow
+            {
+                Item = "Total Units",
+                Basis = totalUnits + " unit(s)",
+                Amount = "-",
+                IsEmphasized = false
+            });
+            data.AssessmentRows.Add(new CorPrintAssessmentRow
+            {
+                Item = "Tuition",
+                Basis = totalUnits + " x " + tuitionPerUnit.ToString("N2"),
+                Amount = tuitionAmount.ToString("N2"),
+                IsEmphasized = false
+            });
+            data.AssessmentRows.Add(new CorPrintAssessmentRow
+            {
+                Item = "Miscellaneous Fee",
+                Basis = "School fees",
+                Amount = miscellaneousFee.ToString("N2"),
+                IsEmphasized = false
+            });
+            data.AssessmentRows.Add(new CorPrintAssessmentRow
+            {
+                Item = "Registration Fee",
+                Basis = "Processing",
+                Amount = registrationFee.ToString("N2"),
+                IsEmphasized = false
+            });
+            data.AssessmentRows.Add(new CorPrintAssessmentRow
+            {
+                Item = "Laboratory Fee",
+                Basis = "Laboratory usage",
+                Amount = laboratoryFee.ToString("N2"),
+                IsEmphasized = false
+            });
+            data.AssessmentRows.Add(new CorPrintAssessmentRow
+            {
+                Item = "Total Assessment",
+                Basis = "Amount due",
+                Amount = totalAssessment.ToString("N2"),
+                IsEmphasized = true
+            });
+
+            if (includeSavedNotice)
+            {
+                data.Notices.Add("Enrollment saved successfully.");
+                data.Notices.Add("You may now print the Certificate of Registration.");
+            }
+
+            return data;
         }
 
         private static void LoadLookupOptions(ObservableCollection<LookupOptionViewModel> target, DataTable table, string idColumn, string titleColumn, string subtitleColumn)

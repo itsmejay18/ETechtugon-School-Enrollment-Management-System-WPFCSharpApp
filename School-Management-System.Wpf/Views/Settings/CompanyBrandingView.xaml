@@ -1,0 +1,306 @@
+<UserControl x:Class="School_Management_System.Wpf.Views.Settings.CompanyBrandingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="BrandingLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+
+        <Style x:Key="BrandingInputStyle" TargetType="TextBox" BasedOn="{StaticResource ToolbarTextBoxStyle}">
+            <Setter Property="Margin" Value="0,8,0,0" />
+            <Setter Property="MinHeight" Value="44" />
+        </Style>
+
+        <Style x:Key="BrandingSectionStyle" TargetType="Border" BasedOn="{StaticResource ModalSectionBorderStyle}">
+            <Setter Property="Margin" Value="0,0,0,20" />
+            <Setter Property="Padding" Value="22" />
+        </Style>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource CardBorderStyle}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Company branding"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Margin="0,8,0,0"
+                           Text="Customize the stored company logos and the text shown on the landing screen, shell header, and shared branding surfaces."
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource MutedTextBrush}" />
+
+                <Border Margin="0,18,0,20"
+                        Padding="16,12"
+                        Background="#FFF8FBFF"
+                        BorderBrush="{StaticResource BorderBrushSoft}"
+                        BorderThickness="1"
+                        CornerRadius="16">
+                    <TextBlock Text="{Binding StatusMessage}"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                </Border>
+
+                <Border Style="{StaticResource BrandingSectionStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.4*" />
+                            <ColumnDefinition Width="0.9*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Margin="0,0,20,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Margin="0,0,14,16">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Company name" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding CompanyName, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Margin="0,0,0,16">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Landing subtitle" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding ApplicationTagline, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Margin="0,0,14,16">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Header subtitle" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding ShellWorkspaceTagline, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,16">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Serial / license number" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding ClientSerialNumber, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Margin="0,0,14,16">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Support email" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding SupportEmail, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,16">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Support phone" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding SupportPhoneNumber, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="2">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Company address" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}"
+                                         MinHeight="92"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         VerticalContentAlignment="Top"
+                                         Text="{Binding CompanyAddress, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Branding assets"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="These images are stored in MySQL and reused as the header branding image and the dashboard company logo."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+
+                            <UniformGrid Margin="0,18,0,0"
+                                         Columns="2">
+                                <StackPanel Margin="0,0,10,0">
+                                    <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Header branding logo" />
+                                    <Border Height="152"
+                                            Margin="0,8,0,0"
+                                            Background="#FFF8FBFF"
+                                            BorderBrush="{StaticResource BorderBrushSoft}"
+                                            BorderThickness="1"
+                                            CornerRadius="18">
+                                        <Grid>
+                                            <Image Source="{Binding BrandLogo}"
+                                                   Stretch="Uniform"
+                                                   Margin="10"
+                                                   Visibility="{Binding HasBrandLogo, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBlock HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Text="No logo"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       Visibility="{Binding HasBrandLogo, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                        </Grid>
+                                    </Border>
+                                    <WrapPanel Margin="0,12,0,0">
+                                        <Button Style="{StaticResource NeutralButtonStyle}"
+                                                MinWidth="130"
+                                                Margin="0,0,10,0"
+                                                Command="{Binding UploadBrandLogoCommand}"
+                                                Content="Upload header branding" />
+                                        <Button Style="{StaticResource DangerButtonStyle}"
+                                                MinWidth="110"
+                                                Command="{Binding RemoveBrandLogoCommand}"
+                                                Content="Remove" />
+                                    </WrapPanel>
+                                </StackPanel>
+
+                                <StackPanel Margin="10,0,0,0">
+                                    <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Dashboard company logo" />
+                                    <Border Height="152"
+                                            Margin="0,8,0,0"
+                                            Background="#FFF8FBFF"
+                                            BorderBrush="{StaticResource BorderBrushSoft}"
+                                            BorderThickness="1"
+                                            CornerRadius="18">
+                                        <Grid>
+                                            <Image Source="{Binding CompactLogo}"
+                                                   Stretch="Uniform"
+                                                   Margin="10"
+                                                   Visibility="{Binding HasCompactLogo, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBlock HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Text="No branding logo"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       Visibility="{Binding HasCompactLogo, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                        </Grid>
+                                    </Border>
+                                    <WrapPanel Margin="0,12,0,0">
+                                        <Button Style="{StaticResource NeutralButtonStyle}"
+                                                MinWidth="130"
+                                                Margin="0,0,10,0"
+                                                Command="{Binding UploadCompactLogoCommand}"
+                                                Content="Upload dashboard logo" />
+                                        <Button Style="{StaticResource DangerButtonStyle}"
+                                                MinWidth="110"
+                                                Command="{Binding RemoveCompactLogoCommand}"
+                                                Content="Remove" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </UniformGrid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource BrandingSectionStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Margin="0,0,14,0">
+                            <TextBlock Text="Landing hero copy"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="These values control the large left-side panel on the landing screen."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+
+                            <TextBlock Margin="0,18,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Headline" />
+                            <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding LoginHeadline, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Body" />
+                            <TextBox Style="{StaticResource BrandingInputStyle}"
+                                     MinHeight="110"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     VerticalContentAlignment="Top"
+                                     Text="{Binding LoginBody, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                            <TextBlock Text="Login form copy"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="These values control the right-side form title and subtitle."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedTextBrush}" />
+
+                            <TextBlock Margin="0,18,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Form title" />
+                            <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding LoginFormTitle, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Form subtitle" />
+                            <TextBox Style="{StaticResource BrandingInputStyle}"
+                                     MinHeight="110"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     VerticalContentAlignment="Top"
+                                     Text="{Binding LoginFormSubtitle, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Style="{StaticResource BrandingSectionStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Feature highlights"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource TextBrush}" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="These three highlights appear under the landing hero body."
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+
+                        <Grid Margin="0,18,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Feature 1 title" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding FeatureOneTitle, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Feature 1 body" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}"
+                                         MinHeight="100"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         VerticalContentAlignment="Top"
+                                         Text="{Binding FeatureOneBody, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Feature 2 title" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding FeatureTwoTitle, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Feature 2 body" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}"
+                                         MinHeight="100"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         VerticalContentAlignment="Top"
+                                         Text="{Binding FeatureTwoBody, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Feature 3 title" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding FeatureThreeTitle, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Feature 3 body" />
+                                <TextBox Style="{StaticResource BrandingInputStyle}"
+                                         MinHeight="100"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"
+                                         VerticalContentAlignment="Top"
+                                         Text="{Binding FeatureThreeBody, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right">
+                    <Button Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding SaveCommand}"
+                            Content="Save branding" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

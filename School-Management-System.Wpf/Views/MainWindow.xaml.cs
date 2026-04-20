@@ -21,8 +21,10 @@ namespace School_Management_System.Wpf.Views
             ApplyBrandingAssets();
             SourceInitialized += MainWindow_SourceInitialized;
             Loaded += MainWindow_Loaded;
+            Unloaded += MainWindow_Unloaded;
             Activated += MainWindow_Activated;
             StateChanged += MainWindow_StateChanged;
+            SchoolBranding.BrandingChanged += SchoolBranding_BrandingChanged;
             UpdateWindowStateGlyph();
         }
 
@@ -30,11 +32,13 @@ namespace School_Management_System.Wpf.Views
 
         private void ApplyBrandingAssets()
         {
-            var logo = BrandingAssetLoader.LoadBrandLogo();
-            if (logo != null)
+            var appIcon = BrandingAssetLoader.LoadAppIcon();
+            if (appIcon != null)
             {
-                ShellBrandLogoImage.Source = logo;
+                Icon = appIcon;
             }
+
+            ShellBrandLogoImage.Source = BrandingAssetLoader.LoadBrandLogo();
         }
 
         private void RequestLogout()
@@ -51,6 +55,11 @@ namespace School_Management_System.Wpf.Views
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             EnterFullscreen();
+        }
+
+        private void MainWindow_Unloaded(object sender, RoutedEventArgs e)
+        {
+            SchoolBranding.BrandingChanged -= SchoolBranding_BrandingChanged;
         }
 
         private void MainWindow_Activated(object sender, EventArgs e)
@@ -144,6 +153,11 @@ namespace School_Management_System.Wpf.Views
                     ? "\uE923"
                     : "\uE922";
             }
+        }
+
+        private void SchoolBranding_BrandingChanged(object sender, EventArgs e)
+        {
+            ApplyBrandingAssets();
         }
     }
 }

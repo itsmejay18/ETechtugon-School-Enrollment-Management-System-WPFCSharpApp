@@ -39,6 +39,62 @@ namespace School_Management_System.Wpf.Services
             }
         }
 
+        public static ImageSource LoadImage(byte[] bytes, string path)
+        {
+            var image = LoadImage(bytes);
+            return image ?? LoadImageFromPath(path);
+        }
+
+        public static ImageSource LoadImageFromPath(string path)
+        {
+            var fullPath = ResolvePhotoPath(path);
+            if (string.IsNullOrWhiteSpace(fullPath) || !File.Exists(fullPath))
+            {
+                return null;
+            }
+
+            try
+            {
+                var image = new BitmapImage();
+                image.BeginInit();
+                image.CacheOption = BitmapCacheOption.OnLoad;
+                image.UriSource = new Uri(fullPath, UriKind.Absolute);
+                image.EndInit();
+                image.Freeze();
+                return image;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static string ResolvePhotoPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return null;
+            }
+
+            if (Path.IsPathRooted(path))
+            {
+                return path;
+            }
+
+            var relativePath = path.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            if (!string.IsNullOrWhiteSpace(localAppData))
+            {
+                var appDataPath = Path.Combine(localAppData, "SchoolManagementSystem", relativePath);
+                if (File.Exists(appDataPath))
+                {
+                    return appDataPath;
+                }
+            }
+
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory ?? string.Empty, relativePath);
+        }
+
         public static DataTable CreateSettingsTable(IDictionary<string, string> settings, string searchText, Func<KeyValuePair<string, string>, bool> extraFilter = null)
         {
             var table = new DataTable();

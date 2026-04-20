@@ -54,7 +54,13 @@ namespace School_Management_System.Wpf.ViewModels.Faculty
         public string ProfileSummary
         {
             get { return _profileSummary; }
-            private set { SetProperty(ref _profileSummary, value); }
+            private set
+            {
+                if (SetProperty(ref _profileSummary, value))
+                {
+                    OnPropertyChanged(nameof(DetailsModalSubtitle));
+                }
+            }
         }
 
         protected override void OnSelectedRecordChanged()
@@ -101,6 +107,23 @@ namespace School_Management_System.Wpf.ViewModels.Faculty
                 Assignments = new DataView(new DataTable());
                 ProfileSummary = "Faculty details loaded, but schedule assignments are unavailable right now.";
             }
+        }
+
+        protected override string GetDetailsModalTitle()
+        {
+            return BuildPreferredDisplayText(
+                CurrentSelectedRecord,
+                "Faculty profile",
+                "FacultyCode",
+                "LastName",
+                "FirstName");
+        }
+
+        protected override string GetDetailsModalSubtitle()
+        {
+            return string.IsNullOrWhiteSpace(ProfileSummary)
+                ? "Review the selected faculty profile and teaching assignments."
+                : ProfileSummary;
         }
     }
 }

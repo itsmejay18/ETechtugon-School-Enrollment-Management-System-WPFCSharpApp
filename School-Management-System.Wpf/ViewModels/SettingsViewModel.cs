@@ -1,4 +1,6 @@
 using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using School_Management_System.Models;
 using School_Management_System.Wpf.Services;
@@ -8,8 +10,10 @@ using School_Management_System.Wpf.ViewModels.Shared;
 
 namespace School_Management_System.Wpf.ViewModels
 {
-    public sealed class SettingsViewModel : Infrastructure.ViewModelBase
+    public sealed class SettingsViewModel : Infrastructure.ViewModelBase, IModalStateHost
     {
+        private INotifyPropertyChanged _selectedSectionModuleNotifier;
+
         public SettingsViewModel(AppBootstrapper bootstrapper, User currentUser)
         {
             if (bootstrapper == null) throw new ArgumentNullException(nameof(bootstrapper));
@@ -20,6 +24,7 @@ namespace School_Management_System.Wpf.ViewModels
             CourseManagement = new CourseManagementViewModel(
                 bootstrapper.CourseService,
                 bootstrapper.DepartmentService);
+            CompanyModule = new CompanyBrandingViewModel(bootstrapper.BrandingProfileService);
 
             SystemModule = new DataTableWorkspaceViewModel(
                 "System settings",
@@ -77,10 +82,27 @@ namespace School_Management_System.Wpf.ViewModels
                 "Search usernames or roles",
                 bootstrapper.UserManagementService.GetUsers);
             UserManagementModule.Refresh();
+
+            Sections = new ObservableCollection<SettingsSectionItemViewModel>
+            {
+                new SettingsSectionItemViewModel("Company", "Branding logos, landing-form copy, and shell identity stored in MySQL.", "\uE8D1", CompanyModule),
+                new SettingsSectionItemViewModel("System", "School-wide controls, system variables, and operating preferences.", "\uE713", SystemModule),
+                new SettingsSectionItemViewModel("Database", "Activity history, connection records, and database monitoring details.", "\uE9F9", DatabaseModule),
+                new SettingsSectionItemViewModel("Departments", "Academic department records and organizational structure.", "\uE7EF", DepartmentsModule),
+                new SettingsSectionItemViewModel("Courses", "Program maintenance, validation, and course editing workspace.", "\uE82D", CourseManagement),
+                new SettingsSectionItemViewModel("Year Levels", "Year-level references used by enrollment and scheduling.", "\uE8D2", YearLevelsModule),
+                new SettingsSectionItemViewModel("Sections", "Section assignments, labels, and active class groups.", "\uE8C8", SectionsModule),
+                new SettingsSectionItemViewModel("Subjects", "Subject catalog management for the live school database.", "\uE8EF", SubjectsModule),
+                new SettingsSectionItemViewModel("Curriculum", "Curriculum explorer for course, year, and semester mappings.", "\uE7BE", CurriculumModule),
+                new SettingsSectionItemViewModel("User Management", "Read-only account review for operators and administrators.", "\uE716", UserManagementModule)
+            };
+
+            SelectedSection = Sections.FirstOrDefault();
         }
 
         public bool IsAdmin { get; private set; }
         public CourseManagementViewModel CourseManagement { get; private set; }
+        public CompanyBrandingViewModel CompanyModule { get; private set; }
         public DataTableWorkspaceViewModel SystemModule { get; private set; }
         public DataTableWorkspaceViewModel DatabaseModule { get; private set; }
         public DataTableWorkspaceViewModel DepartmentsModule { get; private set; }
@@ -89,5 +111,82 @@ namespace School_Management_System.Wpf.ViewModels
         public DataTableWorkspaceViewModel SubjectsModule { get; private set; }
         public CurriculumExplorerViewModel CurriculumModule { get; private set; }
         public DataTableWorkspaceViewModel UserManagementModule { get; private set; }
+        public ObservableCollection<SettingsSectionItemViewModel> Sections { get; private set; }
+
+        private SettingsSectionItemViewModel _selectedSection;
+        public SettingsSectionItemViewModel SelectedSection
+        {
+            get { return _selectedSection; }
+            set
+            {
+                var previousModule = _selectedSection != null ? _selectedSection.Module : null;
+                if (SetProperty(ref _selectedSection, value))
+                {
+                    UpdateSelectedSectionModuleSubscription(previousModule, SelectedSectionModule);
+                    OnPropertyChanged(nameof(SelectedSectionTitle));
+                    OnPropertyChanged(nameof(SelectedSectionDescription));
+                    OnPropertyChanged(nameof(SelectedSectionModule));
+                    OnPropertyChanged(nameof(IsModalOpen));
+                }
+            }
+        }
+
+        public string SelectedSectionTitle
+        {
+            get { return SelectedSection != null ? SelectedSection.Title : "Settings"; }
+        }
+
+        public string SelectedSectionDescription
+        {
+            get
+            {
+                return SelectedSection != null
+                    ? SelectedSection.Description
+                    : "Choose a settings area to manage its records and tools.";
+            }
+        }
+
+        public object SelectedSectionModule
+        {
+            get { return SelectedSection != null ? SelectedSection.Module : null; }
+        }
+
+        public string SectionCountText
+        {
+            get { return string.Format("{0} settings areas", Sections != null ? Sections.Count : 0); }
+        }
+
+        public bool IsModalOpen
+        {
+            get
+            {
+                var modalHost = SelectedSectionModule as IModalStateHost;
+                return modalHost != null && modalHost.IsModalOpen;
+            }
+        }
+
+        private void UpdateSelectedSectionModuleSubscription(object previousModule, object nextModule)
+        {
+            var oldNotifier = previousModule as INotifyPropertyChanged;
+            if (oldNotifier != null)
+            {
+                oldNotifier.PropertyChanged -= SelectedSectionModule_PropertyChanged;
+            }
+
+            _selectedSectionModuleNotifier = nextModule as INotifyPropertyChanged;
+            if (_selectedSectionModuleNotifier != null)
+            {
+                _selectedSectionModuleNotifier.PropertyChanged += SelectedSectionModule_PropertyChanged;
+            }
+        }
+
+        private void SelectedSectionModule_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(e.PropertyName) ||
+                string.Equals(e.PropertyName, nameof(IModalStateHost.IsModalOpen), StringComparison.Ordinal))
+            {
+                OnPropertyChanged(nameof(IsModalOpen));
+            }
+        }
     }
 }

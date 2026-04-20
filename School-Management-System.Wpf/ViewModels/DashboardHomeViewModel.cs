@@ -24,6 +24,7 @@ namespace School_Management_System.Wpf.ViewModels
             _bootstrapper = bootstrapper ?? throw new ArgumentNullException(nameof(bootstrapper));
             _currentUser = currentUser;
 
+            SchoolBranding.BrandingChanged += SchoolBranding_BrandingChanged;
             RefreshMetrics();
             RefreshClock();
         }
@@ -245,6 +246,16 @@ namespace School_Management_System.Wpf.ViewModels
             {
                 return 0;
             }
+        }
+
+        private void SchoolBranding_BrandingChanged(object sender, EventArgs e)
+        {
+            OnPropertyChanged(nameof(ApplicationTitle));
+            OnPropertyChanged(nameof(ApplicationTagline));
+            OnPropertyChanged(nameof(DashboardTitle));
+            OnPropertyChanged(nameof(DashboardSubtitle));
+            OnPropertyChanged(nameof(SerialNumber));
+            OnPropertyChanged(nameof(SupportLine));
         }
     }
 }

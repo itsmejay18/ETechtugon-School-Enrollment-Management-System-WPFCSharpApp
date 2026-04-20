@@ -1,4 +1,9 @@
 using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Globalization;
+using School_Management_System.BusinessLayer.Services;
+using School_Management_System.Common;
 using School_Management_System.DataLayer.Configuration;
 using School_Management_System.Models;
 using School_Management_System.Wpf.Infrastructure;
@@ -16,10 +21,13 @@ namespace School_Management_System.Wpf.ViewModels
     public sealed class ShellViewModel : ViewModelBase
     {
         private readonly Action _logoutAction;
+        private readonly ActivityLogService _activityLogService;
+        private INotifyPropertyChanged _modalHostNotifier;
         private object _currentModule;
         private string _currentModuleTitle;
         private string _currentModuleSubtitle;
         private string _activeModuleKey;
+        private bool _isNotificationModalOpen;
 
         public ShellViewModel(AppBootstrapper bootstrapper, User currentUser, Action logoutAction)
         {
@@ -27,6 +35,7 @@ namespace School_Management_System.Wpf.ViewModels
 
             CurrentUser = currentUser;
             _logoutAction = logoutAction;
+            _activityLogService = bootstrapper.ActivityLogService;
 
             Dashboard = new DashboardHomeViewModel(bootstrapper, currentUser);
             Settings = new SettingsViewModel(bootstrapper, currentUser);
@@ -52,6 +61,7 @@ namespace School_Management_System.Wpf.ViewModels
             Calendar = new AcademicCalendarViewModel(
                 bootstrapper.LookupService,
                 bootstrapper.SectionService);
+            Notifications = new ObservableCollection<NotificationItemViewModel>();
 
             ShowDashboardCommand = new RelayCommand(ShowDashboard);
             ShowStudentsCommand = new RelayCommand(ShowStudents);
@@ -60,9 +70,13 @@ namespace School_Management_System.Wpf.ViewModels
             ShowScheduleCommand = new RelayCommand(ShowSchedule);
             ShowCalendarCommand = new RelayCommand(ShowCalendar);
             ShowSettingsCommand = new RelayCommand(ShowSettings);
+            ShowNotificationsCommand = new RelayCommand(ToggleNotifications);
+            CloseNotificationsCommand = new RelayCommand(CloseNotifications);
             BackCommand = new RelayCommand(ShowDashboard, () => CanGoBack);
             LogoutCommand = new RelayCommand(Logout);
 
+            SchoolBranding.BrandingChanged += SchoolBranding_BrandingChanged;
+            RefreshNotifications();
             ShowDashboard();
         }
 
@@ -146,6 +160,7 @@ namespace School_Management_System.Wpf.ViewModels
         public ScheduleBoardViewModel Schedule { get; private set; }
         public AcademicCalendarViewModel Calendar { get; private set; }
         public SettingsViewModel Settings { get; private set; }
+        public ObservableCollection<NotificationItemViewModel> Notifications { get; private set; }
 
         public object CurrentModule
         {
@@ -178,8 +193,56 @@ namespace School_Management_System.Wpf.ViewModels
         public RelayCommand ShowScheduleCommand { get; private set; }
         public RelayCommand ShowCalendarCommand { get; private set; }
         public RelayCommand ShowSettingsCommand { get; private set; }
+        public RelayCommand ShowNotificationsCommand { get; private set; }
+        public RelayCommand CloseNotificationsCommand { get; private set; }
         public RelayCommand BackCommand { get; private set; }
         public RelayCommand LogoutCommand { get; private set; }
+
+        public bool IsNotificationModalOpen
+        {
+            get { return _isNotificationModalOpen; }
+            private set
+            {
+                if (SetProperty(ref _isNotificationModalOpen, value))
+                {
+                    OnPropertyChanged(nameof(IsModalOpen));
+                }
+            }
+        }
+
+        public int NotificationCount
+        {
+            get { return Notifications == null ? 0 : Notifications.Count; }
+        }
+
+        public bool HasNotifications
+        {
+            get { return NotificationCount > 0; }
+        }
+
+        public string NotificationBadgeText
+        {
+            get
+            {
+                if (NotificationCount <= 0)
+                {
+                    return string.Empty;
+                }
+
+                return NotificationCount > 9
+                    ? "9+"
+                    : NotificationCount.ToString(CultureInfo.InvariantCulture);
+            }
+        }
+
+        public bool IsModalOpen
+        {
+            get
+            {
+                var modalHost = CurrentModule as IModalStateHost;
+                return IsNotificationModalOpen || (modalHost != null && modalHost.IsModalOpen);
+            }
+        }
 
         private void ShowDashboard()
         {
@@ -218,6 +281,21 @@ namespace School_Management_System.Wpf.ViewModels
             Activate("settings", Settings, "Settings", "Academic setup, course maintenance, and configuration.");
         }
 
+        private void ToggleNotifications()
+        {
+            if (!IsNotificationModalOpen)
+            {
+                RefreshNotifications();
+            }
+
+            IsNotificationModalOpen = !IsNotificationModalOpen;
+        }
+
+        private void CloseNotifications()
+        {
+            IsNotificationModalOpen = false;
+        }
+
         private void Logout()
         {
             var action = _logoutAction;
@@ -229,15 +307,163 @@ namespace School_Management_System.Wpf.ViewModels
 
         private void Activate(string key, object module, string title, string subtitle)
         {
+            DetachModalHost();
             ActiveModuleKey = key;
             CurrentModule = module;
             CurrentModuleTitle = title;
             CurrentModuleSubtitle = subtitle;
+            AttachModalHost(module);
             OnPropertyChanged(nameof(CanGoBack));
+            OnPropertyChanged(nameof(IsModalOpen));
             if (BackCommand != null)
             {
                 BackCommand.RaiseCanExecuteChanged();
             }
+        }
+
+        private void RefreshNotifications()
+        {
+            Notifications.Clear();
+
+            if (_activityLogService == null)
+            {
+                RaiseNotificationState();
+                return;
+            }
+
+            try
+            {
+                var logs = _activityLogService.Search(null, null, null, null, 12);
+                for (var i = 0; i < logs.Count; i++)
+                {
+                    var item = CreateNotificationItem(logs[i]);
+                    if (item != null)
+                    {
+                        Notifications.Add(item);
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            RaiseNotificationState();
+        }
+
+        private static NotificationItemViewModel CreateNotificationItem(ActivityLog log)
+        {
+            if (log == null)
+            {
+                return null;
+            }
+
+            var title = log.Action;
+            if (string.Equals(log.Action, AppConstants.ActivityActions.LoginSuccess, StringComparison.OrdinalIgnoreCase))
+            {
+                title = "Login User";
+            }
+            else if (string.Equals(log.Action, AppConstants.ActivityActions.LoginFailed, StringComparison.OrdinalIgnoreCase))
+            {
+                title = "Login Attempt";
+            }
+            else if (string.Equals(log.Action, AppConstants.ActivityActions.Logout, StringComparison.OrdinalIgnoreCase))
+            {
+                title = "Logout User";
+            }
+
+            var actor = string.IsNullOrWhiteSpace(log.DisplayName)
+                ? (string.IsNullOrWhiteSpace(log.Username) ? "System user" : log.Username)
+                : log.DisplayName;
+
+            var subtitle = string.IsNullOrWhiteSpace(log.Username) || string.Equals(actor, log.Username, StringComparison.OrdinalIgnoreCase)
+                ? actor
+                : actor + " • " + log.Username;
+
+            var timestamp = DateTime.SpecifyKind(log.CreatedAt, DateTimeKind.Utc).ToLocalTime();
+
+            return new NotificationItemViewModel(
+                title,
+                subtitle,
+                string.IsNullOrWhiteSpace(log.Details) ? "Recent workspace activity." : log.Details,
+                FormatRelativeTime(timestamp));
+        }
+
+        private static string FormatRelativeTime(DateTime timestamp)
+        {
+            var delta = DateTime.Now - timestamp;
+            if (delta.TotalMinutes < 1)
+            {
+                return "Now";
+            }
+
+            if (delta.TotalHours < 1)
+            {
+                return Math.Max(1, (int)delta.TotalMinutes).ToString(CultureInfo.InvariantCulture) + "m";
+            }
+
+            if (delta.TotalDays < 1)
+            {
+                return Math.Max(1, (int)delta.TotalHours).ToString(CultureInfo.InvariantCulture) + "h";
+            }
+
+            return Math.Max(1, (int)delta.TotalDays).ToString(CultureInfo.InvariantCulture) + "d";
+        }
+
+        private void RaiseNotificationState()
+        {
+            OnPropertyChanged(nameof(NotificationCount));
+            OnPropertyChanged(nameof(HasNotifications));
+            OnPropertyChanged(nameof(NotificationBadgeText));
+        }
+
+        private void SchoolBranding_BrandingChanged(object sender, EventArgs e)
+        {
+            OnPropertyChanged(nameof(ApplicationTitle));
+            OnPropertyChanged(nameof(ApplicationSubtitle));
+            OnPropertyChanged(nameof(SupportSummary));
+        }
+
+        private void AttachModalHost(object module)
+        {
+            _modalHostNotifier = module as INotifyPropertyChanged;
+            if (_modalHostNotifier != null)
+            {
+                _modalHostNotifier.PropertyChanged += ModalHost_PropertyChanged;
+            }
+        }
+
+        private void DetachModalHost()
+        {
+            if (_modalHostNotifier != null)
+            {
+                _modalHostNotifier.PropertyChanged -= ModalHost_PropertyChanged;
+                _modalHostNotifier = null;
+            }
+        }
+
+        private void ModalHost_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(e.PropertyName) ||
+                string.Equals(e.PropertyName, nameof(IModalStateHost.IsModalOpen), StringComparison.Ordinal))
+            {
+                OnPropertyChanged(nameof(IsModalOpen));
+            }
+        }
+
+        public sealed class NotificationItemViewModel
+        {
+            public NotificationItemViewModel(string title, string subtitle, string message, string relativeTime)
+            {
+                Title = title ?? string.Empty;
+                Subtitle = subtitle ?? string.Empty;
+                Message = message ?? string.Empty;
+                RelativeTime = relativeTime ?? string.Empty;
+            }
+
+            public string Title { get; private set; }
+            public string Subtitle { get; private set; }
+            public string Message { get; private set; }
+            public string RelativeTime { get; private set; }
         }
     }
 }

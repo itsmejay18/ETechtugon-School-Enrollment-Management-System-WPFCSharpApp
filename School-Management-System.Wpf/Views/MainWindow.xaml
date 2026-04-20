@@ -203,6 +203,46 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="HeaderIconButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="56" />
+            <Setter Property="Height" Value="56" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="Foreground" Value="#FF15436E" />
+            <Setter Property="Background" Value="#FFFFFFFF" />
+            <Setter Property="BorderBrush" Value="#FFC8DCF0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="18">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#FFF4FAFF" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="#FF6BAEE4" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HeaderPrimaryIconButtonStyle" TargetType="Button" BasedOn="{StaticResource HeaderIconButtonStyle}">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#FF1D5FA8" />
+            <Setter Property="BorderBrush" Value="#FF1D5FA8" />
+        </Style>
     </Window.Resources>
 
     <Grid Background="{StaticResource WindowBackgroundBrush}">
@@ -223,18 +263,17 @@
 
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <Border Width="60"
-                            Height="60"
-                            Background="#13528E"
-                            BorderBrush="#2FFFFFFF"
-                            BorderThickness="1"
-                            CornerRadius="18">
+                    <Grid Width="180"
+                          Height="58"
+                          VerticalAlignment="Center">
                         <Image x:Name="ShellBrandLogoImage"
-                               Margin="9"
-                               Stretch="Uniform" />
-                    </Border>
+                               Stretch="Uniform"
+                               HorizontalAlignment="Left"
+                               VerticalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Grid>
 
-                    <StackPanel Margin="14,2,0,0"
+                    <StackPanel Margin="16,3,0,0"
                                 VerticalAlignment="Center">
                         <TextBlock Text="{Binding ApplicationTitle}"
                                    Foreground="White"
@@ -276,51 +315,67 @@
                     </Border>
 
                     <Button Command="{Binding BackCommand}"
-                            Margin="0,0,10,0"
-                            Style="{StaticResource HeaderActionButtonStyle}"
+                            Style="{StaticResource HeaderIconButtonStyle}"
+                            ToolTip="Back"
                             Visibility="{Binding CanGoBack, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock FontFamily="Segoe MDL2 Assets"
-                                       FontSize="13"
-                                       Text="&#xE72B;" />
-                            <TextBlock Margin="10,0,0,0"
-                                       Text="Back" />
-                        </StackPanel>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="18"
+                                   Text="&#xE72B;" />
                     </Button>
 
                     <Button Command="{Binding ShowDashboardCommand}"
-                            Margin="0,0,10,0"
-                            Style="{StaticResource HeaderActionButtonStyle}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock FontFamily="Segoe MDL2 Assets"
-                                       FontSize="13"
-                                       Text="&#xE80F;" />
-                            <TextBlock Margin="10,0,0,0"
-                                       Text="Dashboard" />
-                        </StackPanel>
+                            Style="{StaticResource HeaderIconButtonStyle}"
+                            ToolTip="Home">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="18"
+                                   Text="&#xE80F;" />
+                    </Button>
+
+                    <Button Command="{Binding ShowNotificationsCommand}"
+                            Style="{StaticResource HeaderIconButtonStyle}"
+                            ToolTip="Notifications">
+                        <Grid Width="24"
+                              Height="24">
+                            <TextBlock HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       Text="&#xE7F4;" />
+                            <Border Width="20"
+                                    Height="20"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Margin="0,-8,-10,0"
+                                    Background="#FFE74C3C"
+                                    BorderBrush="White"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Visibility="{Binding HasNotifications, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           Text="{Binding NotificationBadgeText}" />
+                            </Border>
+                        </Grid>
                     </Button>
 
                     <Button Command="{Binding ShowSettingsCommand}"
-                            Margin="0,0,10,0"
-                            Style="{StaticResource HeaderActionButtonStyle}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock FontFamily="Segoe MDL2 Assets"
-                                       FontSize="13"
-                                       Text="&#xE713;" />
-                            <TextBlock Margin="10,0,0,0"
-                                       Text="Settings" />
-                        </StackPanel>
+                            Style="{StaticResource HeaderIconButtonStyle}"
+                            ToolTip="Settings">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="18"
+                                   Text="&#xE713;" />
                     </Button>
 
                     <Button Command="{Binding LogoutCommand}"
-                            Style="{StaticResource HeaderPrimaryButtonStyle}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock FontFamily="Segoe MDL2 Assets"
-                                       FontSize="13"
-                                       Text="&#xE8AC;" />
-                            <TextBlock Margin="10,0,0,0"
-                                       Text="Log out" />
-                        </StackPanel>
+                            Margin="0"
+                            Style="{StaticResource HeaderPrimaryIconButtonStyle}"
+                            ToolTip="Log out">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="18"
+                                   Text="&#xE8AC;" />
                     </Button>
                 </StackPanel>
 
@@ -382,5 +437,115 @@
                 </ContentControl.Style>
             </ContentControl>
         </Border>
+
+        <Grid Grid.RowSpan="2"
+              Panel.ZIndex="40"
+              Visibility="{Binding IsModalOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Background="{StaticResource ModalOverlayBrush}" />
+        </Grid>
+
+        <Grid Grid.RowSpan="2"
+              Panel.ZIndex="50"
+              Visibility="{Binding IsNotificationModalOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Width="700"
+                    MaxHeight="760"
+                    Style="{StaticResource ModalCardBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Padding="30,26,30,20"
+                            BorderBrush="{StaticResource BorderBrushSoft}"
+                            BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="Notifications"
+                                           FontSize="28"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource TextBrush}" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="Recent alerts and workspace activity from the WPF shell."
+                                           Foreground="{StaticResource MutedTextBrush}" />
+                            </StackPanel>
+
+                            <Button Grid.Column="1"
+                                    Style="{StaticResource ModalCloseButtonStyle}"
+                                    Command="{Binding CloseNotificationsCommand}" />
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1"
+                                  Padding="30,22,30,30"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Notifications}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,16"
+                                            Padding="18"
+                                            Background="#FFF8FBFF"
+                                            BorderBrush="{StaticResource BorderBrushSoft}"
+                                            BorderThickness="1"
+                                            CornerRadius="20">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="56" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Width="44"
+                                                    Height="44"
+                                                    VerticalAlignment="Top"
+                                                    Background="#FFFCE8E8"
+                                                    CornerRadius="16">
+                                                <TextBlock HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="20"
+                                                           Foreground="{StaticResource DangerBrush}"
+                                                           Text="&#xE77B;" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1"
+                                                        Margin="16,0,0,0">
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontSize="16"
+                                                           FontWeight="Bold"
+                                                           Foreground="{StaticResource TextBrush}" />
+                                                <TextBlock Margin="0,6,0,0"
+                                                           Text="{Binding Subtitle}"
+                                                           FontSize="13.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource MutedTextBrush}" />
+                                                <TextBlock Margin="0,8,0,0"
+                                                           Text="{Binding Message}"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{StaticResource MutedTextBrush}" />
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="2"
+                                                       Margin="18,0,0,0"
+                                                       FontSize="13.5"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       Text="{Binding RelativeTime}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

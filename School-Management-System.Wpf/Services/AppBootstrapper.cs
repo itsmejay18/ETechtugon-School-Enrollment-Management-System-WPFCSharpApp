@@ -22,6 +22,7 @@ namespace School_Management_System.Wpf.Services
             LookupService lookupService,
             CurriculumService curriculumService,
             SystemSettingService systemSettingService,
+            BrandingProfileService brandingProfileService,
             UserManagementService userManagementService,
             EnrollmentService enrollmentService,
             ClassScheduleService classScheduleService,
@@ -39,6 +40,7 @@ namespace School_Management_System.Wpf.Services
             LookupService = lookupService;
             CurriculumService = curriculumService;
             SystemSettingService = systemSettingService;
+            BrandingProfileService = brandingProfileService;
             UserManagementService = userManagementService;
             EnrollmentService = enrollmentService;
             ClassScheduleService = classScheduleService;
@@ -57,6 +59,7 @@ namespace School_Management_System.Wpf.Services
         public LookupService LookupService { get; private set; }
         public CurriculumService CurriculumService { get; private set; }
         public SystemSettingService SystemSettingService { get; private set; }
+        public BrandingProfileService BrandingProfileService { get; private set; }
         public UserManagementService UserManagementService { get; private set; }
         public EnrollmentService EnrollmentService { get; private set; }
         public ClassScheduleService ClassScheduleService { get; private set; }
@@ -101,12 +104,16 @@ namespace School_Management_System.Wpf.Services
             ILookupData lookupData = new LookupData(database);
             ICurriculumData curriculumData = new CurriculumData(database);
             ISystemSettingData systemSettingData = new SystemSettingData(database);
+            IBrandingProfileData brandingProfileData = new BrandingProfileData(database);
             IUserManagementData userManagementData = new UserManagementData(database);
             IEnrollmentData enrollmentData = new EnrollmentData(database);
             IClassScheduleData classScheduleData = new ClassScheduleData(database);
             IUserData userData = new UserData(database);
             IActivityLogData activityLogData = new ActivityLogData(database);
             var activityLogService = new ActivityLogService(activityLogData);
+            var brandingProfileService = new BrandingProfileService(brandingProfileData);
+
+            SchoolBranding.Apply(brandingProfileService.GetCurrent());
 
             return new AppBootstrapper(
                 database,
@@ -120,6 +127,7 @@ namespace School_Management_System.Wpf.Services
                 new LookupService(lookupData),
                 new CurriculumService(curriculumData),
                 new SystemSettingService(systemSettingData),
+                brandingProfileService,
                 new UserManagementService(userManagementData),
                 new EnrollmentService(enrollmentData),
                 new ClassScheduleService(classScheduleData),

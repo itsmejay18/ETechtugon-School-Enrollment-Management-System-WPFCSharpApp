@@ -15,6 +15,18 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Background" Value="White" />
         </Style>
+
+        <Style x:Key="SummaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="MinWidth" Value="180" />
+            <Setter Property="Padding" Value="24,12" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="SummarySecondaryActionButtonStyle" TargetType="Button" BasedOn="{StaticResource NeutralButtonStyle}">
+            <Setter Property="MinWidth" Value="150" />
+            <Setter Property="Padding" Value="22,12" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
     </UserControl.Resources>
 
     <Border Style="{StaticResource CardBorderStyle}">
@@ -50,8 +62,8 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBox Margin="0,0,10,0" Padding="12,8" VerticalContentAlignment="Center" Text="{Binding StudentSearchText, UpdateSourceTrigger=PropertyChanged}" />
-                            <Button Grid.Column="1" Padding="18,10" Style="{StaticResource NeutralButtonStyle}" Command="{Binding SearchStudentsCommand}" Content="Search" />
+                            <TextBox Margin="0,0,10,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding StudentSearchText, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button Grid.Column="1" Style="{StaticResource NeutralButtonStyle}" Command="{Binding SearchStudentsCommand}" Content="Search" />
                         </Grid>
 
                         <DataGrid Grid.Row="2" AutoGenerateColumns="True" ItemsSource="{Binding StudentRecords}" SelectedItem="{Binding SelectedStudent, Mode=TwoWay}" />
@@ -94,8 +106,8 @@
                                 </Grid.ColumnDefinitions>
                                 <ComboBox ItemsSource="{Binding Sections}" SelectedItem="{Binding SelectedSection, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
                                 <CheckBox Grid.Column="1" VerticalAlignment="Center" Margin="0,0,14,0" Content="By section" IsChecked="{Binding UseSectionMode, Mode=TwoWay}" />
-                                <Button Grid.Column="2" Margin="0,0,10,0" Padding="18,10" Style="{StaticResource NeutralButtonStyle}" Command="{Binding LoadSubjectsCommand}" Content="Load subjects" />
-                                <Button Grid.Column="3" Padding="18,10" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding RefreshLookupsCommand}" Content="Refresh lookups" />
+                                <Button Grid.Column="2" Margin="0,0,10,0" Style="{StaticResource NeutralButtonStyle}" Command="{Binding LoadSubjectsCommand}" Content="Load subjects" />
+                                <Button Grid.Column="3" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding RefreshLookupsCommand}" Content="Refresh lookups" />
                             </Grid>
                         </Grid>
                     </Border>
@@ -134,7 +146,19 @@
                                 <TextBlock Text="{Binding SelectedStudentSummary}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
                                 <TextBlock Margin="0,10,0,0" Text="{Binding SummaryText}" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" />
                             </StackPanel>
-                            <Button Grid.Column="1" Margin="18,0,0,0" Padding="18,12" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding SaveEnrollmentCommand}" Content="Save enrollment" />
+                            <StackPanel Grid.Column="1"
+                                        Margin="18,0,0,0"
+                                        Orientation="Horizontal"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center">
+                                <Button Margin="0,0,10,0"
+                                        Style="{StaticResource SummarySecondaryActionButtonStyle}"
+                                        Command="{Binding PrintCorCommand}"
+                                        Content="Print COR" />
+                                <Button Style="{StaticResource SummaryActionButtonStyle}"
+                                        Command="{Binding SaveEnrollmentCommand}"
+                                        Content="Save enrollment" />
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </Grid>

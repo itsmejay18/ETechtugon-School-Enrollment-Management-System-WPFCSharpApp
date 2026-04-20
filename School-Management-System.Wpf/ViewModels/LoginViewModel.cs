@@ -79,12 +79,52 @@ namespace School_Management_System.Wpf.ViewModels
 
         public string LoginHeadline
         {
-            get { return "Cleaner sign-in, same school workflow."; }
+            get { return SchoolBranding.LoginHeadline; }
         }
 
         public string LoginBody
         {
-            get { return "Use the same accounts, quick presets, and database profiles from the existing school system inside the native WPF shell."; }
+            get { return SchoolBranding.LoginBody; }
+        }
+
+        public string LoginFormTitle
+        {
+            get { return SchoolBranding.LoginFormTitle; }
+        }
+
+        public string LoginFormSubtitle
+        {
+            get { return SchoolBranding.LoginFormSubtitle; }
+        }
+
+        public string FeatureOneTitle
+        {
+            get { return SchoolBranding.FeatureOneTitle; }
+        }
+
+        public string FeatureOneBody
+        {
+            get { return SchoolBranding.FeatureOneBody; }
+        }
+
+        public string FeatureTwoTitle
+        {
+            get { return SchoolBranding.FeatureTwoTitle; }
+        }
+
+        public string FeatureTwoBody
+        {
+            get { return SchoolBranding.FeatureTwoBody; }
+        }
+
+        public string FeatureThreeTitle
+        {
+            get { return SchoolBranding.FeatureThreeTitle; }
+        }
+
+        public string FeatureThreeBody
+        {
+            get { return SchoolBranding.FeatureThreeBody; }
         }
 
         public string Username
@@ -147,6 +187,7 @@ namespace School_Management_System.Wpf.ViewModels
                     IsConnectionReady = false;
                     OnPropertyChanged(nameof(SelectedConnectionCaption));
                     OnPropertyChanged(nameof(SelectedConnectionDetails));
+                    LoadBrandingForSelectedConnection();
                 }
             }
         }
@@ -254,6 +295,10 @@ namespace School_Management_System.Wpf.ViewModels
             }
 
             SelectedConnectionProfile = selected;
+            if (selected == null)
+            {
+                LoadBrandingForSelectedConnection();
+            }
         }
 
         private void RefreshConnectionStatus()
@@ -278,6 +323,27 @@ namespace School_Management_System.Wpf.ViewModels
             StatusMessage = message;
             IsStatusError = isError;
             IsStatusSuccess = isSuccess;
+        }
+
+        private void LoadBrandingForSelectedConnection()
+        {
+            _connectionService.LoadBranding(SelectedConnectionProfile == null ? null : SelectedConnectionProfile.Profile);
+
+            OnPropertyChanged(nameof(ClientSerialNumber));
+            OnPropertyChanged(nameof(SupportGmail));
+            OnPropertyChanged(nameof(SupportPhoneNumber));
+            OnPropertyChanged(nameof(ApplicationTitle));
+            OnPropertyChanged(nameof(ApplicationTagline));
+            OnPropertyChanged(nameof(LoginHeadline));
+            OnPropertyChanged(nameof(LoginBody));
+            OnPropertyChanged(nameof(LoginFormTitle));
+            OnPropertyChanged(nameof(LoginFormSubtitle));
+            OnPropertyChanged(nameof(FeatureOneTitle));
+            OnPropertyChanged(nameof(FeatureOneBody));
+            OnPropertyChanged(nameof(FeatureTwoTitle));
+            OnPropertyChanged(nameof(FeatureTwoBody));
+            OnPropertyChanged(nameof(FeatureThreeTitle));
+            OnPropertyChanged(nameof(FeatureThreeBody));
         }
 
         private void RequestClose(bool? result)

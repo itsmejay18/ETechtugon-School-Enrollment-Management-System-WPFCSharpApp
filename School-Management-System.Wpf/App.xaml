@@ -21,6 +21,8 @@
         <SolidColorBrush x:Key="TextBrush" Color="#FF2C3E50" />
         <SolidColorBrush x:Key="MutedTextBrush" Color="#FF6B7280" />
         <SolidColorBrush x:Key="DangerBrush" Color="#FFE74C3C" />
+        <SolidColorBrush x:Key="DangerBrushDark" Color="#FFD94135" />
+        <SolidColorBrush x:Key="ModalOverlayBrush" Color="#9F0E1726" />
 
         <LinearGradientBrush x:Key="ShellHeaderBrush" StartPoint="0,0" EndPoint="1,0">
             <GradientStop Color="#FF203449" Offset="0" />
@@ -36,26 +38,47 @@
             <Setter Property="Padding" Value="22" />
         </Style>
 
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+        <Style x:Key="ToolbarTextBoxStyle" TargetType="TextBox">
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="BaseActionButtonStyle" TargetType="Button">
             <Setter Property="Foreground" Value="White" />
             <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="20,10" />
+            <Setter Property="MinWidth" Value="104" />
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="FontSize" Value="14" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="12">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource PrimaryBrushDark}" />
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Opacity" Value="0.9" />
                 </Trigger>
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Opacity" Value="0.45" />
@@ -63,16 +86,65 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="NeutralButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseActionButtonStyle}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryBrushDark}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrushDark}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="NeutralButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseActionButtonStyle}">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
             <Setter Property="Background" Value="#FFF8FAFC" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFF1F6FB" />
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
-        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseActionButtonStyle}">
             <Setter Property="Background" Value="{StaticResource DangerBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource DangerBrushDark}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource DangerBrushDark}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ModalCardBorderStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
+            <Setter Property="CornerRadius" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="BorderBrush" Value="#FFE1E8F0" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style x:Key="ModalCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource NeutralButtonStyle}">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="Height" Value="46" />
+            <Setter Property="MinWidth" Value="46" />
+            <Setter Property="MinHeight" Value="46" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="Content" Value="&#xE711;" />
+        </Style>
+
+        <Style x:Key="ModalSectionBorderStyle" TargetType="Border">
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="Margin" Value="0,0,0,18" />
+            <Setter Property="Background" Value="#FFF8FBFF" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="18" />
         </Style>
     </Application.Resources>
 </Application>
