@@ -25,6 +25,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         private readonly CurriculumService _curriculumService;
         private readonly ClassScheduleService _classScheduleService;
         private readonly SystemSettingService _systemSettingService;
+        private readonly ActivityLogService _activityLogService;
         private string _studentSearchText;
         private DataView _studentRecords;
         private DataRowView _selectedStudent;
@@ -40,7 +41,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         private bool _enrollmentSaved;
         private string _savedEnrollmentNumber;
 
-        public EnrollmentWorkspaceViewModel(StudentService studentService, EnrollmentService enrollmentService, CourseService courseService, LookupService lookupService, SectionService sectionService, CurriculumService curriculumService, ClassScheduleService classScheduleService, SystemSettingService systemSettingService)
+        public EnrollmentWorkspaceViewModel(StudentService studentService, EnrollmentService enrollmentService, CourseService courseService, LookupService lookupService, SectionService sectionService, CurriculumService curriculumService, ClassScheduleService classScheduleService, SystemSettingService systemSettingService, ActivityLogService activityLogService)
         {
             _studentService = studentService ?? throw new ArgumentNullException(nameof(studentService));
             _enrollmentService = enrollmentService ?? throw new ArgumentNullException(nameof(enrollmentService));
@@ -50,6 +51,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             _curriculumService = curriculumService ?? throw new ArgumentNullException(nameof(curriculumService));
             _classScheduleService = classScheduleService ?? throw new ArgumentNullException(nameof(classScheduleService));
             _systemSettingService = systemSettingService ?? throw new ArgumentNullException(nameof(systemSettingService));
+            _activityLogService = activityLogService;
 
             Courses = new ObservableCollection<LookupOptionViewModel>();
             AcademicYears = new ObservableCollection<LookupOptionViewModel>();
@@ -306,9 +308,10 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                     return false;
                 }
 
-                _enrollmentService.Save(enrollment, details);
+                var enrollmentId = _enrollmentService.Save(enrollment, details);
                 _enrollmentSaved = true;
                 _savedEnrollmentNumber = enrollment.EnrollmentNumber;
+                LogEnrollmentTransaction(enrollmentId, details.Count, enrollment.EnrollmentNumber);
                 StatusMessage = "Enrollment saved successfully as " + enrollment.EnrollmentNumber + ".";
                 SummaryText = BuildSummaryText(enrollment.EnrollmentNumber);
                 RaiseCommandStates();
@@ -586,6 +589,24 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             var end = row.Table.Columns.Contains("EndTime") && row["EndTime"] is TimeSpan ? ((TimeSpan)row["EndTime"]).ToString(@"hh\:mm") : string.Empty;
             var time = string.IsNullOrWhiteSpace(start) || string.IsNullOrWhiteSpace(end) ? string.Empty : start + "-" + end;
             return string.Join(" | ", new[] { day, time, room }.Where(v => !string.IsNullOrWhiteSpace(v)));
+        }
+
+        private void LogEnrollmentTransaction(int? enrollmentId, int selectedSubjectCount, string enrollmentNumber)
+        {
+            if (_activityLogService == null)
+            {
+                return;
+            }
+
+            var details = "Posted enrollment " + (enrollmentNumber ?? string.Empty) +
+                          " for " + (SelectedStudentSummary ?? "selected student") +
+                          " with " + selectedSubjectCount + " subject(s).";
+
+            _activityLogService.LogTransaction(
+                AppConstants.ActivityActions.Post,
+                AppConstants.Entities.Enrollment,
+                enrollmentId,
+                details);
         }
     }
 }

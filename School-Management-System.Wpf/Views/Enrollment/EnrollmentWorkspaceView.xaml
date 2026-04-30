@@ -47,28 +47,26 @@
                     <ColumnDefinition Width="1.08*" />
                 </Grid.ColumnDefinitions>
 
-                <Border Style="{StaticResource CardBorderStyle}" Padding="18">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                        <TextBlock Text="Student selection" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Text="Student selection" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
 
-                        <Grid Grid.Row="1" Margin="0,14,0,14">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBox Margin="0,0,10,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding StudentSearchText, UpdateSourceTrigger=PropertyChanged}" />
-                            <Button Grid.Column="1" Style="{StaticResource NeutralButtonStyle}" Command="{Binding SearchStudentsCommand}" Content="Search" />
-                        </Grid>
-
-                        <DataGrid Grid.Row="2" AutoGenerateColumns="True" ItemsSource="{Binding StudentRecords}" SelectedItem="{Binding SelectedStudent, Mode=TwoWay}" />
+                    <Grid Grid.Row="1" Margin="0,14,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Margin="0,0,10,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding StudentSearchText, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="1" Style="{StaticResource NeutralButtonStyle}" Command="{Binding SearchStudentsCommand}" Content="Search" />
                     </Grid>
-                </Border>
+
+                    <DataGrid Grid.Row="2" AutoGenerateColumns="True" ItemsSource="{Binding StudentRecords}" SelectedItem="{Binding SelectedStudent, Mode=TwoWay}" />
+                </Grid>
 
                 <Grid Grid.Column="1" Margin="18,0,0,0">
                     <Grid.RowDefinitions>
@@ -77,90 +75,101 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <Border Style="{StaticResource CardBorderStyle}" Padding="18">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                    <StackPanel>
+                        <WrapPanel>
+                            <ComboBox Width="200"
+                                      MinWidth="180"
+                                      Margin="0,0,10,10"
+                                      ItemsSource="{Binding Courses}"
+                                      SelectedItem="{Binding SelectedCourse, Mode=TwoWay}"
+                                      DisplayMemberPath="DisplayName" />
+                            <ComboBox Width="200"
+                                      MinWidth="180"
+                                      Margin="0,0,10,10"
+                                      ItemsSource="{Binding AcademicYears}"
+                                      SelectedItem="{Binding SelectedAcademicYear, Mode=TwoWay}"
+                                      DisplayMemberPath="DisplayName" />
+                            <ComboBox Width="200"
+                                      MinWidth="180"
+                                      Margin="0,0,10,10"
+                                      ItemsSource="{Binding YearLevels}"
+                                      SelectedItem="{Binding SelectedYearLevel, Mode=TwoWay}"
+                                      DisplayMemberPath="DisplayName" />
+                            <ComboBox Width="200"
+                                      MinWidth="180"
+                                      Margin="0,0,0,10"
+                                      ItemsSource="{Binding Semesters}"
+                                      SelectedItem="{Binding SelectedSemester, Mode=TwoWay}"
+                                      DisplayMemberPath="DisplayName" />
+                        </WrapPanel>
 
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <ComboBox ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
-                                <ComboBox Grid.Column="1" ItemsSource="{Binding AcademicYears}" SelectedItem="{Binding SelectedAcademicYear, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
-                                <ComboBox Grid.Column="2" ItemsSource="{Binding YearLevels}" SelectedItem="{Binding SelectedYearLevel, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
-                                <ComboBox Grid.Column="3" ItemsSource="{Binding Semesters}" SelectedItem="{Binding SelectedSemester, Mode=TwoWay}" DisplayMemberPath="DisplayName" />
-                            </Grid>
+                        <WrapPanel Margin="0,4,0,0">
+                            <ComboBox Width="260"
+                                      MinWidth="220"
+                                      Margin="0,0,10,10"
+                                      ItemsSource="{Binding Sections}"
+                                      SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
+                                      DisplayMemberPath="DisplayName" />
+                            <CheckBox VerticalAlignment="Center"
+                                      Margin="0,10,14,0"
+                                      Content="By section"
+                                      IsChecked="{Binding UseSectionMode, Mode=TwoWay}" />
+                            <Button Margin="0,0,10,10"
+                                    Style="{StaticResource NeutralButtonStyle}"
+                                    Command="{Binding LoadSubjectsCommand}"
+                                    Content="Load subjects" />
+                            <Button Margin="0,0,0,10"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding RefreshLookupsCommand}"
+                                    Content="Refresh lookups" />
+                        </WrapPanel>
+                    </StackPanel>
 
-                            <Grid Grid.Row="1" Margin="0,14,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="260" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ComboBox ItemsSource="{Binding Sections}" SelectedItem="{Binding SelectedSection, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
-                                <CheckBox Grid.Column="1" VerticalAlignment="Center" Margin="0,0,14,0" Content="By section" IsChecked="{Binding UseSectionMode, Mode=TwoWay}" />
-                                <Button Grid.Column="2" Margin="0,0,10,0" Style="{StaticResource NeutralButtonStyle}" Command="{Binding LoadSubjectsCommand}" Content="Load subjects" />
-                                <Button Grid.Column="3" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding RefreshLookupsCommand}" Content="Refresh lookups" />
-                            </Grid>
-                        </Grid>
-                    </Border>
+                    <Grid Grid.Row="1" Margin="0,18,0,18">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
 
-                    <Border Grid.Row="1" Margin="0,18,0,18" Style="{StaticResource CardBorderStyle}" Padding="18">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="Available subjects" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Margin="0,6,0,0" Text="{Binding TotalUnitsText}" Foreground="{StaticResource PrimaryBrush}" />
+                        </StackPanel>
 
-                            <StackPanel Margin="0,0,0,12">
-                                <TextBlock Text="Available subjects" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
-                                <TextBlock Margin="0,6,0,0" Text="{Binding TotalUnitsText}" Foreground="{StaticResource PrimaryBrush}" />
-                            </StackPanel>
+                        <DataGrid Grid.Row="1" AutoGenerateColumns="False" ItemsSource="{Binding AvailableSubjects}">
+                            <DataGrid.Columns>
+                                <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}" Header="Pick" Width="70" />
+                                <DataGridTextColumn Binding="{Binding SubjectCode}" Header="Code" Width="110" />
+                                <DataGridTextColumn Binding="{Binding SubjectName}" Header="Subject" Width="*" />
+                                <DataGridTextColumn Binding="{Binding Units}" Header="Units" Width="80" />
+                                <DataGridTextColumn Binding="{Binding ScheduleText}" Header="Schedule" Width="220" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
 
-                            <DataGrid Grid.Row="1" AutoGenerateColumns="False" ItemsSource="{Binding AvailableSubjects}">
-                                <DataGrid.Columns>
-                                    <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay}" Header="Pick" Width="70" />
-                                    <DataGridTextColumn Binding="{Binding SubjectCode}" Header="Code" Width="110" />
-                                    <DataGridTextColumn Binding="{Binding SubjectName}" Header="Subject" Width="*" />
-                                    <DataGridTextColumn Binding="{Binding Units}" Header="Units" Width="80" />
-                                    <DataGridTextColumn Binding="{Binding ScheduleText}" Header="Schedule" Width="220" />
-                                </DataGrid.Columns>
-                            </DataGrid>
-                        </Grid>
-                    </Border>
-
-                    <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="18">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel>
-                                <TextBlock Text="{Binding SelectedStudentSummary}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
-                                <TextBlock Margin="0,10,0,0" Text="{Binding SummaryText}" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="1"
-                                        Margin="18,0,0,0"
-                                        Orientation="Horizontal"
-                                        HorizontalAlignment="Right"
-                                        VerticalAlignment="Center">
-                                <Button Margin="0,0,10,0"
-                                        Style="{StaticResource SummarySecondaryActionButtonStyle}"
-                                        Command="{Binding PrintCorCommand}"
-                                        Content="Print COR" />
-                                <Button Style="{StaticResource SummaryActionButtonStyle}"
-                                        Command="{Binding SaveEnrollmentCommand}"
-                                        Content="Save enrollment" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedStudentSummary}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Margin="0,10,0,0" Text="{Binding SummaryText}" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" />
+                        </StackPanel>
+                        <WrapPanel Grid.Column="1"
+                                   Margin="18,0,0,0"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Center">
+                            <Button Margin="0,0,10,0"
+                                    Style="{StaticResource SummarySecondaryActionButtonStyle}"
+                                    Command="{Binding PrintCorCommand}"
+                                    Content="Print COR" />
+                            <Button Margin="0,0,0,10"
+                                    Style="{StaticResource SummaryActionButtonStyle}"
+                                    Command="{Binding SaveEnrollmentCommand}"
+                                    Content="Save enrollment" />
+                        </WrapPanel>
+                    </Grid>
                 </Grid>
             </Grid>
         </Grid>

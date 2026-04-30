@@ -37,13 +37,91 @@
     </UserControl.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="24" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <Border Style="{StaticResource CardBorderStyle}">
-            <Grid>
+        <Border Padding="0,0,24,0"
+                BorderBrush="{StaticResource BorderBrushSoft}"
+                BorderThickness="0,0,1,0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,0,8,0">
+                <TextBlock Text="Course CRUD"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Margin="0,8,0,0"
+                           Text="Manage course records from this sidebar, then use the modal editor for the selected item."
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource MutedTextBrush}" />
+
+                <TextBlock Margin="0,28,0,8"
+                           Text="Find courses"
+                           FontSize="12.5"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource PrimaryBrush}" />
+                <TextBox VerticalContentAlignment="Center"
+                         Style="{StaticResource FieldTextBoxStyle}"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button Margin="0,12,0,0"
+                        Content="Refresh list"
+                        Style="{StaticResource NeutralButtonStyle}"
+                        Command="{Binding RefreshCommand}" />
+                <Button Margin="0,18,0,0"
+                        Content="Add course"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding AddCommand}" />
+                <Button Margin="0,10,0,0"
+                        Content="Edit selected"
+                        Style="{StaticResource NeutralButtonStyle}"
+                        Command="{Binding EditCommand}" />
+                <Button Margin="0,10,0,0"
+                        Content="Delete selected"
+                        Style="{StaticResource DangerButtonStyle}"
+                        Command="{Binding DeleteCommand}" />
+
+                <Border Margin="0,24,0,18"
+                        Height="1"
+                        Background="{StaticResource BorderBrushSoft}" />
+
+                <TextBlock Text="Selected course"
+                           FontSize="12.5"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource PrimaryBrush}" />
+                <TextBlock Margin="0,6,0,0"
+                           Text="{Binding SelectedCourse.CourseCode, TargetNullValue=No course selected}"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Margin="0,6,0,0"
+                           Text="{Binding SelectedCourse.CourseName}"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource MutedTextBrush}" />
+
+                <TextBlock Margin="0,22,0,0"
+                           Text="Workspace status"
+                           FontSize="12.5"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource PrimaryBrush}" />
+                <TextBlock Margin="0,6,0,0"
+                           Text="{Binding StatusMessage}"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource MutedTextBrush}" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Margin="0,0,0,18">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -51,112 +129,59 @@
 
                 <StackPanel>
                     <TextBlock Text="Courses"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource PrimaryBrush}" />
+                               FontSize="26"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextBrush}" />
                     <TextBlock Margin="0,8,0,0"
-                               Text="Course maintenance now uses a centered modal editor so the data list can stay full-width inside the settings workspace."
+                               Text="Course maintenance now uses a left CRUD sidebar with the editor modal kept in the same workspace."
                                TextWrapping="Wrap"
                                Foreground="{StaticResource MutedTextBrush}" />
                 </StackPanel>
 
-                <Border Grid.Column="1"
-                        Padding="12,8"
-                        CornerRadius="999"
-                        Background="#D7F7F4">
-                    <TextBlock Text="Modal CRUD editor"
-                               FontWeight="SemiBold"
-                               Foreground="{StaticResource PrimaryBrush}" />
-                </Border>
+                <TextBlock Grid.Column="1"
+                           VerticalAlignment="Top"
+                           Text="Modal CRUD editor"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource PrimaryBrush}" />
             </Grid>
-        </Border>
 
-        <Border Grid.Row="1"
-                Margin="0,24,0,0"
-                Style="{StaticResource CardBorderStyle}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+            <DataGrid Grid.Row="1"
+                      ItemsSource="{Binding Courses}"
+                      SelectedItem="{Binding SelectedCourse}"
+                      MouseDoubleClick="CoursesGrid_OnMouseDoubleClick"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserResizeRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      RowHeaderWidth="0"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      IsReadOnly="True"
+                      AlternatingRowBackground="#FFF8FAFC"
+                      BorderThickness="1"
+                      BorderBrush="{StaticResource BorderBrushSoft}"
+                      Background="White">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Code" Binding="{Binding CourseCode}" Width="140" />
+                    <DataGridTextColumn Header="Course Name" Binding="{Binding CourseName}" Width="240" />
+                    <DataGridTextColumn Header="Department" Binding="{Binding DepartmentName}" Width="200" />
+                    <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*" />
+                </DataGrid.Columns>
+            </DataGrid>
 
-                <Grid Margin="0,0,0,18">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2.2*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <TextBox Grid.Column="0"
-                             Margin="0,0,12,0"
-                             VerticalContentAlignment="Center"
-                             Style="{StaticResource FieldTextBoxStyle}"
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-
-                    <Button Grid.Column="1"
-                            Content="Refresh"
-                            Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding RefreshCommand}" />
-                    <Button Grid.Column="2"
-                            Content="Add"
-                            Style="{StaticResource ToolbarPrimaryButtonStyle}"
-                            Command="{Binding AddCommand}" />
-                    <Button Grid.Column="3"
-                            Content="Edit"
-                            Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding EditCommand}" />
-                    <Button Grid.Column="4"
-                            Margin="0"
-                            Content="Delete"
-                            Style="{StaticResource ToolbarDangerButtonStyle}"
-                            Command="{Binding DeleteCommand}" />
-                </Grid>
-
-                <DataGrid Grid.Row="1"
-                          ItemsSource="{Binding Courses}"
-                          SelectedItem="{Binding SelectedCourse}"
-                          MouseDoubleClick="CoursesGrid_OnMouseDoubleClick"
-                          AutoGenerateColumns="False"
-                          CanUserAddRows="False"
-                          CanUserDeleteRows="False"
-                          CanUserResizeRows="False"
-                          HeadersVisibility="Column"
-                          GridLinesVisibility="Horizontal"
-                          RowHeaderWidth="0"
-                          SelectionMode="Single"
-                          SelectionUnit="FullRow"
-                          IsReadOnly="True"
-                          AlternatingRowBackground="#FFF8FAFC"
-                          BorderThickness="1"
-                          BorderBrush="{StaticResource BorderBrushSoft}"
-                          Background="White">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Code" Binding="{Binding CourseCode}" Width="140" />
-                        <DataGridTextColumn Header="Course Name" Binding="{Binding CourseName}" Width="240" />
-                        <DataGridTextColumn Header="Department" Binding="{Binding DepartmentName}" Width="200" />
-                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*" />
-                    </DataGrid.Columns>
-                </DataGrid>
-
-                <Border Grid.Row="2"
-                        Margin="0,18,0,0"
-                        Padding="14"
-                        CornerRadius="14"
-                        Background="#EFFCF6">
-                    <TextBlock Text="{Binding StatusMessage}"
-                               TextWrapping="Wrap"
-                               Foreground="#166534" />
-                </Border>
-            </Grid>
-        </Border>
+            <TextBlock Grid.Row="2"
+                       Margin="0,18,0,0"
+                       Text="{Binding StatusMessage}"
+                       TextWrapping="Wrap"
+                       Foreground="#166534" />
+        </Grid>
 
         <Popup IsOpen="{Binding IsEditorModalOpen, Mode=OneWay}"
                AllowsTransparency="True"
                Placement="Center"
-               PlacementTarget="{Binding ElementName=Root}"
+               PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                PopupAnimation="Fade"
                StaysOpen="True">
             <Border Margin="44"

@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Media;
 using Microsoft.Win32;
 using School_Management_System.BusinessLayer.Services;
+using School_Management_System.Common;
 using School_Management_System.Models;
 using School_Management_System.Wpf.Infrastructure;
 using School_Management_System.Wpf.Services;
@@ -13,6 +14,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
     public sealed class CompanyBrandingViewModel : ViewModelBase
     {
         private readonly BrandingProfileService _brandingProfileService;
+        private readonly ActivityLogService _activityLogService;
         private string _companyName;
         private string _applicationTagline;
         private string _shellWorkspaceTagline;
@@ -38,9 +40,10 @@ namespace School_Management_System.Wpf.ViewModels.Settings
         private ImageSource _brandLogo;
         private ImageSource _compactLogo;
 
-        public CompanyBrandingViewModel(BrandingProfileService brandingProfileService)
+        public CompanyBrandingViewModel(BrandingProfileService brandingProfileService, ActivityLogService activityLogService)
         {
             _brandingProfileService = brandingProfileService ?? throw new ArgumentNullException(nameof(brandingProfileService));
+            _activityLogService = activityLogService;
 
             UploadBrandLogoCommand = new RelayCommand(UploadBrandLogo);
             RemoveBrandLogoCommand = new RelayCommand(RemoveBrandLogo, () => HasBrandLogo);
@@ -303,6 +306,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
                 });
 
                 SchoolBranding.Apply(saved);
+                LogBrandingTransaction(saved);
                 StatusMessage = "Branding saved to the active database profile.";
             }
             catch (Exception ex)
@@ -329,6 +333,20 @@ namespace School_Management_System.Wpf.ViewModels.Settings
             }
 
             return File.ReadAllBytes(dialog.FileName);
+        }
+
+        private void LogBrandingTransaction(BrandingProfile profile)
+        {
+            if (_activityLogService == null)
+            {
+                return;
+            }
+
+            _activityLogService.LogTransaction(
+                AppConstants.ActivityActions.Update,
+                AppConstants.Entities.BrandingProfile,
+                profile == null ? (int?)null : profile.BrandingProfileId,
+                "Updated company profile for " + (profile == null || string.IsNullOrWhiteSpace(profile.CompanyName) ? "the active school" : profile.CompanyName.Trim()) + ".");
         }
     }
 }

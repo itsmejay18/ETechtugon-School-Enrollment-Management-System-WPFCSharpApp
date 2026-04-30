@@ -26,7 +26,7 @@
         </Style>
 
         <Style x:Key="TopSectionNavItemStyle" TargetType="ListBoxItem">
-            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Margin" Value="0,0,8,8" />
             <Setter Property="Padding" Value="10,9" />
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="MinHeight" Value="44" />
@@ -96,7 +96,7 @@
                          SelectedItem="{Binding SelectedSection, Mode=TwoWay}">
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <primitives:UniformGrid Columns="10" />
+                            <WrapPanel />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
                     <ListBox.ItemTemplate>

@@ -72,97 +72,132 @@
     <Grid>
         <Border Style="{StaticResource CardBorderStyle}">
             <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                <Grid Margin="0,0,0,18">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="660" />
-                    </Grid.ColumnDefinitions>
-
-                    <StackPanel>
-                        <TextBlock Text="Student directory"
-                                   FontSize="26"
+                <Border Padding="0,0,24,0"
+                        BorderBrush="{StaticResource BorderBrushSoft}"
+                        BorderThickness="0,0,1,0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="0,0,8,0">
+                        <TextBlock Text="Student CRUD"
+                                   FontSize="24"
                                    FontWeight="Bold"
                                    Foreground="{StaticResource TextBrush}" />
                         <TextBlock Margin="0,8,0,0"
-                                   Text="Add starts beside the filter, while selected students open in a modal where Edit and Delete are handled."
+                                   Text="Use this sidebar for search, refresh, and record actions. Edit and Delete stay inside the selected student profile modal."
                                    TextWrapping="Wrap"
                                    Foreground="{StaticResource MutedTextBrush}" />
-                    </StackPanel>
 
-                    <Grid Grid.Column="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBox Margin="0,0,10,0"
-                                 MinWidth="180"
-                                 Style="{StaticResource ToolbarTextBoxStyle}"
+                        <TextBlock Margin="0,28,0,8"
+                                   Text="Find students"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}" />
+                        <TextBox Style="{StaticResource ToolbarTextBoxStyle}"
                                  Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-                        <Button Grid.Column="1"
-                                Margin="0,0,10,0"
+
+                        <Button Margin="0,12,0,0"
                                 Style="{StaticResource NeutralButtonStyle}"
                                 Command="{Binding SearchCommand}"
-                                Content="Search" />
-                        <Button Grid.Column="2"
-                                Margin="0,0,10,0"
+                                Content="Search records" />
+                        <Button Margin="0,10,0,0"
                                 Style="{StaticResource NeutralButtonStyle}"
                                 Command="{Binding RefreshCommand}"
-                                Content="Refresh" />
-                        <Button Grid.Column="3"
-                                Margin="0,0,10,0"
+                                Content="Refresh list" />
+                        <Button Margin="0,18,0,0"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding AddCommand}"
                                 Content="Add student" />
-                        <Button Grid.Column="4"
+                        <Button Margin="0,10,0,0"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding OpenDetailsCommand}"
                                 Content="Open profile" />
-                    </Grid>
-                </Grid>
 
-                <Border Grid.Row="1"
-                        Style="{StaticResource CardBorderStyle}"
-                        Padding="18">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                        <Border Margin="0,24,0,18"
+                                Height="1"
+                                Background="{StaticResource BorderBrushSoft}" />
 
-                        <StackPanel Margin="0,0,0,12">
-                            <TextBlock Text="{Binding RecordCountText}"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource PrimaryBrush}" />
-                            <TextBlock Margin="0,6,0,0"
+                        <TextBlock Text="Loaded records"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding RecordCountText}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextBrush}" />
+
+                        <TextBlock Margin="0,22,0,0"
+                                   Text="Selected student"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding ProfileSummary}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+
+                        <TextBlock Margin="0,22,0,0"
+                                   Text="Workflow"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="Add starts here, then the profile modal handles save, edit, and delete for the selected student."
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Margin="0,0,0,18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="Student directory"
+                                       FontSize="26"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Margin="0,8,0,0"
                                        Text="{Binding StatusMessage}"
                                        TextWrapping="Wrap"
                                        Foreground="{StaticResource MutedTextBrush}" />
                         </StackPanel>
 
-                        <DataGrid Grid.Row="1"
-                                  AutoGenerateColumns="True"
-                                  ItemsSource="{Binding Records}"
-                                  SelectedItem="{Binding SelectedRecord, Mode=TwoWay}"
-                                  MouseDoubleClick="RecordsGrid_OnMouseDoubleClick" />
+                        <TextBlock Grid.Column="1"
+                                   VerticalAlignment="Top"
+                                   Text="{Binding RecordCountText}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}" />
                     </Grid>
-                </Border>
+
+                    <DataGrid Grid.Row="1"
+                              AutoGenerateColumns="True"
+                              ItemsSource="{Binding Records}"
+                              SelectedItem="{Binding SelectedRecord, Mode=TwoWay}"
+                              MouseDoubleClick="RecordsGrid_OnMouseDoubleClick" />
+                </Grid>
             </Grid>
         </Border>
 
         <Popup IsOpen="{Binding IsDetailsModalOpen, Mode=OneWay}"
                AllowsTransparency="True"
                Placement="Center"
-               PlacementTarget="{Binding ElementName=Root}"
+               PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                PopupAnimation="Fade"
                StaysOpen="True">
             <Border Margin="40"

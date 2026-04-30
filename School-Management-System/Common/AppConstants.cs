@@ -25,6 +25,7 @@ namespace School_Management_System.Common
             public const string Enrollment = "Enrollment";
             public const string Database = "Database";
             public const string SystemSetting = "SystemSetting";
+            public const string BrandingProfile = "BrandingProfile";
         }
 
         public static class SettingKeys
@@ -79,6 +80,11 @@ namespace School_Management_System.Common
             public const string LoginSuccess = "LoginSuccess";
             public const string LoginFailed = "LoginFailed";
             public const string Logout = "Logout";
+            public const string Create = "Create";
+            public const string Update = "Update";
+            public const string Delete = "Delete";
+            public const string Post = "Post";
+            public const string Save = "Save";
             public const string BackupFull = "BackupFull";
             public const string BackupIncremental = "BackupIncremental";
             public const string BackupDifferential = "BackupDifferential";

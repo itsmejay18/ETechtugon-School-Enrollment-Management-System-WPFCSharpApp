@@ -25,7 +25,8 @@
             <Setter Property="CornerRadius" Value="12" />
             <Setter Property="Padding" Value="12" />
             <Setter Property="Margin" Value="0,0,12,12" />
-            <Setter Property="Width" Value="470" />
+            <Setter Property="MinWidth" Value="260" />
+            <Setter Property="MaxWidth" Value="470" />
         </Style>
     </UserControl.Resources>
 
@@ -38,10 +39,10 @@
                 </Grid.RowDefinitions>
 
                 <Grid Margin="0,0,0,18">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="520" />
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
                     <StackPanel>
                         <TextBlock Text="Faculty directory"
@@ -54,69 +55,58 @@
                                    Foreground="{StaticResource MutedTextBrush}" />
                     </StackPanel>
 
-                    <Grid Grid.Column="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBox Margin="0,0,10,0"
-                                 MinWidth="180"
+                    <WrapPanel Grid.Row="1"
+                               Margin="0,16,0,0">
+                        <TextBox Width="260"
+                                 MinWidth="220"
+                                 Margin="0,0,10,10"
                                  Style="{StaticResource ToolbarTextBoxStyle}"
                                  Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-                        <Button Grid.Column="1"
-                                Margin="0,0,10,0"
+                        <Button Margin="0,0,10,10"
                                 Style="{StaticResource NeutralButtonStyle}"
                                 Command="{Binding SearchCommand}"
                                 Content="Search" />
-                        <Button Grid.Column="2"
-                                Margin="0,0,10,0"
+                        <Button Margin="0,0,10,10"
                                 Style="{StaticResource NeutralButtonStyle}"
                                 Command="{Binding RefreshCommand}"
                                 Content="Refresh" />
-                        <Button Grid.Column="3"
+                        <Button Margin="0,0,0,10"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding OpenDetailsCommand}"
                                 Content="Open profile" />
-                    </Grid>
+                    </WrapPanel>
                 </Grid>
 
-                <Border Grid.Row="1"
-                        Style="{StaticResource CardBorderStyle}"
-                        Padding="18">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                        <StackPanel Margin="0,0,0,12">
-                            <TextBlock Text="{Binding RecordCountText}"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource PrimaryBrush}" />
-                            <TextBlock Margin="0,6,0,0"
-                                       Text="{Binding StatusMessage}"
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource MutedTextBrush}" />
-                        </StackPanel>
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="{Binding RecordCountText}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding StatusMessage}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedTextBrush}" />
+                    </StackPanel>
 
-                        <DataGrid Grid.Row="1"
-                                  AutoGenerateColumns="True"
-                                  ItemsSource="{Binding Records}"
-                                  SelectedItem="{Binding SelectedRecord, Mode=TwoWay}"
-                                  MouseDoubleClick="RecordsGrid_OnMouseDoubleClick" />
-                    </Grid>
-                </Border>
+                    <DataGrid Grid.Row="1"
+                              AutoGenerateColumns="True"
+                              ItemsSource="{Binding Records}"
+                              SelectedItem="{Binding SelectedRecord, Mode=TwoWay}"
+                              MouseDoubleClick="RecordsGrid_OnMouseDoubleClick" />
+                </Grid>
             </Grid>
         </Border>
 
         <Popup IsOpen="{Binding IsDetailsModalOpen, Mode=OneWay}"
                AllowsTransparency="True"
                Placement="Center"
-               PlacementTarget="{Binding ElementName=Root}"
+               PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                PopupAnimation="Fade"
                StaysOpen="True">
             <Border Margin="40"

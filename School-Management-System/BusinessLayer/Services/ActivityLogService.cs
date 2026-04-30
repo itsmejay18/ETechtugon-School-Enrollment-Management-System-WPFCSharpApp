@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Interfaces;
 using School_Management_System.DataLayer.Logging;
+using School_Management_System.BusinessLayer.Session;
 using School_Management_System.Models;
 
 namespace School_Management_System.BusinessLayer.Services
@@ -10,6 +11,7 @@ namespace School_Management_System.BusinessLayer.Services
     public sealed class ActivityLogService
     {
         private readonly IActivityLogData _activityLogData;
+        public event EventHandler<ActivityLoggedEventArgs> ActivityLogged;
 
         public ActivityLogService(IActivityLogData activityLogData)
         {
@@ -25,7 +27,7 @@ namespace School_Management_System.BusinessLayer.Services
 
             try
             {
-                _activityLogData.Add(new ActivityLog
+                var entry = new ActivityLog
                 {
                     UserId = userId,
                     Action = action.Trim(),
@@ -33,12 +35,26 @@ namespace School_Management_System.BusinessLayer.Services
                     EntityId = entityId,
                     Details = string.IsNullOrWhiteSpace(details) ? null : details.Trim(),
                     MachineName = Environment.MachineName
-                });
+                };
+
+                _activityLogData.Add(entry);
+                OnActivityLogged(entry);
             }
             catch (Exception ex)
             {
                 FileLogger.LogError("ActivityLogService.Log", ex);
             }
+        }
+
+        public void LogTransaction(string action, string entity, int? entityId, string details)
+        {
+            var currentUser = UserSession.CurrentUser;
+            Log(
+                currentUser == null ? (int?)null : currentUser.UserId,
+                action,
+                entity,
+                entityId,
+                details);
         }
 
         public IList<ActivityLog> Search(DateTime? fromUtcInclusive, DateTime? toUtcExclusive, string usernameLike, string action, int maxRows)
@@ -95,6 +111,25 @@ namespace School_Management_System.BusinessLayer.Services
                 AppConstants.Entities.User,
                 user.UserId,
                 "User logged out: " + name + ".");
+        }
+
+        private void OnActivityLogged(ActivityLog entry)
+        {
+            var handler = ActivityLogged;
+            if (handler != null)
+            {
+                handler(this, new ActivityLoggedEventArgs(entry));
+            }
+        }
+
+        public sealed class ActivityLoggedEventArgs : EventArgs
+        {
+            public ActivityLoggedEventArgs(ActivityLog entry)
+            {
+                Entry = entry;
+            }
+
+            public ActivityLog Entry { get; private set; }
         }
     }
 }

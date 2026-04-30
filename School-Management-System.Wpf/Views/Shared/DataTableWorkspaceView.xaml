@@ -3,11 +3,6 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Resources>
-        <Style x:Key="SectionCardStyle" TargetType="Border" BasedOn="{StaticResource CardBorderStyle}">
-            <Setter Property="Padding" Value="18" />
-            <Setter Property="Margin" Value="0" />
-        </Style>
-
         <Style x:Key="FieldCardStyle" TargetType="Border">
             <Setter Property="Padding" Value="12" />
             <Setter Property="Margin" Value="0,0,0,10" />
@@ -35,128 +30,108 @@
     </UserControl.Resources>
 
     <Grid>
-        <Border Style="{StaticResource CardBorderStyle}">
-            <Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Margin="0,0,0,18">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="{Binding Title}"
+                               FontSize="26"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Margin="0,8,0,0"
+                               Text="{Binding Description}"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                </StackPanel>
+
+                <WrapPanel Grid.Row="1"
+                           Margin="0,16,0,0">
+                    <TextBox Width="260"
+                             MinWidth="220"
+                             Margin="0,0,10,10"
+                             Style="{StaticResource ToolbarTextBoxStyle}"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Button Margin="0,0,10,10"
+                            Style="{StaticResource NeutralButtonStyle}"
+                            Command="{Binding SearchCommand}"
+                            Content="Search" />
+
+                    <Button Margin="0,0,10,10"
+                            Style="{StaticResource NeutralButtonStyle}"
+                            Command="{Binding RefreshCommand}"
+                            Content="Refresh" />
+
+                    <Button Margin="0,0,0,10"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding OpenDetailsCommand}"
+                            Content="Open selected" />
+                </WrapPanel>
+            </Grid>
+
+            <Grid Grid.Row="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <Grid Margin="0,0,0,18">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="520" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,0,14">
+                    <TextBlock Text="{Binding RecordCountText}"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}" />
+                    <TextBlock Margin="0,6,0,0"
+                               Text="{Binding StatusMessage}"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                </StackPanel>
 
-                    <StackPanel>
-                        <TextBlock Text="{Binding Title}"
-                                   FontSize="26"
-                                   FontWeight="Bold"
-                                   Foreground="{StaticResource TextBrush}" />
-                        <TextBlock Margin="0,8,0,0"
-                                   Text="{Binding Description}"
-                                   TextWrapping="Wrap"
-                                   Foreground="{StaticResource MutedTextBrush}" />
-                    </StackPanel>
-
-                    <Grid Grid.Column="1"
-                          HorizontalAlignment="Right">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <TextBox Margin="0,0,10,0"
-                                 MinWidth="180"
-                                 Style="{StaticResource ToolbarTextBoxStyle}"
-                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-
-                        <Button Grid.Column="1"
-                                Margin="0,0,10,0"
-                                Style="{StaticResource NeutralButtonStyle}"
-                                Command="{Binding SearchCommand}"
-                                Content="Search" />
-
-                        <Button Grid.Column="2"
-                                Margin="0,0,10,0"
-                                Style="{StaticResource NeutralButtonStyle}"
-                                Command="{Binding RefreshCommand}"
-                                Content="Refresh" />
-
-                        <Button Grid.Column="3"
-                                Style="{StaticResource PrimaryButtonStyle}"
-                                Command="{Binding OpenDetailsCommand}"
-                                Content="Open selected" />
-                    </Grid>
-                </Grid>
-
-                <Border Grid.Row="1"
-                        Style="{StaticResource SectionCardStyle}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="{Binding RecordCountText}"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource PrimaryBrush}" />
-                            <TextBlock Margin="0,6,0,0"
-                                       Text="{Binding StatusMessage}"
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource MutedTextBrush}" />
-                        </StackPanel>
-
-                        <DataGrid Grid.Row="1"
-                                  ItemsSource="{Binding Records}"
-                                  SelectedItem="{Binding SelectedRecord, Mode=TwoWay}"
-                                  MouseDoubleClick="RecordsGrid_OnMouseDoubleClick" />
-
-                        <Border Grid.Row="2"
-                                Margin="0,16,0,0"
-                                Padding="16"
-                                CornerRadius="16"
-                                Background="#FFF7FAFE"
-                                BorderBrush="{StaticResource BorderBrushSoft}"
-                                BorderThickness="1">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel>
-                                    <TextBlock Text="Modal-first record review"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextBrush}" />
-                                    <TextBlock Margin="0,6,0,0"
-                                               Text="Select a row and open it in the dark-overlay modal instead of using a permanent side information column."
-                                               TextWrapping="Wrap"
-                                               Foreground="{StaticResource MutedTextBrush}" />
-                                </StackPanel>
-
-                                <Button Grid.Column="1"
-                                        Margin="16,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Style="{StaticResource PrimaryButtonStyle}"
-                                        Command="{Binding OpenDetailsCommand}"
-                                        Content="View details" />
-                            </Grid>
-                        </Border>
-                    </Grid>
-                </Border>
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding Records}"
+                          SelectedItem="{Binding SelectedRecord, Mode=TwoWay}"
+                          MouseDoubleClick="RecordsGrid_OnMouseDoubleClick" />
             </Grid>
-        </Border>
+
+            <Grid Grid.Row="2"
+                  Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Modal-first record review"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Margin="0,6,0,0"
+                               Text="Select a row and open it in the dark-overlay modal instead of using a permanent side information column."
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding OpenDetailsCommand}"
+                        Content="View details" />
+            </Grid>
+        </Grid>
 
         <Popup IsOpen="{Binding IsDetailsModalOpen, Mode=OneWay}"
                AllowsTransparency="True"
                Placement="Center"
-               PlacementTarget="{Binding ElementName=Root}"
+               PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                PopupAnimation="Fade"
                StaysOpen="True">
             <Border Margin="44"

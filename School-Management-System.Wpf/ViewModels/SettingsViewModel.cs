@@ -23,8 +23,11 @@ namespace School_Management_System.Wpf.ViewModels
 
             CourseManagement = new CourseManagementViewModel(
                 bootstrapper.CourseService,
-                bootstrapper.DepartmentService);
-            CompanyModule = new CompanyBrandingViewModel(bootstrapper.BrandingProfileService);
+                bootstrapper.DepartmentService,
+                bootstrapper.ActivityLogService);
+            CompanyModule = new CompanyBrandingViewModel(
+                bootstrapper.BrandingProfileService,
+                bootstrapper.ActivityLogService);
 
             SystemModule = new DataTableWorkspaceViewModel(
                 "System settings",

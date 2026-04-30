@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -17,9 +18,9 @@ namespace School_Management_System.Wpf.Services
 
         public static ImageSource LoadCompanyLogo()
         {
-            return LoadImageSource(SchoolBranding.CompactLogoData)
-                   ?? LoadImageSource(SchoolBranding.BrandLogoData)
-                   ?? LoadImageSource(FindCompanyLogoAssetPath())
+            return LoadImageSource(SchoolBranding.CompactLogoData, true)
+                   ?? LoadImageSource(SchoolBranding.BrandLogoData, true)
+                   ?? LoadImageSource(FindCompanyLogoAssetPath(), true)
                    ?? LoadBrandLogo();
         }
 
@@ -32,7 +33,7 @@ namespace School_Management_System.Wpf.Services
                    ?? LoadBrandLogo();
         }
 
-        private static ImageSource LoadImageSource(byte[] bytes)
+        private static ImageSource LoadImageSource(byte[] bytes, bool stripSolidWhiteBackground = false)
         {
             if (bytes == null || bytes.Length == 0)
             {
@@ -48,7 +49,7 @@ namespace School_Management_System.Wpf.Services
                     image.CacheOption = BitmapCacheOption.OnLoad;
                     image.StreamSource = stream;
                     image.EndInit();
-                    return PrepareImageSource(image);
+                    return PrepareImageSource(image, stripSolidWhiteBackground);
                 }
             }
             catch
@@ -57,7 +58,7 @@ namespace School_Management_System.Wpf.Services
             }
         }
 
-        private static ImageSource LoadImageSource(string path)
+        private static ImageSource LoadImageSource(string path, bool stripSolidWhiteBackground = false)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -80,7 +81,7 @@ namespace School_Management_System.Wpf.Services
                             return null;
                         }
 
-                        return PrepareImageSource(decoder.Frames[0]);
+                        return PrepareImageSource(decoder.Frames[0], stripSolidWhiteBackground);
                     }
                 }
 
@@ -89,7 +90,7 @@ namespace School_Management_System.Wpf.Services
                 image.CacheOption = BitmapCacheOption.OnLoad;
                 image.UriSource = new Uri(path, UriKind.Absolute);
                 image.EndInit();
-                return PrepareImageSource(image);
+                return PrepareImageSource(image, stripSolidWhiteBackground);
             }
             catch
             {
@@ -97,7 +98,7 @@ namespace School_Management_System.Wpf.Services
             }
         }
 
-        private static ImageSource PrepareImageSource(BitmapSource source)
+        private static ImageSource PrepareImageSource(BitmapSource source, bool stripSolidWhiteBackground = false)
         {
             if (source == null)
             {
@@ -106,13 +107,17 @@ namespace School_Management_System.Wpf.Services
 
             try
             {
-                var trimmed = TrimTransparentMargins(source);
+                var processed = stripSolidWhiteBackground
+                    ? StripSolidWhiteBackground(source)
+                    : source;
+
+                var trimmed = TrimTransparentMargins(processed);
                 if (trimmed != null && trimmed.CanFreeze && !trimmed.IsFrozen)
                 {
                     trimmed.Freeze();
                 }
 
-                return trimmed ?? source;
+                return trimmed ?? processed ?? source;
             }
             catch
             {
@@ -123,6 +128,138 @@ namespace School_Management_System.Wpf.Services
 
                 return source;
             }
+        }
+
+        private static BitmapSource StripSolidWhiteBackground(BitmapSource source)
+        {
+            if (source == null || source.PixelWidth <= 0 || source.PixelHeight <= 0)
+            {
+                return source;
+            }
+
+            BitmapSource working = source;
+            if (working.Format != PixelFormats.Bgra32)
+            {
+                var converted = new FormatConvertedBitmap();
+                converted.BeginInit();
+                converted.Source = working;
+                converted.DestinationFormat = PixelFormats.Bgra32;
+                converted.EndInit();
+                if (converted.CanFreeze)
+                {
+                    converted.Freeze();
+                }
+
+                working = converted;
+            }
+
+            var width = working.PixelWidth;
+            var height = working.PixelHeight;
+            var stride = width * 4;
+            var pixels = new byte[stride * height];
+            working.CopyPixels(pixels, stride, 0);
+
+            var visited = new bool[width * height];
+            var queue = new Queue<int>();
+
+            for (var x = 0; x < width; x++)
+            {
+                TryEnqueueBackgroundPixel(x, 0, width, height, stride, pixels, visited, queue);
+                TryEnqueueBackgroundPixel(x, height - 1, width, height, stride, pixels, visited, queue);
+            }
+
+            for (var y = 0; y < height; y++)
+            {
+                TryEnqueueBackgroundPixel(0, y, width, height, stride, pixels, visited, queue);
+                TryEnqueueBackgroundPixel(width - 1, y, width, height, stride, pixels, visited, queue);
+            }
+
+            if (queue.Count == 0)
+            {
+                return source;
+            }
+
+            while (queue.Count > 0)
+            {
+                var index = queue.Dequeue();
+                var x = index % width;
+                var y = index / width;
+                var pixelOffset = (y * stride) + (x * 4);
+
+                pixels[pixelOffset] = 0;
+                pixels[pixelOffset + 1] = 0;
+                pixels[pixelOffset + 2] = 0;
+                pixels[pixelOffset + 3] = 0;
+
+                TryEnqueueBackgroundPixel(x - 1, y, width, height, stride, pixels, visited, queue);
+                TryEnqueueBackgroundPixel(x + 1, y, width, height, stride, pixels, visited, queue);
+                TryEnqueueBackgroundPixel(x, y - 1, width, height, stride, pixels, visited, queue);
+                TryEnqueueBackgroundPixel(x, y + 1, width, height, stride, pixels, visited, queue);
+            }
+
+            var cleaned = BitmapSource.Create(
+                width,
+                height,
+                working.DpiX,
+                working.DpiY,
+                PixelFormats.Bgra32,
+                null,
+                pixels,
+                stride);
+
+            if (cleaned.CanFreeze)
+            {
+                cleaned.Freeze();
+            }
+
+            return cleaned;
+        }
+
+        private static void TryEnqueueBackgroundPixel(
+            int x,
+            int y,
+            int width,
+            int height,
+            int stride,
+            byte[] pixels,
+            bool[] visited,
+            Queue<int> queue)
+        {
+            if (x < 0 || y < 0 || x >= width || y >= height)
+            {
+                return;
+            }
+
+            var index = (y * width) + x;
+            if (visited[index])
+            {
+                return;
+            }
+
+            var pixelOffset = (y * stride) + (x * 4);
+            if (!IsNearWhiteBackgroundPixel(
+                    pixels[pixelOffset + 2],
+                    pixels[pixelOffset + 1],
+                    pixels[pixelOffset],
+                    pixels[pixelOffset + 3]))
+            {
+                return;
+            }
+
+            visited[index] = true;
+            queue.Enqueue(index);
+        }
+
+        private static bool IsNearWhiteBackgroundPixel(byte r, byte g, byte b, byte a)
+        {
+            if (a <= 10)
+            {
+                return false;
+            }
+
+            var max = Math.Max(r, Math.Max(g, b));
+            var min = Math.Min(r, Math.Min(g, b));
+            return r >= 220 && g >= 220 && b >= 220 && (max - min) <= 25;
         }
 
         private static BitmapSource TrimTransparentMargins(BitmapSource source)

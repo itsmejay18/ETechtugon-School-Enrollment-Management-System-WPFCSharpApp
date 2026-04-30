@@ -38,7 +38,7 @@ namespace School_Management_System.Wpf.Views
                 Icon = appIcon;
             }
 
-            ShellBrandLogoImage.Source = BrandingAssetLoader.LoadBrandLogo();
+            ShellBrandLogoImage.Source = BrandingAssetLoader.LoadCompanyLogo();
         }
 
         private void RequestLogout()

@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.Windows;
 using School_Management_System.BusinessLayer.Services;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Configuration;
@@ -41,7 +42,8 @@ namespace School_Management_System.Wpf.ViewModels
             Settings = new SettingsViewModel(bootstrapper, currentUser);
             Students = new StudentDirectoryViewModel(
                 bootstrapper.StudentService,
-                bootstrapper.SystemSettingService);
+                bootstrapper.SystemSettingService,
+                bootstrapper.ActivityLogService);
             Faculty = new FacultyDirectoryViewModel(
                 bootstrapper.FacultyService,
                 bootstrapper.ClassScheduleService);
@@ -53,7 +55,8 @@ namespace School_Management_System.Wpf.ViewModels
                 bootstrapper.SectionService,
                 bootstrapper.CurriculumService,
                 bootstrapper.ClassScheduleService,
-                bootstrapper.SystemSettingService);
+                bootstrapper.SystemSettingService,
+                bootstrapper.ActivityLogService);
             Schedule = new ScheduleBoardViewModel(
                 bootstrapper.SectionService,
                 bootstrapper.FacultyService,
@@ -61,6 +64,16 @@ namespace School_Management_System.Wpf.ViewModels
             Calendar = new AcademicCalendarViewModel(
                 bootstrapper.LookupService,
                 bootstrapper.SectionService);
+            Profile = new ProfileWorkspaceViewModel(
+                SchoolBranding.ApplicationTitle,
+                SchoolBranding.ShellWorkspaceTagline,
+                SchoolBranding.SupportEmail + "  |  " + SchoolBranding.SupportPhoneNumber,
+                CurrentModeDisplay,
+                CurrentUserDisplay,
+                CurrentUserRole,
+                WorkspaceLabel,
+                ShowDashboard,
+                Logout);
             Notifications = new ObservableCollection<NotificationItemViewModel>();
 
             ShowDashboardCommand = new RelayCommand(ShowDashboard);
@@ -70,12 +83,17 @@ namespace School_Management_System.Wpf.ViewModels
             ShowScheduleCommand = new RelayCommand(ShowSchedule);
             ShowCalendarCommand = new RelayCommand(ShowCalendar);
             ShowSettingsCommand = new RelayCommand(ShowSettings);
+            ShowProfileCommand = new RelayCommand(ShowProfile);
             ShowNotificationsCommand = new RelayCommand(ToggleNotifications);
             CloseNotificationsCommand = new RelayCommand(CloseNotifications);
             BackCommand = new RelayCommand(ShowDashboard, () => CanGoBack);
             LogoutCommand = new RelayCommand(Logout);
 
             SchoolBranding.BrandingChanged += SchoolBranding_BrandingChanged;
+            if (_activityLogService != null)
+            {
+                _activityLogService.ActivityLogged += ActivityLogService_ActivityLogged;
+            }
             RefreshNotifications();
             ShowDashboard();
         }
@@ -148,6 +166,25 @@ namespace School_Management_System.Wpf.ViewModels
             get { return CurrentUserRole + " workspace"; }
         }
 
+        public string CurrentUserInitial
+        {
+            get
+            {
+                var text = CurrentUserDisplay;
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    return "G";
+                }
+
+                return text.Substring(0, 1).ToUpperInvariant();
+            }
+        }
+
+        public string CurrentUserAccountSummary
+        {
+            get { return CurrentUserDisplay + " | " + CurrentUserRole; }
+        }
+
         public bool CanGoBack
         {
             get { return !string.Equals(ActiveModuleKey, "dashboard", StringComparison.OrdinalIgnoreCase); }
@@ -160,6 +197,7 @@ namespace School_Management_System.Wpf.ViewModels
         public ScheduleBoardViewModel Schedule { get; private set; }
         public AcademicCalendarViewModel Calendar { get; private set; }
         public SettingsViewModel Settings { get; private set; }
+        public ProfileWorkspaceViewModel Profile { get; private set; }
         public ObservableCollection<NotificationItemViewModel> Notifications { get; private set; }
 
         public object CurrentModule
@@ -193,6 +231,7 @@ namespace School_Management_System.Wpf.ViewModels
         public RelayCommand ShowScheduleCommand { get; private set; }
         public RelayCommand ShowCalendarCommand { get; private set; }
         public RelayCommand ShowSettingsCommand { get; private set; }
+        public RelayCommand ShowProfileCommand { get; private set; }
         public RelayCommand ShowNotificationsCommand { get; private set; }
         public RelayCommand CloseNotificationsCommand { get; private set; }
         public RelayCommand BackCommand { get; private set; }
@@ -281,6 +320,11 @@ namespace School_Management_System.Wpf.ViewModels
             Activate("settings", Settings, "Settings", "Academic setup, course maintenance, and configuration.");
         }
 
+        private void ShowProfile()
+        {
+            Activate("profile", Profile, "Profile", "Signed-in account details and session information.");
+        }
+
         private void ToggleNotifications()
         {
             if (!IsNotificationModalOpen)
@@ -333,9 +377,14 @@ namespace School_Management_System.Wpf.ViewModels
 
             try
             {
-                var logs = _activityLogService.Search(null, null, null, null, 12);
-                for (var i = 0; i < logs.Count; i++)
+                var logs = _activityLogService.Search(null, null, null, null, 80);
+                for (var i = 0; i < logs.Count && Notifications.Count < 12; i++)
                 {
+                    if (!IsTransactionLog(logs[i]))
+                    {
+                        continue;
+                    }
+
                     var item = CreateNotificationItem(logs[i]);
                     if (item != null)
                     {
@@ -357,18 +406,10 @@ namespace School_Management_System.Wpf.ViewModels
                 return null;
             }
 
-            var title = log.Action;
-            if (string.Equals(log.Action, AppConstants.ActivityActions.LoginSuccess, StringComparison.OrdinalIgnoreCase))
+            var title = BuildNotificationTitle(log);
+            if (string.IsNullOrWhiteSpace(title))
             {
-                title = "Login User";
-            }
-            else if (string.Equals(log.Action, AppConstants.ActivityActions.LoginFailed, StringComparison.OrdinalIgnoreCase))
-            {
-                title = "Login Attempt";
-            }
-            else if (string.Equals(log.Action, AppConstants.ActivityActions.Logout, StringComparison.OrdinalIgnoreCase))
-            {
-                title = "Logout User";
+                title = "Transaction";
             }
 
             var actor = string.IsNullOrWhiteSpace(log.DisplayName)
@@ -384,8 +425,94 @@ namespace School_Management_System.Wpf.ViewModels
             return new NotificationItemViewModel(
                 title,
                 subtitle,
-                string.IsNullOrWhiteSpace(log.Details) ? "Recent workspace activity." : log.Details,
+                string.IsNullOrWhiteSpace(log.Details) ? "Recent transaction activity." : log.Details,
                 FormatRelativeTime(timestamp));
+        }
+
+        private static bool IsTransactionLog(ActivityLog log)
+        {
+            if (log == null || string.IsNullOrWhiteSpace(log.Entity) || string.IsNullOrWhiteSpace(log.Action))
+            {
+                return false;
+            }
+
+            var isKnownEntity =
+                string.Equals(log.Entity, AppConstants.Entities.Student, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(log.Entity, AppConstants.Entities.Course, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(log.Entity, AppConstants.Entities.Enrollment, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(log.Entity, AppConstants.Entities.BrandingProfile, StringComparison.OrdinalIgnoreCase);
+
+            if (!isKnownEntity)
+            {
+                return false;
+            }
+
+            return string.Equals(log.Action, AppConstants.ActivityActions.Create, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(log.Action, AppConstants.ActivityActions.Update, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(log.Action, AppConstants.ActivityActions.Delete, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(log.Action, AppConstants.ActivityActions.Post, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(log.Action, AppConstants.ActivityActions.Save, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string BuildNotificationTitle(ActivityLog log)
+        {
+            if (log == null)
+            {
+                return string.Empty;
+            }
+
+            var entityName = GetNotificationEntityName(log.Entity);
+            if (string.IsNullOrWhiteSpace(entityName))
+            {
+                entityName = "Transaction";
+            }
+
+            if (string.Equals(log.Action, AppConstants.ActivityActions.Create, StringComparison.OrdinalIgnoreCase))
+            {
+                return entityName + " created";
+            }
+
+            if (string.Equals(log.Action, AppConstants.ActivityActions.Update, StringComparison.OrdinalIgnoreCase))
+            {
+                return entityName + " updated";
+            }
+
+            if (string.Equals(log.Action, AppConstants.ActivityActions.Delete, StringComparison.OrdinalIgnoreCase))
+            {
+                return entityName + " deleted";
+            }
+
+            if (string.Equals(log.Action, AppConstants.ActivityActions.Post, StringComparison.OrdinalIgnoreCase))
+            {
+                return entityName + " posted";
+            }
+
+            if (string.Equals(log.Action, AppConstants.ActivityActions.Save, StringComparison.OrdinalIgnoreCase))
+            {
+                return entityName + " saved";
+            }
+
+            return entityName;
+        }
+
+        private static string GetNotificationEntityName(string entity)
+        {
+            if (string.IsNullOrWhiteSpace(entity))
+            {
+                return string.Empty;
+            }
+
+            if (string.Equals(entity, AppConstants.Entities.BrandingProfile, StringComparison.OrdinalIgnoreCase))
+            {
+                return "Company profile";
+            }
+
+            if (string.Equals(entity, AppConstants.Entities.SystemSetting, StringComparison.OrdinalIgnoreCase))
+            {
+                return "System setting";
+            }
+
+            return entity;
         }
 
         private static string FormatRelativeTime(DateTime timestamp)
@@ -421,6 +548,7 @@ namespace School_Management_System.Wpf.ViewModels
             OnPropertyChanged(nameof(ApplicationTitle));
             OnPropertyChanged(nameof(ApplicationSubtitle));
             OnPropertyChanged(nameof(SupportSummary));
+            OnPropertyChanged(nameof(CurrentUserAccountSummary));
         }
 
         private void AttachModalHost(object module)
@@ -448,6 +576,23 @@ namespace School_Management_System.Wpf.ViewModels
             {
                 OnPropertyChanged(nameof(IsModalOpen));
             }
+        }
+
+        private void ActivityLogService_ActivityLogged(object sender, ActivityLogService.ActivityLoggedEventArgs e)
+        {
+            if (e == null || !IsTransactionLog(e.Entry))
+            {
+                return;
+            }
+
+            var dispatcher = Application.Current == null ? null : Application.Current.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
+            {
+                dispatcher.BeginInvoke(new Action(RefreshNotifications));
+                return;
+            }
+
+            RefreshNotifications();
         }
 
         public sealed class NotificationItemViewModel

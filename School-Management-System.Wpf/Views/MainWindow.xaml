@@ -50,6 +50,10 @@
             <views:SettingsView />
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vm:ProfileWorkspaceViewModel}">
+            <views:ProfileWorkspaceView />
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vm:ModulePlaceholderViewModel}">
             <views:ModulePlaceholderView />
         </DataTemplate>
@@ -243,6 +247,56 @@
             <Setter Property="Background" Value="#FF1D5FA8" />
             <Setter Property="BorderBrush" Value="#FF1D5FA8" />
         </Style>
+
+        <Style x:Key="SidebarCircleButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="56" />
+            <Setter Property="Height" Value="56" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Foreground" Value="#FF7A8596" />
+            <Setter Property="Background" Value="#FFFFFFFF" />
+            <Setter Property="BorderBrush" Value="#FFD6E0EA" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="28">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="#FFF7FBFF" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="#FF7CB6E8" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.9" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.48" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SidebarCircleIndicatorStyle" TargetType="Border">
+            <Setter Property="Width" Value="56" />
+            <Setter Property="Height" Value="56" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Background" Value="#FFFFFFFF" />
+            <Setter Property="BorderBrush" Value="#FFD6E0EA" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="28" />
+        </Style>
+
+        <Geometry x:Key="NotificationBellGeometry">M12,2 C9.79,2 8,3.79 8,6 L8,7.09 C8,7.57 7.82,8.04 7.5,8.41 L6.17,10 L17.83,10 L16.5,8.41 C16.18,8.04 16,7.57 16,7.09 L16,6 C16,3.79 14.21,2 12,2 Z M6,11 C5.45,11 5,11.45 5,12 C5,12.55 5.45,13 6,13 L18,13 C18.55,13 19,12.55 19,12 C19,11.45 18.55,11 18,11 L6,11 Z M10,16 C10,17.1 10.9,18 12,18 C13.1,18 14,17.1 14,16 L10,16 Z</Geometry>
     </Window.Resources>
 
     <Grid Background="{StaticResource WindowBackgroundBrush}">
@@ -270,24 +324,10 @@
                                Stretch="Uniform"
                                HorizontalAlignment="Left"
                                VerticalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="HighQuality" />
+                               SnapsToDevicePixels="True"
+                               RenderOptions.BitmapScalingMode="Linear" />
                     </Grid>
 
-                    <StackPanel Margin="16,3,0,0"
-                                VerticalAlignment="Center">
-                        <TextBlock Text="{Binding ApplicationTitle}"
-                                   Foreground="White"
-                                   FontSize="18"
-                                   FontWeight="Bold"
-                                   MaxWidth="520"
-                                   TextWrapping="Wrap" />
-                        <TextBlock Margin="0,4,0,0"
-                                   Text="{Binding ApplicationSubtitle}"
-                                   Foreground="#EAF6FF"
-                                   FontSize="13"
-                                   MaxWidth="520"
-                                   TextWrapping="Wrap" />
-                    </StackPanel>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1"
@@ -314,33 +354,19 @@
                         </StackPanel>
                     </Border>
 
-                    <Button Command="{Binding BackCommand}"
-                            Style="{StaticResource HeaderIconButtonStyle}"
-                            ToolTip="Back"
-                            Visibility="{Binding CanGoBack, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock FontFamily="Segoe MDL2 Assets"
-                                   FontSize="18"
-                                   Text="&#xE72B;" />
-                    </Button>
-
-                    <Button Command="{Binding ShowDashboardCommand}"
-                            Style="{StaticResource HeaderIconButtonStyle}"
-                            ToolTip="Home">
-                        <TextBlock FontFamily="Segoe MDL2 Assets"
-                                   FontSize="18"
-                                   Text="&#xE80F;" />
-                    </Button>
-
                     <Button Command="{Binding ShowNotificationsCommand}"
                             Style="{StaticResource HeaderIconButtonStyle}"
                             ToolTip="Notifications">
                         <Grid Width="24"
                               Height="24">
-                            <TextBlock HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="18"
-                                       Text="&#xE7F4;" />
+                            <Viewbox Width="20"
+                                     Height="20"
+                                     HorizontalAlignment="Center"
+                                     VerticalAlignment="Center">
+                                <Path Data="{StaticResource NotificationBellGeometry}"
+                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      Stretch="Uniform" />
+                            </Viewbox>
                             <Border Width="20"
                                     Height="20"
                                     HorizontalAlignment="Right"
@@ -359,23 +385,6 @@
                                            Text="{Binding NotificationBadgeText}" />
                             </Border>
                         </Grid>
-                    </Button>
-
-                    <Button Command="{Binding ShowSettingsCommand}"
-                            Style="{StaticResource HeaderIconButtonStyle}"
-                            ToolTip="Settings">
-                        <TextBlock FontFamily="Segoe MDL2 Assets"
-                                   FontSize="18"
-                                   Text="&#xE713;" />
-                    </Button>
-
-                    <Button Command="{Binding LogoutCommand}"
-                            Margin="0"
-                            Style="{StaticResource HeaderPrimaryIconButtonStyle}"
-                            ToolTip="Log out">
-                        <TextBlock FontFamily="Segoe MDL2 Assets"
-                                   FontSize="18"
-                                   Text="&#xE8AC;" />
                     </Button>
                 </StackPanel>
 
@@ -422,12 +431,14 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1"
-                Background="#FFF4F9FF">
-            <ContentControl Content="{Binding CurrentModule}">
+        <Grid Grid.Row="1"
+              Background="#FFF4F9FF">
+            <ContentControl x:Name="ShellContentPresenter"
+                            Content="{Binding CurrentModule}"
+                            ClipToBounds="False">
                 <ContentControl.Style>
                     <Style TargetType="ContentControl">
-                        <Setter Property="Margin" Value="22" />
+                        <Setter Property="Margin" Value="98,22,22,22" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding ActiveModuleKey}" Value="dashboard">
                                 <Setter Property="Margin" Value="0" />
@@ -436,7 +447,187 @@
                     </Style>
                 </ContentControl.Style>
             </ContentControl>
-        </Border>
+
+            <Grid Panel.ZIndex="20"
+                  Margin="14,18,0,18"
+                  HorizontalAlignment="Left">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ActiveModuleKey}" Value="dashboard">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <Button Command="{Binding ShowDashboardCommand}"
+                            ToolTip="Dashboard">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="dashboard">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE80F;" />
+                    </Button>
+
+                    <Button Command="{Binding ShowStudentsCommand}"
+                            ToolTip="Students">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="students">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE716;" />
+                    </Button>
+
+                    <Button Command="{Binding ShowFacultyCommand}"
+                            ToolTip="Faculty">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="faculty">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE77B;" />
+                    </Button>
+
+                    <Button Command="{Binding ShowEnrollmentCommand}"
+                            ToolTip="Enrollment">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="enrollment">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE8C8;" />
+                    </Button>
+
+                    <Button Command="{Binding ShowScheduleCommand}"
+                            ToolTip="Schedule">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="schedule">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE787;" />
+                    </Button>
+
+                    <Button Command="{Binding ShowCalendarCommand}"
+                            ToolTip="Calendar">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="calendar">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE163;" />
+                    </Button>
+
+                    <Button Command="{Binding ShowSettingsCommand}"
+                            ToolTip="Settings">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="settings">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE713;" />
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1"
+                            Margin="0,12,0,0">
+                    <Button Command="{Binding ShowProfileCommand}"
+                            Margin="0,0,0,10"
+                            ToolTip="{Binding CurrentUserDisplay}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Setter Property="Foreground" Value="#FF1D5FA8" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="profile">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE77B;" />
+                    </Button>
+
+                    <Button Command="{Binding LogoutCommand}"
+                            Margin="0"
+                            Style="{StaticResource SidebarCircleButtonStyle}"
+                            ToolTip="Log out">
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Foreground="#FFE53935"
+                                   Text="&#xE8AC;" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
 
         <Grid Grid.RowSpan="2"
               Panel.ZIndex="40"
@@ -473,7 +664,7 @@
                                            FontWeight="Bold"
                                            Foreground="{StaticResource TextBrush}" />
                                 <TextBlock Margin="0,8,0,0"
-                                           Text="Recent alerts and workspace activity from the WPF shell."
+                                           Text="Recent transaction activity from the active school database."
                                            Foreground="{StaticResource MutedTextBrush}" />
                             </StackPanel>
 
@@ -486,63 +677,85 @@
                     <ScrollViewer Grid.Row="1"
                                   Padding="30,22,30,30"
                                   VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding Notifications}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Margin="0,0,0,16"
-                                            Padding="18"
-                                            Background="#FFF8FBFF"
-                                            BorderBrush="{StaticResource BorderBrushSoft}"
-                                            BorderThickness="1"
-                                            CornerRadius="20">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="56" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Margin="0,18,0,0"
+                                       HorizontalAlignment="Center"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       Text="No recent transactions yet.">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasNotifications}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
 
-                                            <Border Width="44"
-                                                    Height="44"
-                                                    VerticalAlignment="Top"
-                                                    Background="#FFFCE8E8"
-                                                    CornerRadius="16">
-                                                <TextBlock HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           FontFamily="Segoe MDL2 Assets"
-                                                           FontSize="20"
-                                                           Foreground="{StaticResource DangerBrush}"
-                                                           Text="&#xE77B;" />
-                                            </Border>
+                            <ItemsControl ItemsSource="{Binding Notifications}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,16"
+                                                Padding="18"
+                                                Background="#FFF8FBFF"
+                                                BorderBrush="{StaticResource BorderBrushSoft}"
+                                                BorderThickness="1"
+                                                CornerRadius="20">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="56" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
 
-                                            <StackPanel Grid.Column="1"
-                                                        Margin="16,0,0,0">
-                                                <TextBlock Text="{Binding Title}"
-                                                           FontSize="16"
-                                                           FontWeight="Bold"
-                                                           Foreground="{StaticResource TextBrush}" />
-                                                <TextBlock Margin="0,6,0,0"
-                                                           Text="{Binding Subtitle}"
+                                                <Border Width="44"
+                                                        Height="44"
+                                                        VerticalAlignment="Top"
+                                                        Background="#FFEAF4FF"
+                                                        CornerRadius="16">
+                                                    <Viewbox Width="20"
+                                                             Height="20"
+                                                             HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center">
+                                                        <Path Data="{StaticResource NotificationBellGeometry}"
+                                                              Fill="{StaticResource PrimaryBrush}"
+                                                              Stretch="Uniform" />
+                                                    </Viewbox>
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1"
+                                                            Margin="16,0,0,0">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontSize="16"
+                                                               FontWeight="Bold"
+                                                               Foreground="{StaticResource TextBrush}" />
+                                                    <TextBlock Margin="0,6,0,0"
+                                                               Text="{Binding Subtitle}"
+                                                               FontSize="13.5"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{StaticResource MutedTextBrush}" />
+                                                    <TextBlock Margin="0,8,0,0"
+                                                               Text="{Binding Message}"
+                                                               TextWrapping="Wrap"
+                                                               Foreground="{StaticResource MutedTextBrush}" />
+                                                </StackPanel>
+
+                                                <TextBlock Grid.Column="2"
+                                                           Margin="18,0,0,0"
                                                            FontSize="13.5"
                                                            FontWeight="SemiBold"
-                                                           Foreground="{StaticResource MutedTextBrush}" />
-                                                <TextBlock Margin="0,8,0,0"
-                                                           Text="{Binding Message}"
-                                                           TextWrapping="Wrap"
-                                                           Foreground="{StaticResource MutedTextBrush}" />
-                                            </StackPanel>
-
-                                            <TextBlock Grid.Column="2"
-                                                       Margin="18,0,0,0"
-                                                       FontSize="13.5"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{StaticResource MutedTextBrush}"
-                                                       Text="{Binding RelativeTime}" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                                           Foreground="{StaticResource MutedTextBrush}"
+                                                           Text="{Binding RelativeTime}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </ScrollViewer>
                 </Grid>
             </Border>

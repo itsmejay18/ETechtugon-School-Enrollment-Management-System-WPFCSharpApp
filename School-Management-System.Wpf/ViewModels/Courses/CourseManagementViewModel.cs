@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Windows;
 using School_Management_System.BusinessLayer.Services;
+using School_Management_System.Common;
 using School_Management_System.Models;
 using School_Management_System.Wpf.Infrastructure;
 
@@ -13,6 +14,7 @@ namespace School_Management_System.Wpf.ViewModels.Courses
     {
         private readonly CourseService _courseService;
         private readonly DepartmentService _departmentService;
+        private readonly ActivityLogService _activityLogService;
 
         private string _searchText;
         private CourseListItemViewModel _selectedCourse;
@@ -25,10 +27,11 @@ namespace School_Management_System.Wpf.ViewModels.Courses
         private string _statusMessage;
         private int _editingCourseId;
 
-        public CourseManagementViewModel(CourseService courseService, DepartmentService departmentService)
+        public CourseManagementViewModel(CourseService courseService, DepartmentService departmentService, ActivityLogService activityLogService)
         {
             _courseService = courseService ?? throw new ArgumentNullException(nameof(courseService));
             _departmentService = departmentService ?? throw new ArgumentNullException(nameof(departmentService));
+            _activityLogService = activityLogService;
 
             Courses = new ObservableCollection<CourseListItemViewModel>();
             Departments = new ObservableCollection<DepartmentOptionViewModel>();
@@ -359,17 +362,25 @@ namespace School_Management_System.Wpf.ViewModels.Courses
                 }
 
                 int selectedCourseId;
+                string transactionAction;
                 if (_editingCourseId == 0)
                 {
                     selectedCourseId = _courseService.Create(course);
+                    transactionAction = AppConstants.ActivityActions.Create;
                     StatusMessage = "Course saved successfully.";
                 }
                 else
                 {
                     _courseService.Update(course);
                     selectedCourseId = _editingCourseId;
+                    transactionAction = AppConstants.ActivityActions.Update;
                     StatusMessage = "Course updated successfully.";
                 }
+
+                LogCourseTransaction(
+                    transactionAction,
+                    selectedCourseId,
+                    BuildCourseTransactionMessage(transactionAction, course));
 
                 IsEditorActive = false;
                 IsEditorModalOpen = false;
@@ -407,6 +418,10 @@ namespace School_Management_System.Wpf.ViewModels.Courses
             try
             {
                 _courseService.Delete(SelectedCourse.CourseId);
+                LogCourseTransaction(
+                    AppConstants.ActivityActions.Delete,
+                    SelectedCourse.CourseId,
+                    "Deleted course " + BuildCourseLabel(SelectedCourse.CourseCode, SelectedCourse.CourseName) + ".");
                 StatusMessage = "Course deleted successfully.";
                 RefreshCourses();
             }
@@ -434,6 +449,39 @@ namespace School_Management_System.Wpf.ViewModels.Courses
             DeleteCommand.RaiseCanExecuteChanged();
             SaveCommand.RaiseCanExecuteChanged();
             CancelCommand.RaiseCanExecuteChanged();
+        }
+
+        private string BuildCourseTransactionMessage(string action, Course course)
+        {
+            var label = BuildCourseLabel(
+                course == null ? null : course.CourseCode,
+                course == null ? null : course.CourseName);
+
+            if (string.Equals(action, AppConstants.ActivityActions.Create, StringComparison.OrdinalIgnoreCase))
+            {
+                return "Created course " + label + ".";
+            }
+
+            return "Updated course " + label + ".";
+        }
+
+        private static string BuildCourseLabel(string courseCode, string courseName)
+        {
+            var code = string.IsNullOrWhiteSpace(courseCode) ? "Course" : courseCode.Trim();
+            var name = string.IsNullOrWhiteSpace(courseName) ? string.Empty : courseName.Trim();
+            return string.IsNullOrWhiteSpace(name)
+                ? code
+                : code + " | " + name;
+        }
+
+        private void LogCourseTransaction(string action, int? courseId, string details)
+        {
+            if (_activityLogService == null)
+            {
+                return;
+            }
+
+            _activityLogService.LogTransaction(action, AppConstants.Entities.Course, courseId, details);
         }
     }
 }

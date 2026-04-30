@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Media;
 using Microsoft.Win32;
 using School_Management_System.BusinessLayer.Services;
+using School_Management_System.Common;
 using School_Management_System.Models;
 using School_Management_System.Presentation.Helpers;
 using School_Management_System.Wpf.Infrastructure;
@@ -18,6 +19,7 @@ namespace School_Management_System.Wpf.ViewModels.Students
     {
         private readonly StudentService _studentService;
         private readonly SystemSettingService _systemSettingService;
+        private readonly ActivityLogService _activityLogService;
         private ImageSource _studentPhoto;
         private DataView _enrolledSubjects;
         private string _profileSummary;
@@ -38,7 +40,7 @@ namespace School_Management_System.Wpf.ViewModels.Students
         private string _currentPhotoPath;
         private string _selectedPhotoSourcePath;
 
-        public StudentDirectoryViewModel(StudentService studentService, SystemSettingService systemSettingService)
+        public StudentDirectoryViewModel(StudentService studentService, SystemSettingService systemSettingService, ActivityLogService activityLogService)
             : base(
                 "Student directory",
                 "Search and review student records loaded directly from the live school database.",
@@ -47,6 +49,7 @@ namespace School_Management_System.Wpf.ViewModels.Students
         {
             _studentService = studentService ?? throw new ArgumentNullException(nameof(studentService));
             _systemSettingService = systemSettingService ?? throw new ArgumentNullException(nameof(systemSettingService));
+            _activityLogService = activityLogService;
 
             GenderOptions = new ObservableCollection<string> { string.Empty, "Male", "Female", "Other" };
             EnrolledSubjects = new DataView(new DataTable());
@@ -335,6 +338,10 @@ namespace School_Management_System.Wpf.ViewModels.Students
             try
             {
                 _studentService.Delete(studentId);
+                LogStudentTransaction(
+                    AppConstants.ActivityActions.Delete,
+                    studentId,
+                    "Deleted student " + studentLabel + ".");
                 StatusMessage = "Student deleted successfully.";
                 ModalStatusMessage = "Student deleted successfully.";
                 IsDetailsModalOpen = false;
@@ -391,17 +398,25 @@ namespace School_Management_System.Wpf.ViewModels.Students
                 }
 
                 int selectedStudentId;
+                string transactionAction;
                 if (_editingStudentId == 0)
                 {
                     selectedStudentId = _studentService.Create(student);
+                    transactionAction = AppConstants.ActivityActions.Create;
                     StatusMessage = "Student saved successfully.";
                 }
                 else
                 {
                     _studentService.Update(student);
                     selectedStudentId = _editingStudentId;
+                    transactionAction = AppConstants.ActivityActions.Update;
                     StatusMessage = "Student updated successfully.";
                 }
+
+                LogStudentTransaction(
+                    transactionAction,
+                    selectedStudentId,
+                    BuildStudentTransactionMessage(transactionAction, student));
 
                 ModalStatusMessage = StatusMessage;
                 _currentPhotoPath = student.PhotoPath;
@@ -645,6 +660,31 @@ namespace School_Management_System.Wpf.ViewModels.Students
             return string.IsNullOrWhiteSpace(fullName)
                 ? studentLabel
                 : studentLabel + " | " + fullName;
+        }
+
+        private string BuildStudentTransactionMessage(string action, Student student)
+        {
+            var label = BuildStudentSummary(
+                student == null ? null : student.StudentNumber,
+                student == null ? null : student.LastName,
+                student == null ? null : student.FirstName);
+
+            if (string.Equals(action, AppConstants.ActivityActions.Create, StringComparison.OrdinalIgnoreCase))
+            {
+                return "Created student " + label + ".";
+            }
+
+            return "Updated student " + label + ".";
+        }
+
+        private void LogStudentTransaction(string action, int? studentId, string details)
+        {
+            if (_activityLogService == null)
+            {
+                return;
+            }
+
+            _activityLogService.LogTransaction(action, AppConstants.Entities.Student, studentId, details);
         }
     }
 }

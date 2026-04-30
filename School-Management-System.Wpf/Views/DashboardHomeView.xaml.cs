@@ -59,7 +59,7 @@ namespace School_Management_System.Wpf.Views
 
         private void ApplyBrandingAssets()
         {
-            HeroBrandLogoImage.Source = BrandingAssetLoader.LoadCompanyLogo();
+            HeroBrandLogoImage.Source = BrandingAssetLoader.LoadBrandLogo();
         }
 
         private void SchoolBranding_BrandingChanged(object sender, EventArgs e)
