@@ -9,8 +9,8 @@
         </Style>
 
         <Style x:Key="BrandingInputStyle" TargetType="TextBox" BasedOn="{StaticResource ToolbarTextBoxStyle}">
-            <Setter Property="Margin" Value="0,8,0,0" />
-            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="Margin" Value="0,6,0,0" />
+            <Setter Property="MinHeight" Value="36" />
         </Style>
 
     </UserControl.Resources>
@@ -78,7 +78,7 @@
                             <StackPanel Grid.Row="3" Grid.ColumnSpan="2">
                                 <TextBlock Style="{StaticResource BrandingLabelStyle}" Text="Company address" />
                                 <TextBox Style="{StaticResource BrandingInputStyle}"
-                                         MinHeight="92"
+                                         MinHeight="76"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          VerticalContentAlignment="Top"
@@ -186,7 +186,7 @@
 
                             <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Body" />
                             <TextBox Style="{StaticResource BrandingInputStyle}"
-                                     MinHeight="110"
+                                     MinHeight="86"
                                      AcceptsReturn="True"
                                      TextWrapping="Wrap"
                                      VerticalContentAlignment="Top"
@@ -209,7 +209,7 @@
 
                             <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Form subtitle" />
                             <TextBox Style="{StaticResource BrandingInputStyle}"
-                                     MinHeight="110"
+                                     MinHeight="86"
                                      AcceptsReturn="True"
                                      TextWrapping="Wrap"
                                      VerticalContentAlignment="Top"
@@ -235,7 +235,7 @@
                                 <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding FeatureOneTitle, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Feature 1 body" />
                                 <TextBox Style="{StaticResource BrandingInputStyle}"
-                                         MinHeight="100"
+                                         MinHeight="82"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          VerticalContentAlignment="Top"
@@ -248,7 +248,7 @@
                                 <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding FeatureTwoTitle, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Feature 2 body" />
                                 <TextBox Style="{StaticResource BrandingInputStyle}"
-                                         MinHeight="100"
+                                         MinHeight="82"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          VerticalContentAlignment="Top"
@@ -261,7 +261,7 @@
                                 <TextBox Style="{StaticResource BrandingInputStyle}" Text="{Binding FeatureThreeTitle, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBlock Margin="0,16,0,0" Style="{StaticResource BrandingLabelStyle}" Text="Feature 3 body" />
                                 <TextBox Style="{StaticResource BrandingInputStyle}"
-                                         MinHeight="100"
+                                         MinHeight="82"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          VerticalContentAlignment="Top"
@@ -280,3 +280,4 @@
         </StackPanel>
     </ScrollViewer>
 </UserControl>
+

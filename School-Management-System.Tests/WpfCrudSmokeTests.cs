@@ -170,7 +170,7 @@ namespace School_Management_System.Tests.Integration
         public void StudentDirectory_Commands_OpenAndCloseExpectedModalStates()
         {
             var bootstrapper = AppBootstrapper.CreateForCurrentMode();
-            var vm = new StudentDirectoryViewModel(bootstrapper.StudentService, bootstrapper.SystemSettingService);
+            var vm = new StudentDirectoryViewModel(bootstrapper.StudentService, bootstrapper.SystemSettingService, null);
 
             Assert.That(vm.AddCommand.CanExecute(null), Is.True);
             vm.AddCommand.Execute(null);
@@ -218,7 +218,7 @@ namespace School_Management_System.Tests.Integration
         public void CourseManagement_Commands_OpenAndCloseExpectedModalStates()
         {
             var bootstrapper = AppBootstrapper.CreateForCurrentMode();
-            var vm = new CourseManagementViewModel(bootstrapper.CourseService, bootstrapper.DepartmentService);
+            var vm = new CourseManagementViewModel(bootstrapper.CourseService, bootstrapper.DepartmentService, null);
 
             Assert.That(vm.AddCommand.CanExecute(null), Is.True);
             vm.AddCommand.Execute(null);

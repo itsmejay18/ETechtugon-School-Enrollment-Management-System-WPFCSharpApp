@@ -39,7 +39,9 @@ namespace School_Management_System.Wpf.ViewModels
             _activityLogService = bootstrapper.ActivityLogService;
 
             Dashboard = new DashboardHomeViewModel(bootstrapper, currentUser);
-            Settings = new SettingsViewModel(bootstrapper, currentUser);
+            Analytics = new AnalyticsViewModel(bootstrapper);
+            Settings = new SettingsViewModel(bootstrapper, currentUser, SettingsWorkspaceKind.System);
+            CurriculumSettings = new SettingsViewModel(bootstrapper, currentUser, SettingsWorkspaceKind.Curriculum);
             Students = new StudentDirectoryViewModel(
                 bootstrapper.StudentService,
                 bootstrapper.SystemSettingService,
@@ -82,6 +84,8 @@ namespace School_Management_System.Wpf.ViewModels
             ShowEnrollmentCommand = new RelayCommand(ShowEnrollment);
             ShowScheduleCommand = new RelayCommand(ShowSchedule);
             ShowCalendarCommand = new RelayCommand(ShowCalendar);
+            ShowAnalyticsCommand = new RelayCommand(ShowAnalytics);
+            ShowCurriculumSettingsCommand = new RelayCommand(ShowCurriculumSettings);
             ShowSettingsCommand = new RelayCommand(ShowSettings);
             ShowProfileCommand = new RelayCommand(ShowProfile);
             ShowNotificationsCommand = new RelayCommand(ToggleNotifications);
@@ -191,12 +195,14 @@ namespace School_Management_System.Wpf.ViewModels
         }
 
         public DashboardHomeViewModel Dashboard { get; private set; }
+        public AnalyticsViewModel Analytics { get; private set; }
         public StudentDirectoryViewModel Students { get; private set; }
         public FacultyDirectoryViewModel Faculty { get; private set; }
         public EnrollmentWorkspaceViewModel Enrollment { get; private set; }
         public ScheduleBoardViewModel Schedule { get; private set; }
         public AcademicCalendarViewModel Calendar { get; private set; }
         public SettingsViewModel Settings { get; private set; }
+        public SettingsViewModel CurriculumSettings { get; private set; }
         public ProfileWorkspaceViewModel Profile { get; private set; }
         public ObservableCollection<NotificationItemViewModel> Notifications { get; private set; }
 
@@ -230,6 +236,8 @@ namespace School_Management_System.Wpf.ViewModels
         public RelayCommand ShowEnrollmentCommand { get; private set; }
         public RelayCommand ShowScheduleCommand { get; private set; }
         public RelayCommand ShowCalendarCommand { get; private set; }
+        public RelayCommand ShowAnalyticsCommand { get; private set; }
+        public RelayCommand ShowCurriculumSettingsCommand { get; private set; }
         public RelayCommand ShowSettingsCommand { get; private set; }
         public RelayCommand ShowProfileCommand { get; private set; }
         public RelayCommand ShowNotificationsCommand { get; private set; }
@@ -287,7 +295,7 @@ namespace School_Management_System.Wpf.ViewModels
         {
             Dashboard.RefreshMetrics();
             Dashboard.RefreshClock();
-            Activate("dashboard", Dashboard, "Launch board", "Dashboard tiles, live counts, and academic workspace status.");
+            Activate("dashboard", Dashboard, "Launch board", "Dashboard tiles and academic workspace status.");
         }
 
         private void ShowStudents()
@@ -315,9 +323,20 @@ namespace School_Management_System.Wpf.ViewModels
             Activate("calendar", Calendar, "Calendar", "Academic dates, reminders, and school timeline planning.");
         }
 
+        private void ShowAnalytics()
+        {
+            Analytics.RefreshMetrics();
+            Activate("analytics", Analytics, "Analytics", "Record counts and school database overview.");
+        }
+
+        private void ShowCurriculumSettings()
+        {
+            Activate("curriculum-settings", CurriculumSettings, "Curriculum Settings", "Curriculum codes, subject codes, sections, and academic references.");
+        }
+
         private void ShowSettings()
         {
-            Activate("settings", Settings, "Settings", "Academic setup, course maintenance, and configuration.");
+            Activate("settings", Settings, "System Settings", "Company branding, database activity, user access, and system controls.");
         }
 
         private void ShowProfile()

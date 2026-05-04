@@ -46,6 +46,10 @@
             <views:DashboardHomeView />
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vm:AnalyticsViewModel}">
+            <views:AnalyticsView />
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
             <views:SettingsView />
         </DataTemplate>
@@ -317,15 +321,15 @@
 
                 <StackPanel Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <Grid Width="180"
-                          Height="58"
+                    <Grid Width="260"
+                          Height="72"
                           VerticalAlignment="Center">
                         <Image x:Name="ShellBrandLogoImage"
                                Stretch="Uniform"
                                HorizontalAlignment="Left"
                                VerticalAlignment="Center"
                                SnapsToDevicePixels="True"
-                               RenderOptions.BitmapScalingMode="Linear" />
+                               RenderOptions.BitmapScalingMode="HighQuality" />
                     </Grid>
 
                 </StackPanel>
@@ -573,6 +577,42 @@
                         <TextBlock FontFamily="Segoe MDL2 Assets"
                                    FontSize="22"
                                    Text="&#xE163;" />
+                    </Button>
+
+                    <Button Command="{Binding ShowAnalyticsCommand}"
+                            ToolTip="Analytics">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="analytics">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE9D2;" />
+                    </Button>
+
+                    <Button Command="{Binding ShowCurriculumSettingsCommand}"
+                            ToolTip="Curriculum settings">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveModuleKey}" Value="curriculum-settings">
+                                        <Setter Property="Background" Value="#FFE53935" />
+                                        <Setter Property="BorderBrush" Value="#FFE53935" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock FontFamily="Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Text="&#xE7BE;" />
                     </Button>
 
                     <Button Command="{Binding ShowSettingsCommand}"

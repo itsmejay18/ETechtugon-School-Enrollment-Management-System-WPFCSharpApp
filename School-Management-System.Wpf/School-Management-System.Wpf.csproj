@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net472</TargetFramework>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>assets\app-logo.ico</ApplicationIcon>
+    <ApplicationIcon>..\School-Management-System\assets\app-logo.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <LangVersion>latest</LangVersion>
     <RootNamespace>School_Management_System.Wpf</RootNamespace>
@@ -18,10 +18,12 @@
   <ItemGroup>
     <Reference Include="System.Configuration" />
     <None Include="App.config" />
-    <Content Include="assets\app-logo.ico">
+    <Content Include="..\School-Management-System\assets\app-logo.ico">
+      <Link>assets\app-logo.ico</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="assets\brand-logo.png">
+    <Content Include="..\School-Management-System\assets\brand-logo.png">
+      <Link>assets\brand-logo.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="..\newbranding.png">
@@ -30,6 +32,10 @@
     </Content>
     <Content Include="..\companylogo.png">
       <Link>assets\companylogo.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\clientlogo.png">
+      <Link>assets\clientlogo.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using School_Management_System.BusinessLayer.Services;
@@ -48,6 +49,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
                 if (SetProperty(ref _selectedCourse, value))
                 {
                     LoadCurriculum();
+                    RaiseCurriculumIdentityChanged();
                 }
             }
         }
@@ -60,6 +62,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
                 if (SetProperty(ref _selectedAcademicYear, value))
                 {
                     LoadCurriculum();
+                    RaiseCurriculumIdentityChanged();
                 }
             }
         }
@@ -72,6 +75,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
                 if (SetProperty(ref _selectedYearLevel, value))
                 {
                     LoadCurriculum();
+                    RaiseCurriculumIdentityChanged();
                 }
             }
         }
@@ -84,6 +88,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
                 if (SetProperty(ref _selectedSemester, value))
                 {
                     LoadCurriculum();
+                    RaiseCurriculumIdentityChanged();
                 }
             }
         }
@@ -100,11 +105,22 @@ namespace School_Management_System.Wpf.ViewModels.Settings
             private set { SetProperty(ref _statusMessage, value); }
         }
 
+        public string SelectedCurriculumCode
+        {
+            get { return BuildCurriculumCode(); }
+        }
+
+        public string SelectedCurriculumName
+        {
+            get { return BuildCurriculumName(); }
+        }
+
         public void Refresh()
         {
             LoadCourses();
             LoadAcademicReferences();
             LoadCurriculum();
+            RaiseCurriculumIdentityChanged();
         }
 
         private void LoadCourses()
@@ -133,6 +149,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
             if (SelectedAcademicYear == null && AcademicYears.Count > 0) SelectedAcademicYear = AcademicYears[0];
             if (SelectedYearLevel == null && YearLevels.Count > 0) SelectedYearLevel = YearLevels[0];
             if (SelectedSemester == null && Semesters.Count > 0) SelectedSemester = Semesters[0];
+            RaiseCurriculumIdentityChanged();
         }
 
         private void LoadCurriculum()
@@ -161,6 +178,38 @@ namespace School_Management_System.Wpf.ViewModels.Settings
             StatusMessage = "Loaded curriculum subjects from the academic database.";
         }
 
+        private string BuildCurriculumCode()
+        {
+            var parts = new List<string>();
+            AddCodePart(parts, SelectedCourse == null ? null : SelectedCourse.Subtitle);
+            AddCodePart(parts, SelectedYearLevel == null ? null : SelectedYearLevel.Title);
+            AddCodePart(parts, SelectedSemester == null ? null : SelectedSemester.Title);
+            AddCodePart(parts, SelectedAcademicYear == null ? null : SelectedAcademicYear.Title);
+
+            return parts.Count == 0
+                ? "No curriculum code selected"
+                : string.Join("-", parts);
+        }
+
+        private string BuildCurriculumName()
+        {
+            var parts = new List<string>();
+            AddNamePart(parts, SelectedCourse == null ? null : SelectedCourse.DisplayName);
+            AddNamePart(parts, SelectedYearLevel == null ? null : SelectedYearLevel.Title);
+            AddNamePart(parts, SelectedSemester == null ? null : SelectedSemester.Title);
+            AddNamePart(parts, SelectedAcademicYear == null ? null : SelectedAcademicYear.Title);
+
+            return parts.Count == 0
+                ? "Select course, year level, semester, and academic year"
+                : string.Join(" | ", parts);
+        }
+
+        private void RaiseCurriculumIdentityChanged()
+        {
+            OnPropertyChanged(nameof(SelectedCurriculumCode));
+            OnPropertyChanged(nameof(SelectedCurriculumName));
+        }
+
         private static void LoadLookupCollection(ObservableCollection<LookupOptionViewModel> target, DataTable table, string idColumn, string titleColumn, string subtitleColumn)
         {
             target.Clear();
@@ -176,6 +225,42 @@ namespace School_Management_System.Wpf.ViewModels.Settings
                         : string.Empty
                 });
             }
+        }
+
+        private static void AddCodePart(ICollection<string> parts, string value)
+        {
+            var normalized = NormalizeCodePart(value);
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                parts.Add(normalized);
+            }
+        }
+
+        private static void AddNamePart(ICollection<string> parts, string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                parts.Add(value.Trim());
+            }
+        }
+
+        private static string NormalizeCodePart(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            var chars = new List<char>();
+            foreach (var c in value.Trim().ToUpperInvariant())
+            {
+                if (char.IsLetterOrDigit(c) || c == '-')
+                {
+                    chars.Add(c);
+                }
+            }
+
+            return new string(chars.ToArray());
         }
     }
 }

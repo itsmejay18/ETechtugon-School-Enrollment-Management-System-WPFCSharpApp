@@ -225,6 +225,12 @@ namespace School_Management_System.Presentation.Helpers
         {
             var preferredNames = new[]
             {
+                "clientlogo.png",
+                "client-logo.png",
+                "client_logo.png",
+                "companylogo.png",
+                "company-logo.png",
+                "company_logo.png",
                 "brand-logo.png",
                 "school-logo.png",
                 "logo.png",

@@ -97,36 +97,6 @@ namespace School_Management_System.Wpf.ViewModels
             get { return SchoolBranding.LoginFormSubtitle; }
         }
 
-        public string FeatureOneTitle
-        {
-            get { return SchoolBranding.FeatureOneTitle; }
-        }
-
-        public string FeatureOneBody
-        {
-            get { return SchoolBranding.FeatureOneBody; }
-        }
-
-        public string FeatureTwoTitle
-        {
-            get { return SchoolBranding.FeatureTwoTitle; }
-        }
-
-        public string FeatureTwoBody
-        {
-            get { return SchoolBranding.FeatureTwoBody; }
-        }
-
-        public string FeatureThreeTitle
-        {
-            get { return SchoolBranding.FeatureThreeTitle; }
-        }
-
-        public string FeatureThreeBody
-        {
-            get { return SchoolBranding.FeatureThreeBody; }
-        }
-
         public string Username
         {
             get { return _username; }
@@ -338,12 +308,6 @@ namespace School_Management_System.Wpf.ViewModels
             OnPropertyChanged(nameof(LoginBody));
             OnPropertyChanged(nameof(LoginFormTitle));
             OnPropertyChanged(nameof(LoginFormSubtitle));
-            OnPropertyChanged(nameof(FeatureOneTitle));
-            OnPropertyChanged(nameof(FeatureOneBody));
-            OnPropertyChanged(nameof(FeatureTwoTitle));
-            OnPropertyChanged(nameof(FeatureTwoBody));
-            OnPropertyChanged(nameof(FeatureThreeTitle));
-            OnPropertyChanged(nameof(FeatureThreeBody));
         }
 
         private void RequestClose(bool? result)

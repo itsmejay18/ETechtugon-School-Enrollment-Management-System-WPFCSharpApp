@@ -292,77 +292,32 @@
             <StackPanel VerticalAlignment="Top">
                 <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE713;" />
                 <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Settings" />
-                <TextBlock Style="{StaticResource TileBodyStyle}" Text="Curriculum and school setup." />
+                <TextBlock Style="{StaticResource TileBodyStyle}" Text="Branding, users, and system setup." />
             </StackPanel>
         </Button>
 
         <Button Grid.Row="4"
                 Grid.Column="0"
-                Margin="1"
-                Background="{StaticResource TileCountOneBrush}"
-                Style="{StaticResource LightTileButtonStyle}"
-                Command="{Binding DataContext.ShowStudentsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
-            <StackPanel VerticalAlignment="Top">
-                <TextBlock Text="Students"
-                           FontSize="13"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource PrimaryBrush}" />
-                <TextBlock Margin="0,14,0,0"
-                           Text="{Binding StudentsCount, StringFormat={}{0:N0}}"
-                           FontSize="34"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource TextBrush}" />
-                <TextBlock Margin="0,12,0,0"
-                           Text="Active learner records"
-                           FontSize="10.8"
-                           TextWrapping="Wrap"
-                           Foreground="{StaticResource MutedTextBrush}" />
-            </StackPanel>
-        </Button>
-
-        <Button Grid.Row="4"
-                Grid.Column="1"
-                Margin="1"
-                Background="{StaticResource TileCountTwoBrush}"
-                Style="{StaticResource LightTileButtonStyle}"
-                Command="{Binding DataContext.ShowFacultyCommand, RelativeSource={RelativeSource AncestorType=Window}}">
-            <StackPanel VerticalAlignment="Top">
-                <TextBlock Text="Faculty"
-                           FontSize="13"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource PrimaryBrush}" />
-                <TextBlock Margin="0,14,0,0"
-                           Text="{Binding FacultyCount, StringFormat={}{0:N0}}"
-                           FontSize="34"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource TextBrush}" />
-                <TextBlock Margin="0,12,0,0"
-                           Text="Teaching staff members"
-                           FontSize="10.8"
-                           TextWrapping="Wrap"
-                           Foreground="{StaticResource MutedTextBrush}" />
-            </StackPanel>
-        </Button>
-
-        <Button Grid.Row="4"
-                Grid.Column="2"
+                Grid.ColumnSpan="3"
                 Margin="1"
                 Background="{StaticResource TileCountThreeBrush}"
                 Style="{StaticResource LightTileButtonStyle}"
-                Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowCurriculumSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
             <StackPanel VerticalAlignment="Top">
-                <TextBlock Text="Courses"
-                           FontSize="13"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource PrimaryBrush}" />
-                <TextBlock Margin="0,14,0,0"
-                           Text="{Binding CoursesCount, StringFormat={}{0:N0}}"
-                           FontSize="34"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock FontFamily="Segoe MDL2 Assets"
+                           FontSize="36"
+                           Foreground="{StaticResource PrimaryBrush}"
+                           Text="&#xE7BE;" />
                 <TextBlock Margin="0,12,0,0"
-                           Text="Academic programs"
-                           FontSize="10.8"
+                           Text="Curriculum Settings"
+                           FontSize="17"
+                           FontWeight="Bold"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Margin="0,10,0,0"
+                           Text="Courses, subjects, sections, departments, and academic references."
+                           FontSize="11"
+                           LineHeight="15"
                            TextWrapping="Wrap"
                            Foreground="{StaticResource MutedTextBrush}" />
             </StackPanel>
@@ -370,47 +325,26 @@
 
         <Button Grid.Row="4"
                 Grid.Column="3"
-                Margin="1"
-                Background="{StaticResource TileCountFourBrush}"
-                Style="{StaticResource LightTileButtonStyle}"
-                Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
-            <StackPanel VerticalAlignment="Top">
-                <TextBlock Text="Subjects"
-                           FontSize="13"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource PrimaryBrush}" />
-                <TextBlock Margin="0,14,0,0"
-                           Text="{Binding SubjectsCount, StringFormat={}{0:N0}}"
-                           FontSize="34"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource TextBrush}" />
-                <TextBlock Margin="0,12,0,0"
-                           Text="Catalog subjects"
-                           FontSize="10.8"
-                           TextWrapping="Wrap"
-                           Foreground="{StaticResource MutedTextBrush}" />
-            </StackPanel>
-        </Button>
-
-        <Button Grid.Row="4"
-                Grid.Column="4"
+                Grid.ColumnSpan="2"
                 Margin="1"
                 Background="{StaticResource TileCountFiveBrush}"
                 Style="{StaticResource LightTileButtonStyle}"
-                Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowAnalyticsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
             <StackPanel VerticalAlignment="Top">
-                <TextBlock Text="Departments"
-                           FontSize="13"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource PrimaryBrush}" />
-                <TextBlock Margin="0,14,0,0"
-                           Text="{Binding DepartmentsCount, StringFormat={}{0:N0}}"
-                           FontSize="34"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock FontFamily="Segoe MDL2 Assets"
+                           FontSize="36"
+                           Foreground="{StaticResource PrimaryBrush}"
+                           Text="&#xE9D2;" />
                 <TextBlock Margin="0,12,0,0"
-                           Text="Configured departments"
-                           FontSize="10.8"
+                           Text="Analytics"
+                           FontSize="17"
+                           FontWeight="Bold"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Margin="0,10,0,0"
+                           Text="Open school counts and database overview."
+                           FontSize="11"
+                           LineHeight="15"
                            TextWrapping="Wrap"
                            Foreground="{StaticResource MutedTextBrush}" />
             </StackPanel>

@@ -19,7 +19,7 @@ WizardStyle=modern
 ArchitecturesAllowed=x86compatible and x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\{#MyAppExeName}
-SetupIconFile=..\School-Management-System.Wpf\assets\app-logo.ico
+SetupIconFile=..\School-Management-System\assets\app-logo.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

@@ -11,16 +11,27 @@ namespace School_Management_System.Wpf.Services
     {
         public static ImageSource LoadBrandLogo()
         {
-            return LoadImageSource(SchoolBranding.BrandLogoData)
-                   ?? LoadImageSource(FindRasterBrandAssetPath())
+            return LoadClientLogo();
+        }
+
+        public static ImageSource LoadClientLogo()
+        {
+            return LoadImageSource(FindClientLogoAssetPath(), true)
+                   ?? LoadImageSource(SchoolBranding.BrandLogoData, true)
+                   ?? LoadImageSource(FindRasterBrandAssetPath(), true)
                    ?? LoadImageSource(FindAppIconAssetPath());
         }
 
         public static ImageSource LoadCompanyLogo()
         {
-            return LoadImageSource(SchoolBranding.CompactLogoData, true)
+            return LoadHeaderLogo();
+        }
+
+        public static ImageSource LoadHeaderLogo()
+        {
+            return LoadImageSource(FindCompanyLogoAssetPath(), true)
+                   ?? LoadImageSource(SchoolBranding.CompactLogoData, true)
                    ?? LoadImageSource(SchoolBranding.BrandLogoData, true)
-                   ?? LoadImageSource(FindCompanyLogoAssetPath(), true)
                    ?? LoadBrandLogo();
         }
 
@@ -259,7 +270,14 @@ namespace School_Management_System.Wpf.Services
 
             var max = Math.Max(r, Math.Max(g, b));
             var min = Math.Min(r, Math.Min(g, b));
-            return r >= 220 && g >= 220 && b >= 220 && (max - min) <= 25;
+            var spread = max - min;
+
+            if (r >= 220 && g >= 220 && b >= 220 && spread <= 25)
+            {
+                return true;
+            }
+
+            return max >= 48 && spread <= 24;
         }
 
         private static BitmapSource TrimTransparentMargins(BitmapSource source)
@@ -350,6 +368,16 @@ namespace School_Management_System.Wpf.Services
                 "school-logo.png",
                 "logo.png",
                 "brand.png"
+            });
+        }
+
+        private static string FindClientLogoAssetPath()
+        {
+            return FindExistingAssetPath(new[]
+            {
+                "clientlogo.png",
+                "client-logo.png",
+                "client_logo.png"
             });
         }
 

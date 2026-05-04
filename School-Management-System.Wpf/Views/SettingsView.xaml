@@ -72,12 +72,12 @@
             </Grid.RowDefinitions>
 
             <StackPanel Margin="0,0,0,16">
-                <TextBlock Text="Settings"
+                <TextBlock Text="{Binding WorkspaceTitle}"
                            FontSize="26"
                            FontWeight="Bold"
                            Foreground="{StaticResource TextBrush}" />
                 <TextBlock Margin="0,8,0,0"
-                           Text="Academic setup, system controls, and course maintenance now stay together inside one native WPF settings workspace."
+                           Text="{Binding WorkspaceDescription}"
                            TextWrapping="Wrap"
                            Foreground="{StaticResource MutedTextBrush}" />
             </StackPanel>
