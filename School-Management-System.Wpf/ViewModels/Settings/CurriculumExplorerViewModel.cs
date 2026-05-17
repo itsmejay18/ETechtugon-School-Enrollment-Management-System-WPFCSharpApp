@@ -17,6 +17,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
         private LookupOptionViewModel _selectedAcademicYear;
         private LookupOptionViewModel _selectedYearLevel;
         private LookupOptionViewModel _selectedSemester;
+        private string _selectedCurriculumType;
         private DataView _curriculumSubjects;
         private string _statusMessage;
 
@@ -30,6 +31,8 @@ namespace School_Management_System.Wpf.ViewModels.Settings
             AcademicYears = new ObservableCollection<LookupOptionViewModel>();
             YearLevels = new ObservableCollection<LookupOptionViewModel>();
             Semesters = new ObservableCollection<LookupOptionViewModel>();
+            CurriculumTypes = new ObservableCollection<string> { "NEW", "OLD" };
+            _selectedCurriculumType = "NEW";
             RefreshCommand = new RelayCommand(Refresh);
 
             Refresh();
@@ -39,6 +42,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
         public ObservableCollection<LookupOptionViewModel> AcademicYears { get; private set; }
         public ObservableCollection<LookupOptionViewModel> YearLevels { get; private set; }
         public ObservableCollection<LookupOptionViewModel> Semesters { get; private set; }
+        public ObservableCollection<string> CurriculumTypes { get; private set; }
         public RelayCommand RefreshCommand { get; private set; }
 
         public LookupOptionViewModel SelectedCourse
@@ -86,6 +90,19 @@ namespace School_Management_System.Wpf.ViewModels.Settings
             set
             {
                 if (SetProperty(ref _selectedSemester, value))
+                {
+                    LoadCurriculum();
+                    RaiseCurriculumIdentityChanged();
+                }
+            }
+        }
+
+        public string SelectedCurriculumType
+        {
+            get { return _selectedCurriculumType; }
+            set
+            {
+                if (SetProperty(ref _selectedCurriculumType, CurriculumService.NormalizeCurriculumType(value)))
                 {
                     LoadCurriculum();
                     RaiseCurriculumIdentityChanged();
@@ -165,7 +182,8 @@ namespace School_Management_System.Wpf.ViewModels.Settings
                 SelectedCourse.Id,
                 SelectedYearLevel.Id,
                 SelectedSemester.Id,
-                SelectedAcademicYear.Id);
+                SelectedAcademicYear.Id,
+                SelectedCurriculumType);
 
             if (!curriculumId.HasValue)
             {
@@ -182,6 +200,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
         {
             var parts = new List<string>();
             AddCodePart(parts, SelectedCourse == null ? null : SelectedCourse.Subtitle);
+            AddCodePart(parts, SelectedCurriculumType);
             AddCodePart(parts, SelectedYearLevel == null ? null : SelectedYearLevel.Title);
             AddCodePart(parts, SelectedSemester == null ? null : SelectedSemester.Title);
             AddCodePart(parts, SelectedAcademicYear == null ? null : SelectedAcademicYear.Title);
@@ -195,6 +214,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
         {
             var parts = new List<string>();
             AddNamePart(parts, SelectedCourse == null ? null : SelectedCourse.DisplayName);
+            AddNamePart(parts, SelectedCurriculumType + " Curriculum");
             AddNamePart(parts, SelectedYearLevel == null ? null : SelectedYearLevel.Title);
             AddNamePart(parts, SelectedSemester == null ? null : SelectedSemester.Title);
             AddNamePart(parts, SelectedAcademicYear == null ? null : SelectedAcademicYear.Title);

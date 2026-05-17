@@ -15,13 +15,18 @@ namespace School_Management_System.BusinessLayer.Services
 
         public int EnsureCurriculum(string name, int courseId, int yearLevelId, int semesterId, int academicYearId)
         {
-            var existingId = _curriculumData.GetCurriculumId(courseId, yearLevelId, semesterId, academicYearId);
+            return EnsureCurriculum(name, courseId, yearLevelId, semesterId, academicYearId, "NEW");
+        }
+
+        public int EnsureCurriculum(string name, int courseId, int yearLevelId, int semesterId, int academicYearId, string curriculumType)
+        {
+            var existingId = _curriculumData.GetCurriculumId(courseId, yearLevelId, semesterId, academicYearId, NormalizeCurriculumType(curriculumType));
             if (existingId.HasValue)
             {
                 return existingId.Value;
             }
 
-            return _curriculumData.InsertCurriculum(name, courseId, yearLevelId, semesterId, academicYearId);
+            return _curriculumData.InsertCurriculum(name, courseId, yearLevelId, semesterId, academicYearId, NormalizeCurriculumType(curriculumType));
         }
 
         public int? TryGetCurriculumId(int courseId, int yearLevelId, int semesterId, int academicYearId)
@@ -29,9 +34,19 @@ namespace School_Management_System.BusinessLayer.Services
             return _curriculumData.GetCurriculumId(courseId, yearLevelId, semesterId, academicYearId);
         }
 
+        public int? TryGetCurriculumId(int courseId, int yearLevelId, int semesterId, int academicYearId, string curriculumType)
+        {
+            return _curriculumData.GetCurriculumId(courseId, yearLevelId, semesterId, academicYearId, NormalizeCurriculumType(curriculumType));
+        }
+
         public DataTable GetSubjectsForCourse(int courseId)
         {
             return _curriculumData.GetSubjectsForCourse(courseId);
+        }
+
+        public DataTable GetCurriculums(string search)
+        {
+            return _curriculumData.GetCurriculums(search);
         }
 
         public DataTable GetCurriculumSubjects(int curriculumId)
@@ -49,6 +64,11 @@ namespace School_Management_System.BusinessLayer.Services
             {
                 _curriculumData.RemoveSubject(curriculumId, subjectId);
             }
+        }
+
+        public static string NormalizeCurriculumType(string value)
+        {
+            return string.Equals(value, "OLD", StringComparison.OrdinalIgnoreCase) ? "OLD" : "NEW";
         }
     }
 }

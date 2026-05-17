@@ -30,6 +30,11 @@ namespace School_Management_System.BusinessLayer.Services
             return _subjectData.GetByCourse(courseId);
         }
 
+        public DataTable GetSubjectCapacity(int subjectId)
+        {
+            return _subjectData.GetSubjectCapacity(subjectId);
+        }
+
         public int GetActiveCount()
         {
             return _subjectData.GetActiveCount();
@@ -59,6 +64,11 @@ namespace School_Management_System.BusinessLayer.Services
                 vr.Add("Units must be greater than 0.");
             }
 
+            if (subject.MaxStudents.HasValue && subject.MaxStudents.Value <= 0)
+            {
+                vr.Add("Max Students must be greater than 0 when provided.");
+            }
+
             return vr;
         }
 
@@ -75,6 +85,11 @@ namespace School_Management_System.BusinessLayer.Services
         public void Delete(int subjectId)
         {
             _subjectData.Delete(subjectId);
+        }
+
+        public void RefreshEnrollmentCounts()
+        {
+            _subjectData.RefreshEnrollmentCounts();
         }
     }
 }

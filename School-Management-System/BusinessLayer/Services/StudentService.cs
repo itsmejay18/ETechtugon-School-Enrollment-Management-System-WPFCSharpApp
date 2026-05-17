@@ -26,6 +26,11 @@ namespace School_Management_System.BusinessLayer.Services
             return _studentData.Search(searchText);
         }
 
+        public DataTable GetStudents(string searchText, string studentType)
+        {
+            return _studentData.Search(searchText, studentType);
+        }
+
         public string GetNextStudentNumber()
         {
             return _studentData.GetNextStudentNumber();
@@ -41,6 +46,31 @@ namespace School_Management_System.BusinessLayer.Services
             return _studentData.GetEnrolledSubjects(studentId, academicYearId, semesterId);
         }
 
+        public DataTable GetEnrollmentHistory(int studentId)
+        {
+            return _studentData.GetEnrollmentHistory(studentId);
+        }
+
+        public DataTable GetCompletedSubjects(int studentId)
+        {
+            return _studentData.GetCompletedSubjects(studentId);
+        }
+
+        public DataTable GetFailedSubjects(int studentId)
+        {
+            return _studentData.GetFailedSubjects(studentId);
+        }
+
+        public DataTable GetRemainingSubjects(int studentId, int? curriculumId)
+        {
+            return _studentData.GetRemainingSubjects(studentId, curriculumId);
+        }
+
+        public DataTable GetAcademicProfile(int studentId)
+        {
+            return _studentData.GetAcademicProfile(studentId);
+        }
+
         public ValidationResult Validate(Student student)
         {
             var vr = new ValidationResult();
@@ -53,6 +83,11 @@ namespace School_Management_System.BusinessLayer.Services
             if (string.IsNullOrWhiteSpace(student.StudentNumber))
             {
                 vr.Add("Student Number is required.");
+            }
+
+            if (!IsValidStudentType(student.StudentType))
+            {
+                vr.Add("Student Type must be Regular, Irregular, or Summer.");
             }
 
             if (string.IsNullOrWhiteSpace(student.FirstName))
@@ -75,6 +110,33 @@ namespace School_Management_System.BusinessLayer.Services
             }
 
             return vr;
+        }
+
+        public static string NormalizeStudentType(string value)
+        {
+            if (string.Equals(value, "Irregular", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Irregular";
+            }
+
+            if (string.Equals(value, "Summer", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Summer";
+            }
+
+            return "Regular";
+        }
+
+        private static bool IsValidStudentType(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return true;
+            }
+
+            return string.Equals(value, "Regular", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "Irregular", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(value, "Summer", StringComparison.OrdinalIgnoreCase);
         }
 
         public int Create(Student student)

@@ -28,6 +28,12 @@ namespace School_Management_System.Presentation.Helpers
             return logo == null ? null : new Bitmap(logo);
         }
 
+        public static Image CreateLogoMarkImage()
+        {
+            var logo = GetLogo();
+            return logo == null ? null : CropLogoTagline(logo);
+        }
+
         public static Icon CreateAppIcon()
         {
             var icon = GetAppIcon();
@@ -219,6 +225,42 @@ namespace School_Management_System.Presentation.Helpers
             }
 
             return trimmed;
+        }
+
+        private static Bitmap CropLogoTagline(Bitmap source)
+        {
+            if (source == null || source.Width <= 0 || source.Height <= 0)
+            {
+                return source == null ? null : new Bitmap(source);
+            }
+
+            var aspectRatio = (double)source.Width / source.Height;
+            if (aspectRatio < 2.2)
+            {
+                return new Bitmap(source);
+            }
+
+            var cropHeight = (int)Math.Round(source.Height * 0.84);
+            if (cropHeight <= 0 || cropHeight >= source.Height)
+            {
+                return new Bitmap(source);
+            }
+
+            using (var cropped = new Bitmap(source.Width, cropHeight))
+            using (var g = Graphics.FromImage(cropped))
+            {
+                g.Clear(Color.Transparent);
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                g.DrawImage(
+                    source,
+                    new Rectangle(0, 0, source.Width, cropHeight),
+                    new Rectangle(0, 0, source.Width, cropHeight),
+                    GraphicsUnit.Pixel);
+
+                return TrimTransparentPadding(cropped);
+            }
         }
 
         private static IEnumerable<string> EnumerateLogoCandidates()

@@ -18,15 +18,23 @@ namespace School_Management_System.DataLayer
 
         public DataTable GetBySection(int sectionId)
         {
+            return GetBySection(sectionId, null, null);
+        }
+
+        public DataTable GetBySection(int sectionId, int? academicYearId, int? semesterId)
+        {
             const string sql = @"
 SELECT
     cs.ClassScheduleId,
     cs.SectionId,
+    sec.SectionCode,
     sec.SectionName,
     cs.SubjectId,
     s.SubjectCode,
     s.SubjectName,
     s.Units,
+    s.MaxStudents,
+    s.CurrentEnrolledCount,
     cs.FacultyId,
     CONCAT(f.LastName, ', ', f.FirstName) AS FacultyName,
     cs.DayOfWeek,
@@ -46,21 +54,34 @@ INNER JOIN academicyear ay ON ay.AcademicYearId = cs.AcademicYearId
 INNER JOIN semester sem ON sem.SemesterId = cs.SemesterId
 WHERE cs.IsActive = 1
   AND cs.SectionId = @SectionId
+  AND (@AcademicYearId IS NULL OR cs.AcademicYearId = @AcademicYearId)
+  AND (@SemesterId IS NULL OR cs.SemesterId = @SemesterId)
 ORDER BY s.SubjectName;";
 
             return _db.ExecuteDataTable(
                 sql,
                 CommandType.Text,
-                new[] { new MySqlParameter("@SectionId", sectionId) });
+                new[]
+                {
+                    new MySqlParameter("@SectionId", sectionId),
+                    new MySqlParameter("@AcademicYearId", (object)academicYearId ?? DBNull.Value),
+                    new MySqlParameter("@SemesterId", (object)semesterId ?? DBNull.Value)
+                });
         }
 
         public DataTable GetByFaculty(int facultyId)
+        {
+            return GetByFaculty(facultyId, null, null);
+        }
+
+        public DataTable GetByFaculty(int facultyId, int? academicYearId, int? semesterId)
         {
             const string sql = @"
 SELECT
     cs.ClassScheduleId,
     s.SubjectCode,
     s.SubjectName,
+    sec.SectionCode,
     sec.SectionName,
     cs.DayOfWeek,
     cs.StartTime,
@@ -75,12 +96,19 @@ LEFT JOIN academicyear ay ON ay.AcademicYearId = cs.AcademicYearId
 LEFT JOIN semester sem ON sem.SemesterId = cs.SemesterId
 WHERE cs.IsActive = 1
   AND cs.FacultyId = @FacultyId
+  AND (@AcademicYearId IS NULL OR cs.AcademicYearId = @AcademicYearId)
+  AND (@SemesterId IS NULL OR cs.SemesterId = @SemesterId)
 ORDER BY ay.Name DESC, sem.Name DESC, s.SubjectName;";
 
             return _db.ExecuteDataTable(
                 sql,
                 CommandType.Text,
-                new[] { new MySqlParameter("@FacultyId", facultyId) });
+                new[]
+                {
+                    new MySqlParameter("@FacultyId", facultyId),
+                    new MySqlParameter("@AcademicYearId", (object)academicYearId ?? DBNull.Value),
+                    new MySqlParameter("@SemesterId", (object)semesterId ?? DBNull.Value)
+                });
         }
 
         public int Insert(ClassSchedule schedule)

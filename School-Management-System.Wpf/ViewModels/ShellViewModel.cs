@@ -45,7 +45,8 @@ namespace School_Management_System.Wpf.ViewModels
             Students = new StudentDirectoryViewModel(
                 bootstrapper.StudentService,
                 bootstrapper.SystemSettingService,
-                bootstrapper.ActivityLogService);
+                bootstrapper.ActivityLogService,
+                bootstrapper.CurriculumService);
             Faculty = new FacultyDirectoryViewModel(
                 bootstrapper.FacultyService,
                 bootstrapper.ClassScheduleService);
@@ -62,7 +63,8 @@ namespace School_Management_System.Wpf.ViewModels
             Schedule = new ScheduleBoardViewModel(
                 bootstrapper.SectionService,
                 bootstrapper.FacultyService,
-                bootstrapper.ClassScheduleService);
+                bootstrapper.ClassScheduleService,
+                bootstrapper.SystemSettingService);
             Calendar = new AcademicCalendarViewModel(
                 bootstrapper.LookupService,
                 bootstrapper.SectionService);
@@ -300,7 +302,7 @@ namespace School_Management_System.Wpf.ViewModels
 
         private void ShowStudents()
         {
-            Activate("students", Students, "Students", "Student records, profiles, and enrollment entry points.");
+            Activate("students", Students, "Student Profile", "Student records, academic history, curriculum, and enrollment entry points.");
         }
 
         private void ShowFaculty()

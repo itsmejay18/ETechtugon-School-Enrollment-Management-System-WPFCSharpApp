@@ -6,6 +6,9 @@ namespace School_Management_System.Models
     {
         private int _studentId;
         private string _studentNumber;
+        private string _studentType;
+        private int? _curriculumId;
+        private string _academicStatus;
         private string _firstName;
         private string _lastName;
         private string _middleName;
@@ -22,6 +25,9 @@ namespace School_Management_System.Models
 
         public int StudentId { get { return _studentId; } set { _studentId = value; } }
         public string StudentNumber { get { return _studentNumber; } set { _studentNumber = value; } }
+        public string StudentType { get { return _studentType; } set { _studentType = value; } }
+        public int? CurriculumId { get { return _curriculumId; } set { _curriculumId = value; } }
+        public string AcademicStatus { get { return _academicStatus; } set { _academicStatus = value; } }
         public string FirstName { get { return _firstName; } set { _firstName = value; } }
         public string LastName { get { return _lastName; } set { _lastName = value; } }
         public string MiddleName { get { return _middleName; } set { _middleName = value; } }

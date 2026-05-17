@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using Microsoft.Win32;
@@ -20,12 +21,21 @@ namespace School_Management_System.Wpf.ViewModels.Students
         private readonly StudentService _studentService;
         private readonly SystemSettingService _systemSettingService;
         private readonly ActivityLogService _activityLogService;
+        private readonly CurriculumService _curriculumService;
         private ImageSource _studentPhoto;
         private DataView _enrolledSubjects;
+        private DataView _enrollmentHistory;
+        private DataView _completedSubjects;
+        private DataView _failedSubjects;
+        private DataView _remainingSubjects;
         private string _profileSummary;
         private int _editingStudentId;
         private bool _isEditorActive;
+        private string _selectedStudentTypeFilter;
         private string _studentNumber;
+        private string _selectedStudentType;
+        private string _academicStatus;
+        private LookupOptionViewModel _selectedCurriculum;
         private string _firstName;
         private string _lastName;
         private string _middleName;
@@ -40,19 +50,28 @@ namespace School_Management_System.Wpf.ViewModels.Students
         private string _currentPhotoPath;
         private string _selectedPhotoSourcePath;
 
-        public StudentDirectoryViewModel(StudentService studentService, SystemSettingService systemSettingService, ActivityLogService activityLogService)
+        public StudentDirectoryViewModel(StudentService studentService, SystemSettingService systemSettingService, ActivityLogService activityLogService, CurriculumService curriculumService = null)
             : base(
-                "Student directory",
-                "Search and review student records loaded directly from the live school database.",
+                "Student Profile",
+                "Search, filter, and review student profile records loaded directly from the live school database.",
                 "Search by student number or last name",
                 search => studentService.GetStudents(search))
         {
             _studentService = studentService ?? throw new ArgumentNullException(nameof(studentService));
             _systemSettingService = systemSettingService ?? throw new ArgumentNullException(nameof(systemSettingService));
             _activityLogService = activityLogService;
+            _curriculumService = curriculumService;
 
+            StudentTypeFilterOptions = new ObservableCollection<string> { "All", "Regular", "Irregular", "Summer" };
+            StudentTypeOptions = new ObservableCollection<string> { "Regular", "Irregular", "Summer" };
             GenderOptions = new ObservableCollection<string> { string.Empty, "Male", "Female", "Other" };
+            CurriculumOptions = new ObservableCollection<LookupOptionViewModel>();
+            _selectedStudentTypeFilter = "All";
             EnrolledSubjects = new DataView(new DataTable());
+            EnrollmentHistory = new DataView(new DataTable());
+            CompletedSubjects = new DataView(new DataTable());
+            FailedSubjects = new DataView(new DataTable());
+            RemainingSubjects = new DataView(new DataTable());
             ProfileSummary = "Select a student record to load profile details and enrolled subjects.";
             ModalStatusMessage = "Use Add beside the filter. Edit and Delete are available after you open the selected student modal.";
 
@@ -65,10 +84,14 @@ namespace School_Management_System.Wpf.ViewModels.Students
             UploadPhotoCommand = new RelayCommand(UploadPhoto, () => IsEditorActive);
             RemovePhotoCommand = new RelayCommand(RemovePhoto, () => IsEditorActive && HasPhoto);
 
+            LoadCurriculumOptions();
             Refresh();
         }
 
+        public ObservableCollection<string> StudentTypeFilterOptions { get; private set; }
+        public ObservableCollection<string> StudentTypeOptions { get; private set; }
         public ObservableCollection<string> GenderOptions { get; private set; }
+        public ObservableCollection<LookupOptionViewModel> CurriculumOptions { get; private set; }
 
         public RelayCommand AddCommand { get; private set; }
         public RelayCommand EditCommand { get; private set; }
@@ -101,6 +124,30 @@ namespace School_Management_System.Wpf.ViewModels.Students
         {
             get { return _enrolledSubjects; }
             private set { SetProperty(ref _enrolledSubjects, value); }
+        }
+
+        public DataView EnrollmentHistory
+        {
+            get { return _enrollmentHistory; }
+            private set { SetProperty(ref _enrollmentHistory, value); }
+        }
+
+        public DataView CompletedSubjects
+        {
+            get { return _completedSubjects; }
+            private set { SetProperty(ref _completedSubjects, value); }
+        }
+
+        public DataView FailedSubjects
+        {
+            get { return _failedSubjects; }
+            private set { SetProperty(ref _failedSubjects, value); }
+        }
+
+        public DataView RemainingSubjects
+        {
+            get { return _remainingSubjects; }
+            private set { SetProperty(ref _remainingSubjects, value); }
         }
 
         public string ProfileSummary
@@ -145,6 +192,18 @@ namespace School_Management_System.Wpf.ViewModels.Students
         public bool HasExistingStudent
         {
             get { return _editingStudentId > 0; }
+        }
+
+        public string SelectedStudentTypeFilter
+        {
+            get { return _selectedStudentTypeFilter; }
+            set
+            {
+                if (SetProperty(ref _selectedStudentTypeFilter, value))
+                {
+                    Refresh();
+                }
+            }
         }
 
         public string StudentNumber
@@ -241,12 +300,52 @@ namespace School_Management_System.Wpf.ViewModels.Students
 
         public override void Refresh()
         {
-            base.Refresh();
+            try
+            {
+                var selectedStudentId = CurrentSelectedRecord == null ? 0 : Convert.ToInt32(CurrentSelectedRecord["StudentId"]);
+                var studentType = string.Equals(SelectedStudentTypeFilter, "All", StringComparison.OrdinalIgnoreCase)
+                    ? string.Empty
+                    : SelectedStudentTypeFilter;
+                var table = _studentService.GetStudents(SearchText ?? string.Empty, studentType) ?? new DataTable();
+                Records = table.DefaultView;
+                SelectedRecord = Records.Count > 0 ? Records[0] : null;
+
+                if (selectedStudentId > 0)
+                {
+                    SelectStudentRecord(selectedStudentId);
+                }
+
+                if (Records.Count == 0)
+                {
+                    IsDetailsModalOpen = false;
+                }
+
+                StatusMessage = Records.Count > 0
+                    ? "Loaded student profiles from the current school database."
+                    : "No student profiles matched the current search and type filter.";
+            }
+            catch (Exception ex)
+            {
+                Records = new DataView(new DataTable());
+                SelectedRecord = null;
+                IsDetailsModalOpen = false;
+                StatusMessage = "Unable to load student profiles right now.";
+                MessageBox.Show(
+                    ex.Message,
+                    "Student Profile",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+
             if (!HasRecords)
             {
                 StudentPhoto = null;
                 EnrolledSubjects = new DataView(new DataTable());
-                ProfileSummary = "No student data matched the current search.";
+                EnrollmentHistory = new DataView(new DataTable());
+                CompletedSubjects = new DataView(new DataTable());
+                FailedSubjects = new DataView(new DataTable());
+                RemainingSubjects = new DataView(new DataTable());
+                ProfileSummary = "No student profile matched the current search.";
                 if (!IsEditorActive)
                 {
                     ResetEditorFields(_studentService.GetNextStudentNumber());
@@ -365,6 +464,9 @@ namespace School_Management_System.Wpf.ViewModels.Students
                 {
                     StudentId = _editingStudentId,
                     StudentNumber = (StudentNumber ?? string.Empty).Trim(),
+                    StudentType = StudentService.NormalizeStudentType(SelectedStudentType),
+                    CurriculumId = SelectedCurriculum == null || SelectedCurriculum.Id <= 0 ? (int?)null : SelectedCurriculum.Id,
+                    AcademicStatus = string.IsNullOrWhiteSpace(AcademicStatus) ? "Active" : AcademicStatus.Trim(),
                     FirstName = (FirstName ?? string.Empty).Trim(),
                     LastName = (LastName ?? string.Empty).Trim(),
                     MiddleName = (MiddleName ?? string.Empty).Trim(),
@@ -439,6 +541,48 @@ namespace School_Management_System.Wpf.ViewModels.Students
 
         private void CancelEdit()
         {
+            EndEdit(false);
+        }
+
+        public string SelectedStudentType
+        {
+            get { return _selectedStudentType; }
+            set
+            {
+                if (SetProperty(ref _selectedStudentType, value))
+                {
+                    OnPropertyChanged(nameof(StudentTypeBadgeText));
+                    OnPropertyChanged(nameof(DetailsModalSubtitle));
+                }
+            }
+        }
+
+        public string StudentTypeBadgeText
+        {
+            get { return string.IsNullOrWhiteSpace(SelectedStudentType) ? "Regular" : SelectedStudentType; }
+        }
+
+        public string AcademicStatus
+        {
+            get { return _academicStatus; }
+            set
+            {
+                if (SetProperty(ref _academicStatus, value))
+                {
+                    OnPropertyChanged(nameof(DetailsModalSubtitle));
+                }
+            }
+        }
+
+        public LookupOptionViewModel SelectedCurriculum
+        {
+            get { return _selectedCurriculum; }
+            set { SetProperty(ref _selectedCurriculum, value); }
+        }
+
+        private void EndEdit(bool closeModal)
+        {
+            var wasAdding = _editingStudentId == 0;
             IsEditorActive = false;
             if (CurrentSelectedRecord != null)
             {
@@ -449,15 +593,17 @@ namespace School_Management_System.Wpf.ViewModels.Students
                 ResetEditorFields(_studentService.GetNextStudentNumber());
             }
 
-            IsDetailsModalOpen = false;
-            ModalStatusMessage = "Student edit canceled.";
+            IsDetailsModalOpen = !closeModal && !wasAdding && CurrentSelectedRecord != null;
+            ModalStatusMessage = wasAdding
+                ? "Student add canceled."
+                : "Student edit canceled. Preview mode restored.";
         }
 
         private void CloseModal()
         {
             if (IsEditorActive)
             {
-                CancelEdit();
+                EndEdit(true);
                 return;
             }
 
@@ -514,6 +660,47 @@ namespace School_Management_System.Wpf.ViewModels.Students
             ModalStatusMessage = "Student photo removed. Save the record to apply the change.";
         }
 
+        private void LoadCurriculumOptions()
+        {
+            CurriculumOptions.Clear();
+            CurriculumOptions.Add(new LookupOptionViewModel
+            {
+                Id = 0,
+                Title = "(No curriculum assigned)",
+                Subtitle = string.Empty
+            });
+
+            if (_curriculumService == null)
+            {
+                SelectedCurriculum = CurriculumOptions[0];
+                return;
+            }
+
+            try
+            {
+                var table = _curriculumService.GetCurriculums(string.Empty) ?? new DataTable();
+                foreach (DataRow row in table.Rows)
+                {
+                    var code = table.Columns.Contains("CourseCode") ? Convert.ToString(row["CourseCode"]) : string.Empty;
+                    var year = table.Columns.Contains("YearLevel") ? Convert.ToString(row["YearLevel"]) : string.Empty;
+                    var semester = table.Columns.Contains("Semester") ? Convert.ToString(row["Semester"]) : string.Empty;
+                    var type = table.Columns.Contains("CurriculumType") ? Convert.ToString(row["CurriculumType"]) : string.Empty;
+
+                    CurriculumOptions.Add(new LookupOptionViewModel
+                    {
+                        Id = Convert.ToInt32(row["CurriculumId"]),
+                        Title = Convert.ToString(row["Name"]),
+                        Subtitle = string.Join(" | ", new[] { type, code, year, semester }.Where(v => !string.IsNullOrWhiteSpace(v)))
+                    });
+                }
+            }
+            catch
+            {
+            }
+
+            SelectedCurriculum = CurriculumOptions.Count > 0 ? CurriculumOptions[0] : null;
+        }
+
         private void LoadSelectedStudentData()
         {
             if (CurrentSelectedRecord == null)
@@ -525,6 +712,10 @@ namespace School_Management_System.Wpf.ViewModels.Students
                 _selectedPhotoBytes = null;
                 StudentPhoto = null;
                 EnrolledSubjects = new DataView(new DataTable());
+                EnrollmentHistory = new DataView(new DataTable());
+                CompletedSubjects = new DataView(new DataTable());
+                FailedSubjects = new DataView(new DataTable());
+                RemainingSubjects = new DataView(new DataTable());
                 ProfileSummary = "Select a student record to load profile details and enrolled subjects.";
                 if (!IsEditorActive)
                 {
@@ -545,8 +736,8 @@ namespace School_Management_System.Wpf.ViewModels.Students
                 var lastName = GetColumnValue(CurrentSelectedRecord, "LastName");
                 var firstName = GetColumnValue(CurrentSelectedRecord, "FirstName");
 
-                ProfileSummary = BuildStudentSummary(studentNumber, lastName, firstName);
                 LoadEditorFieldsFromSelectedRecord();
+                ProfileSummary = BuildProfileSummary(studentNumber, lastName, firstName, SelectedStudentType, AcademicStatus);
 
                 try
                 {
@@ -564,10 +755,19 @@ namespace School_Management_System.Wpf.ViewModels.Students
                     var activeTerm = _systemSettingService.GetActiveTerm();
                     var subjectTable = _studentService.GetProfileSubjects(_editingStudentId, activeTerm.AcademicYearId, activeTerm.SemesterId) ?? new DataTable();
                     EnrolledSubjects = subjectTable.DefaultView;
+                    EnrollmentHistory = (_studentService.GetEnrollmentHistory(_editingStudentId) ?? new DataTable()).DefaultView;
+                    CompletedSubjects = (_studentService.GetCompletedSubjects(_editingStudentId) ?? new DataTable()).DefaultView;
+                    FailedSubjects = (_studentService.GetFailedSubjects(_editingStudentId) ?? new DataTable()).DefaultView;
+                    var curriculumId = SelectedCurriculum == null || SelectedCurriculum.Id <= 0 ? (int?)null : SelectedCurriculum.Id;
+                    RemainingSubjects = (_studentService.GetRemainingSubjects(_editingStudentId, curriculumId) ?? new DataTable()).DefaultView;
                 }
                 catch
                 {
                     EnrolledSubjects = new DataView(new DataTable());
+                    EnrollmentHistory = new DataView(new DataTable());
+                    CompletedSubjects = new DataView(new DataTable());
+                    FailedSubjects = new DataView(new DataTable());
+                    RemainingSubjects = new DataView(new DataTable());
                     ModalStatusMessage = "Student profile loaded, but enrolled subjects are unavailable right now.";
                 }
             }
@@ -579,6 +779,10 @@ namespace School_Management_System.Wpf.ViewModels.Students
                 _selectedPhotoBytes = null;
                 StudentPhoto = null;
                 EnrolledSubjects = new DataView(new DataTable());
+                EnrollmentHistory = new DataView(new DataTable());
+                CompletedSubjects = new DataView(new DataTable());
+                FailedSubjects = new DataView(new DataTable());
+                RemainingSubjects = new DataView(new DataTable());
                 ProfileSummary = "Student details loaded, but related subject records are unavailable right now.";
             }
         }
@@ -591,6 +795,11 @@ namespace School_Management_System.Wpf.ViewModels.Students
             }
 
             StudentNumber = GetColumnValue(CurrentSelectedRecord, "StudentNumber");
+            SelectedStudentType = StudentService.NormalizeStudentType(GetColumnValue(CurrentSelectedRecord, "StudentType"));
+            AcademicStatus = string.IsNullOrWhiteSpace(GetColumnValue(CurrentSelectedRecord, "AcademicStatus"))
+                ? "Active"
+                : GetColumnValue(CurrentSelectedRecord, "AcademicStatus");
+            SelectedCurriculum = FindCurriculumOption(GetNullableInt(CurrentSelectedRecord, "CurriculumId"));
             FirstName = GetColumnValue(CurrentSelectedRecord, "FirstName");
             LastName = GetColumnValue(CurrentSelectedRecord, "LastName");
             MiddleName = GetColumnValue(CurrentSelectedRecord, "MiddleName");
@@ -607,6 +816,9 @@ namespace School_Management_System.Wpf.ViewModels.Students
         private void ResetEditorFields(string studentNumber)
         {
             StudentNumber = studentNumber ?? string.Empty;
+            SelectedStudentType = "Regular";
+            AcademicStatus = "Active";
+            SelectedCurriculum = CurriculumOptions.Count > 0 ? CurriculumOptions[0] : null;
             FirstName = string.Empty;
             LastName = string.Empty;
             MiddleName = string.Empty;
@@ -621,6 +833,10 @@ namespace School_Management_System.Wpf.ViewModels.Students
             _selectedPhotoBytes = null;
             StudentPhoto = null;
             EnrolledSubjects = new DataView(new DataTable());
+            EnrollmentHistory = new DataView(new DataTable());
+            CompletedSubjects = new DataView(new DataTable());
+            FailedSubjects = new DataView(new DataTable());
+            RemainingSubjects = new DataView(new DataTable());
         }
 
         private void SelectStudentRecord(int studentId)
@@ -642,6 +858,24 @@ namespace School_Management_System.Wpf.ViewModels.Students
             SelectedRecord = Records.Count > 0 ? Records[0] : null;
         }
 
+        private LookupOptionViewModel FindCurriculumOption(int? curriculumId)
+        {
+            if (!curriculumId.HasValue || CurriculumOptions == null)
+            {
+                return CurriculumOptions == null || CurriculumOptions.Count == 0 ? null : CurriculumOptions[0];
+            }
+
+            foreach (var option in CurriculumOptions)
+            {
+                if (option != null && option.Id == curriculumId.Value)
+                {
+                    return option;
+                }
+            }
+
+            return CurriculumOptions.Count > 0 ? CurriculumOptions[0] : null;
+        }
+
         private void RaiseCommandStates()
         {
             EditCommand.RaiseCanExecuteChanged();
@@ -660,6 +894,23 @@ namespace School_Management_System.Wpf.ViewModels.Students
             return string.IsNullOrWhiteSpace(fullName)
                 ? studentLabel
                 : studentLabel + " | " + fullName;
+        }
+
+        private static string BuildProfileSummary(string studentNumber, string lastName, string firstName, string studentType, string academicStatus)
+        {
+            return BuildStudentSummary(studentNumber, lastName, firstName) +
+                   " | " + StudentService.NormalizeStudentType(studentType) +
+                   " | " + (string.IsNullOrWhiteSpace(academicStatus) ? "Active" : academicStatus.Trim());
+        }
+
+        private static int? GetNullableInt(DataRowView row, string columnName)
+        {
+            if (row == null || string.IsNullOrWhiteSpace(columnName) || !row.Row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return null;
+            }
+
+            return Convert.ToInt32(row[columnName]);
         }
 
         private string BuildStudentTransactionMessage(string action, Student student)

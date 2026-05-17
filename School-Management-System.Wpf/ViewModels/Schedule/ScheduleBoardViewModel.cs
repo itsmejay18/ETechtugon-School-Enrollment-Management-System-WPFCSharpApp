@@ -12,6 +12,7 @@ namespace School_Management_System.Wpf.ViewModels.Schedule
         private readonly SectionService _sectionService;
         private readonly FacultyService _facultyService;
         private readonly ClassScheduleService _classScheduleService;
+        private readonly SystemSettingService _systemSettingService;
         private LookupOptionViewModel _selectedSection;
         private LookupOptionViewModel _selectedFaculty;
         private DataView _sectionScheduleRecords;
@@ -19,11 +20,12 @@ namespace School_Management_System.Wpf.ViewModels.Schedule
         private string _sectionStatus;
         private string _facultyStatus;
 
-        public ScheduleBoardViewModel(SectionService sectionService, FacultyService facultyService, ClassScheduleService classScheduleService)
+        public ScheduleBoardViewModel(SectionService sectionService, FacultyService facultyService, ClassScheduleService classScheduleService, SystemSettingService systemSettingService)
         {
             _sectionService = sectionService ?? throw new ArgumentNullException(nameof(sectionService));
             _facultyService = facultyService ?? throw new ArgumentNullException(nameof(facultyService));
             _classScheduleService = classScheduleService ?? throw new ArgumentNullException(nameof(classScheduleService));
+            _systemSettingService = systemSettingService ?? throw new ArgumentNullException(nameof(systemSettingService));
 
             Sections = new ObservableCollection<LookupOptionViewModel>();
             FacultyMembers = new ObservableCollection<LookupOptionViewModel>();
@@ -106,10 +108,21 @@ namespace School_Management_System.Wpf.ViewModels.Schedule
             get { return (FacultyScheduleRecords == null ? 0 : FacultyScheduleRecords.Count).ToString() + " faculty assignment row(s)"; }
         }
 
+        public string ActiveTermText
+        {
+            get
+            {
+                var activeTerm = _systemSettingService.GetActiveTerm();
+                return "Active term: AY " + (activeTerm.AcademicYearId.HasValue ? activeTerm.AcademicYearId.Value.ToString() : "not set") +
+                       " | Semester " + (activeTerm.SemesterId.HasValue ? activeTerm.SemesterId.Value.ToString() : "not set");
+            }
+        }
+
         public void Refresh()
         {
             LoadSections();
             LoadFacultyMembers();
+            OnPropertyChanged(nameof(ActiveTermText));
         }
 
         private void LoadSections()
@@ -167,10 +180,11 @@ namespace School_Management_System.Wpf.ViewModels.Schedule
                 return;
             }
 
-            var table = _classScheduleService.GetBySection(SelectedSection.Id) ?? new DataTable();
+            var activeTerm = _systemSettingService.GetActiveTerm();
+            var table = _classScheduleService.GetBySection(SelectedSection.Id, activeTerm.AcademicYearId, activeTerm.SemesterId) ?? new DataTable();
             SectionScheduleRecords = table.DefaultView;
             SectionStatus = table.Rows.Count > 0
-                ? "Loaded schedule for " + SelectedSection.Title + "."
+                ? "Loaded active-term schedule for " + SelectedSection.Title + "."
                 : "No schedule rows were found for the selected section.";
         }
 
@@ -183,10 +197,11 @@ namespace School_Management_System.Wpf.ViewModels.Schedule
                 return;
             }
 
-            var table = _classScheduleService.GetByFaculty(SelectedFaculty.Id) ?? new DataTable();
+            var activeTerm = _systemSettingService.GetActiveTerm();
+            var table = _classScheduleService.GetByFaculty(SelectedFaculty.Id, activeTerm.AcademicYearId, activeTerm.SemesterId) ?? new DataTable();
             FacultyScheduleRecords = table.DefaultView;
             FacultyStatus = table.Rows.Count > 0
-                ? "Loaded schedule assignments for " + SelectedFaculty.Subtitle + "."
+                ? "Loaded active-term schedule assignments for " + SelectedFaculty.Subtitle + "."
                 : "No schedule rows were found for the selected faculty member.";
         }
     }

@@ -21,6 +21,7 @@ namespace School_Management_System.DataLayer.Configuration
                 ApplyMigration2026030703(db);
                 ApplyMigration2026031501(db);
                 ApplyMigration2026041701(db);
+                ApplyMigration2026050801(db);
             }
         }
 
@@ -262,6 +263,56 @@ WHERE NOT EXISTS (SELECT 1 FROM `brandingprofile` LIMIT 1);";
             MarkApplied(db, migrationId, "Ensure brandingprofile table and seeded landing-screen branding data.");
         }
 
+        private static void ApplyMigration2026050801(DatabaseHelper db)
+        {
+            const string migrationId = "2026050801";
+            if (IsApplied(db, migrationId))
+            {
+                return;
+            }
+
+            EnsureCollegeTable(db);
+            EnsureColumnExists(db, "department", "CollegeId", "ALTER TABLE `department` ADD COLUMN `CollegeId` int DEFAULT NULL AFTER `DepartmentId`;");
+            EnsureColumnExists(db, "department", "DepartmentHead", "ALTER TABLE `department` ADD COLUMN `DepartmentHead` varchar(160) DEFAULT NULL AFTER `DepartmentName`;");
+            EnsureIndexExists(db, "department", "IX_Department_CollegeId", "ALTER TABLE `department` ADD KEY `IX_Department_CollegeId` (`CollegeId`);");
+            EnsureForeignKeyExists(db, "FK_Department_College", "ALTER TABLE `department` ADD CONSTRAINT `FK_Department_College` FOREIGN KEY (`CollegeId`) REFERENCES `college` (`CollegeId`) ON DELETE SET NULL;");
+
+            EnsureColumnExists(db, "student", "StudentType", "ALTER TABLE `student` ADD COLUMN `StudentType` varchar(20) NOT NULL DEFAULT 'Regular' AFTER `StudentNumber`;");
+            EnsureColumnExists(db, "student", "CurriculumId", "ALTER TABLE `student` ADD COLUMN `CurriculumId` int DEFAULT NULL AFTER `StudentType`;");
+            EnsureColumnExists(db, "student", "AcademicStatus", "ALTER TABLE `student` ADD COLUMN `AcademicStatus` varchar(40) NOT NULL DEFAULT 'Active' AFTER `CurriculumId`;");
+            EnsureIndexExists(db, "student", "IX_Student_StudentType", "ALTER TABLE `student` ADD KEY `IX_Student_StudentType` (`StudentType`);");
+            EnsureIndexExists(db, "student", "IX_Student_CurriculumId", "ALTER TABLE `student` ADD KEY `IX_Student_CurriculumId` (`CurriculumId`);");
+            EnsureForeignKeyExists(db, "FK_Student_Curriculum", "ALTER TABLE `student` ADD CONSTRAINT `FK_Student_Curriculum` FOREIGN KEY (`CurriculumId`) REFERENCES `curriculum` (`CurriculumId`) ON DELETE SET NULL;");
+
+            EnsureColumnExists(db, "section", "SectionCode", "ALTER TABLE `section` ADD COLUMN `SectionCode` varchar(40) DEFAULT NULL AFTER `SectionId`;");
+            EnsureIndexExists(db, "section", "IX_Section_SectionCode", "ALTER TABLE `section` ADD KEY `IX_Section_SectionCode` (`SectionCode`);");
+            db.ExecuteNonQuery(@"
+UPDATE `section`
+SET `SectionCode` = UPPER(REPLACE(REPLACE(TRIM(`SectionName`), ' ', ''), '-', ''))
+WHERE (`SectionCode` IS NULL OR `SectionCode` = '')
+  AND `SectionName` IS NOT NULL;", CommandType.Text, null);
+
+            EnsureColumnExists(db, "curriculum", "CurriculumType", "ALTER TABLE `curriculum` ADD COLUMN `CurriculumType` varchar(10) NOT NULL DEFAULT 'NEW' AFTER `Name`;");
+            EnsureIndexExists(db, "curriculum", "IX_Curriculum_Type", "ALTER TABLE `curriculum` ADD KEY `IX_Curriculum_Type` (`CurriculumType`);");
+
+            EnsureColumnExists(db, "subject", "MaxStudents", "ALTER TABLE `subject` ADD COLUMN `MaxStudents` int DEFAULT NULL AFTER `CourseId`;");
+            EnsureColumnExists(db, "subject", "CurrentEnrolledCount", "ALTER TABLE `subject` ADD COLUMN `CurrentEnrolledCount` int NOT NULL DEFAULT 0 AFTER `MaxStudents`;");
+            EnsureSubjectPrerequisiteTable(db);
+
+            EnsureColumnExists(db, "enrollment", "CurriculumId", "ALTER TABLE `enrollment` ADD COLUMN `CurriculumId` int DEFAULT NULL AFTER `SectionId`;");
+            EnsureColumnExists(db, "enrollment", "StudentType", "ALTER TABLE `enrollment` ADD COLUMN `StudentType` varchar(20) NOT NULL DEFAULT 'Regular' AFTER `CurriculumId`;");
+            EnsureIndexExists(db, "enrollment", "IX_Enrollment_CurriculumId", "ALTER TABLE `enrollment` ADD KEY `IX_Enrollment_CurriculumId` (`CurriculumId`);");
+            EnsureForeignKeyExists(db, "FK_Enrollment_Curriculum", "ALTER TABLE `enrollment` ADD CONSTRAINT `FK_Enrollment_Curriculum` FOREIGN KEY (`CurriculumId`) REFERENCES `curriculum` (`CurriculumId`) ON DELETE SET NULL;");
+
+            EnsureSystemSettingKey(db, AppConstants.SettingKeys.CurrentAcademicYearId, GetFirstIdOrDefault(db, "academicyear", "AcademicYearId", "1"));
+            EnsureSystemSettingKey(db, AppConstants.SettingKeys.CurrentSemesterId, GetFirstIdOrDefault(db, "semester", "SemesterId", "1"));
+            SeedColleges(db);
+            BackfillDepartmentCollege(db);
+            RefreshSubjectEnrollmentCounts(db);
+
+            MarkApplied(db, migrationId, "Upgrade enrollment profile, college, department, curriculum, section, and subject capacity schema.");
+        }
+
         private static void EnsureActivityLogTable(DatabaseHelper db)
         {
             const string existsSql = @"
@@ -328,6 +379,41 @@ CREATE TABLE IF NOT EXISTS `brandingprofile` (
             db.ExecuteNonQuery(sql, CommandType.Text, null);
         }
 
+        private static void EnsureCollegeTable(DatabaseHelper db)
+        {
+            const string sql = @"
+CREATE TABLE IF NOT EXISTS `college` (
+  `CollegeId` int NOT NULL AUTO_INCREMENT,
+  `CollegeCode` varchar(20) NOT NULL,
+  `CollegeName` varchar(160) NOT NULL,
+  `DeanName` varchar(160) DEFAULT NULL,
+  `Description` varchar(500) DEFAULT NULL,
+  `IsActive` tinyint(1) NOT NULL DEFAULT 1,
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  `UpdatedAt` datetime DEFAULT NULL,
+  PRIMARY KEY (`CollegeId`),
+  UNIQUE KEY `UX_College_Code` (`CollegeCode`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
+
+            db.ExecuteNonQuery(sql, CommandType.Text, null);
+        }
+
+        private static void EnsureSubjectPrerequisiteTable(DatabaseHelper db)
+        {
+            const string sql = @"
+CREATE TABLE IF NOT EXISTS `subjectprerequisite` (
+  `SubjectId` int NOT NULL,
+  `PrerequisiteSubjectId` int NOT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT (utc_timestamp()),
+  PRIMARY KEY (`SubjectId`, `PrerequisiteSubjectId`),
+  KEY `IX_SubjectPrerequisite_Prerequisite` (`PrerequisiteSubjectId`),
+  CONSTRAINT `FK_SubjectPrerequisite_Subject` FOREIGN KEY (`SubjectId`) REFERENCES `subject` (`SubjectId`) ON DELETE CASCADE,
+  CONSTRAINT `FK_SubjectPrerequisite_Prerequisite` FOREIGN KEY (`PrerequisiteSubjectId`) REFERENCES `subject` (`SubjectId`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;";
+
+            db.ExecuteNonQuery(sql, CommandType.Text, null);
+        }
+
         private static void EnsureColumnExists(DatabaseHelper db, string tableName, string columnName, string alterSql)
         {
             const string existsSql = @"
@@ -351,6 +437,112 @@ WHERE table_schema = DATABASE()
             {
                 db.ExecuteNonQuery(alterSql, CommandType.Text, null);
             }
+        }
+
+        private static void EnsureIndexExists(DatabaseHelper db, string tableName, string indexName, string alterSql)
+        {
+            const string existsSql = @"
+SELECT COUNT(1)
+FROM information_schema.statistics
+WHERE table_schema = DATABASE()
+  AND table_name = @TableName
+  AND index_name = @IndexName;";
+
+            var exists = Convert.ToInt32(
+                db.ExecuteScalar(
+                    existsSql,
+                    CommandType.Text,
+                    new[]
+                    {
+                        new MySqlParameter("@TableName", tableName),
+                        new MySqlParameter("@IndexName", indexName)
+                    })) > 0;
+
+            if (!exists)
+            {
+                db.ExecuteNonQuery(alterSql, CommandType.Text, null);
+            }
+        }
+
+        private static void EnsureForeignKeyExists(DatabaseHelper db, string constraintName, string alterSql)
+        {
+            const string existsSql = @"
+SELECT COUNT(1)
+FROM information_schema.table_constraints
+WHERE table_schema = DATABASE()
+  AND constraint_name = @ConstraintName
+  AND constraint_type = 'FOREIGN KEY';";
+
+            var exists = Convert.ToInt32(
+                db.ExecuteScalar(
+                    existsSql,
+                    CommandType.Text,
+                    new[] { new MySqlParameter("@ConstraintName", constraintName) })) > 0;
+
+            if (!exists)
+            {
+                db.ExecuteNonQuery(alterSql, CommandType.Text, null);
+            }
+        }
+
+        private static void SeedColleges(DatabaseHelper db)
+        {
+            const string sql = @"
+INSERT INTO `college` (`CollegeCode`, `CollegeName`, `DeanName`, `Description`, `IsActive`, `CreatedAt`)
+VALUES
+  ('CCS', 'College of Computer Studies', NULL, 'Computing, information systems, and technology programs.', 1, UTC_TIMESTAMP()),
+  ('CBA', 'College of Business Administration', NULL, 'Business, accountancy, and management programs.', 1, UTC_TIMESTAMP()),
+  ('COE', 'College of Education', NULL, 'Teacher education and curriculum programs.', 1, UTC_TIMESTAMP())
+ON DUPLICATE KEY UPDATE
+  `CollegeName` = VALUES(`CollegeName`),
+  `UpdatedAt` = UTC_TIMESTAMP();";
+
+            db.ExecuteNonQuery(sql, CommandType.Text, null);
+        }
+
+        private static void BackfillDepartmentCollege(DatabaseHelper db)
+        {
+            const string sql = @"
+UPDATE `department` d
+LEFT JOIN `college` c
+  ON c.`CollegeCode` =
+    CASE
+      WHEN d.`DepartmentCode` IN ('CIT', 'CS', 'IT', 'BSIT', 'BSCS', 'CCS') THEN 'CCS'
+      WHEN d.`DepartmentCode` IN ('CBA', 'BA', 'BSA', 'BSBA') THEN 'CBA'
+      WHEN d.`DepartmentCode` IN ('CED', 'EDU', 'COE', 'BSED') THEN 'COE'
+      ELSE NULL
+    END
+SET d.`CollegeId` = c.`CollegeId`
+WHERE d.`CollegeId` IS NULL
+  AND c.`CollegeId` IS NOT NULL;";
+
+            db.ExecuteNonQuery(sql, CommandType.Text, null);
+        }
+
+        private static void RefreshSubjectEnrollmentCounts(DatabaseHelper db)
+        {
+            const string sql = @"
+UPDATE `subject` s
+SET s.`CurrentEnrolledCount` = (
+    SELECT COUNT(DISTINCT e.`StudentId`)
+    FROM `enrollmentdetails` ed
+    INNER JOIN `enrollment` e ON e.`EnrollmentId` = ed.`EnrollmentId`
+    WHERE ed.`SubjectId` = s.`SubjectId`
+      AND e.`Status` <> 'Cancelled'
+);";
+
+            db.ExecuteNonQuery(sql, CommandType.Text, null);
+        }
+
+        private static string GetFirstIdOrDefault(DatabaseHelper db, string tableName, string idColumn, string defaultValue)
+        {
+            var safeTableName = tableName.Replace("`", string.Empty);
+            var safeIdColumn = idColumn.Replace("`", string.Empty);
+            var sql = "SELECT `" + safeIdColumn + "` FROM `" + safeTableName + "` ORDER BY `" + safeIdColumn + "` LIMIT 1;";
+            var result = db.ExecuteScalar(sql, CommandType.Text, null);
+            return result == null || result == DBNull.Value
+                ? defaultValue
+                : Convert.ToString(result);
         }
 
         private static void EnsureSemesterRow(DatabaseHelper db, int semesterId, string name, int sortOrder)

@@ -14,6 +14,7 @@ namespace School_Management_System.Wpf.Services
             DatabaseHelper database,
             StudentService studentService,
             FacultyService facultyService,
+            CollegeService collegeService,
             CourseService courseService,
             SubjectService subjectService,
             DepartmentService departmentService,
@@ -32,6 +33,7 @@ namespace School_Management_System.Wpf.Services
             Database = database;
             StudentService = studentService;
             FacultyService = facultyService;
+            CollegeService = collegeService;
             CourseService = courseService;
             SubjectService = subjectService;
             DepartmentService = departmentService;
@@ -51,6 +53,7 @@ namespace School_Management_System.Wpf.Services
         public DatabaseHelper Database { get; private set; }
         public StudentService StudentService { get; private set; }
         public FacultyService FacultyService { get; private set; }
+        public CollegeService CollegeService { get; private set; }
         public CourseService CourseService { get; private set; }
         public SubjectService SubjectService { get; private set; }
         public DepartmentService DepartmentService { get; private set; }
@@ -96,6 +99,7 @@ namespace School_Management_System.Wpf.Services
 
             IStudentData studentData = new StudentData(database);
             IFacultyData facultyData = new FacultyData(database);
+            ICollegeData collegeData = new CollegeData(database);
             IDepartmentData departmentData = new DepartmentData(database);
             ICourseData courseData = new CourseData(database);
             ISubjectData subjectData = new SubjectData(database);
@@ -119,6 +123,7 @@ namespace School_Management_System.Wpf.Services
                 database,
                 new StudentService(studentData),
                 new FacultyService(facultyData),
+                new CollegeService(collegeData),
                 new CourseService(courseData),
                 new SubjectService(subjectData),
                 new DepartmentService(departmentData),

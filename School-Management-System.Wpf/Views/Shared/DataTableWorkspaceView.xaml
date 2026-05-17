@@ -5,12 +5,14 @@
              xmlns:services="clr-namespace:School_Management_System.Wpf.Services">
     <UserControl.Resources>
         <Style x:Key="FieldCardStyle" TargetType="Border">
-            <Setter Property="Padding" Value="12" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="Margin" Value="0,0,10,10" />
             <Setter Property="Background" Value="#FFF8FBFF" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="MinWidth" Value="220" />
+            <Setter Property="MaxWidth" Value="340" />
         </Style>
 
         <Style TargetType="DataGrid">
@@ -175,28 +177,32 @@
                         </Grid>
                     </Border>
 
-                    <ScrollViewer Grid.Row="1"
-                                  Padding="30,24,30,30"
-                                  VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding DetailFields}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Style="{StaticResource FieldCardStyle}">
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Label}"
-                                                       FontSize="12.5"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{StaticResource PrimaryBrush}" />
-                                            <TextBlock Margin="0,6,0,0"
-                                                       Text="{Binding Value}"
-                                                       TextWrapping="Wrap"
-                                                       Foreground="{StaticResource TextBrush}" />
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    <ItemsControl Grid.Row="1"
+                                  Margin="24,18,24,24"
+                                  ItemsSource="{Binding DetailFields}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource FieldCardStyle}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Label}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource PrimaryBrush}" />
+                                        <TextBlock Margin="0,4,0,0"
+                                                   Text="{Binding Value}"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="13.5"
+                                                   Foreground="{StaticResource TextBrush}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </Grid>
             </Border>
         </Popup>

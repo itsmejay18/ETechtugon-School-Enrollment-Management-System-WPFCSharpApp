@@ -50,7 +50,7 @@ namespace School_Management_System.Presentation.Forms
 
         public LoginForm()
         {
-            Text = AppConstants.AppTitle + " - Login";
+            Text = "Login";
             MinimumSize = new Size(960, 620);
             FormBorderStyle = FormBorderStyle.Sizable;
             WindowState = FormWindowState.Maximized;
@@ -235,7 +235,7 @@ namespace School_Management_System.Presentation.Forms
             var panel = new Panel { Dock = DockStyle.Left, Width = 640, BackColor = ThemeColors.Surface, Padding = new Padding(44, 34, 44, 34) };
 
             var visualHost = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface };
-            var cardLogo = BrandAssets.CreateLogoImage();
+            var cardLogo = BrandAssets.CreateLogoMarkImage();
             var logoCanvas = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -299,7 +299,7 @@ namespace School_Management_System.Presentation.Forms
 
             var title = new Label
             {
-                Text = "Log in to School Enrollment",
+                Text = "Log in",
                 Dock = DockStyle.Fill,
                 Font = ThemeFonts.AuthTitle,
                 ForeColor = ThemeColors.Text,

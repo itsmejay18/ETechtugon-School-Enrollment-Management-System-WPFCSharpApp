@@ -23,6 +23,9 @@ namespace School_Management_System.DataLayer
 SELECT
     StudentId,
     StudentNumber,
+    StudentType,
+    CurriculumId,
+    AcademicStatus,
     FirstName,
     LastName,
     MiddleName,
@@ -48,6 +51,9 @@ ORDER BY LastName, FirstName;";
 SELECT
     StudentId,
     StudentNumber,
+    StudentType,
+    CurriculumId,
+    AcademicStatus,
     FirstName,
     LastName,
     MiddleName,
@@ -60,7 +66,7 @@ SELECT
     CreatedAt
 FROM student
 WHERE IsActive = 1
-  AND (LastName LIKE @Q OR StudentNumber LIKE @Q)
+  AND (LastName LIKE @Q OR FirstName LIKE @Q OR StudentNumber LIKE @Q OR StudentType LIKE @Q)
 ORDER BY LastName, FirstName;";
 
             return _db.ExecuteDataTable(
@@ -69,6 +75,45 @@ ORDER BY LastName, FirstName;";
                 new[]
                 {
                     new MySqlParameter("@Q", "%" + query + "%")
+                });
+        }
+
+        public DataTable Search(string query, string studentType)
+        {
+            query = (query ?? string.Empty).Trim();
+            studentType = (studentType ?? string.Empty).Trim();
+
+            const string sql = @"
+SELECT
+    StudentId,
+    StudentNumber,
+    StudentType,
+    CurriculumId,
+    AcademicStatus,
+    FirstName,
+    LastName,
+    MiddleName,
+    Gender,
+    BirthDate,
+    Email,
+    Phone,
+    Address,
+    PhotoPath,
+    CreatedAt
+FROM student
+WHERE IsActive = 1
+  AND (@StudentType = '' OR StudentType = @StudentType)
+  AND (@Q = '' OR LastName LIKE @LikeQ OR FirstName LIKE @LikeQ OR StudentNumber LIKE @LikeQ)
+ORDER BY LastName, FirstName;";
+
+            return _db.ExecuteDataTable(
+                sql,
+                CommandType.Text,
+                new[]
+                {
+                    new MySqlParameter("@StudentType", studentType),
+                    new MySqlParameter("@Q", query),
+                    new MySqlParameter("@LikeQ", "%" + query + "%")
                 });
         }
 
@@ -98,6 +143,9 @@ WHERE StudentNumber LIKE CONCAT('STU-', YEAR(UTC_DATE()), '-', '____');";
 INSERT INTO student
 (
     StudentNumber,
+    StudentType,
+    CurriculumId,
+    AcademicStatus,
     FirstName,
     LastName,
     MiddleName,
@@ -114,6 +162,9 @@ INSERT INTO student
 VALUES
 (
     @StudentNumber,
+    @StudentType,
+    @CurriculumId,
+    @AcademicStatus,
     @FirstName,
     @LastName,
     @MiddleName,
@@ -130,6 +181,9 @@ VALUES
 INSERT INTO student
 (
     StudentNumber,
+    StudentType,
+    CurriculumId,
+    AcademicStatus,
     FirstName,
     LastName,
     MiddleName,
@@ -145,6 +199,9 @@ INSERT INTO student
 VALUES
 (
     @StudentNumber,
+    @StudentType,
+    @CurriculumId,
+    @AcademicStatus,
     @FirstName,
     @LastName,
     @MiddleName,
@@ -162,6 +219,9 @@ VALUES
                 ? new[]
                 {
                     new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
+                    new MySqlParameter("@StudentType", (object)NormalizeStudentType(student.StudentType) ?? DBNull.Value),
+                    new MySqlParameter("@CurriculumId", (object)student.CurriculumId ?? DBNull.Value),
+                    new MySqlParameter("@AcademicStatus", (object)NormalizeAcademicStatus(student.AcademicStatus) ?? DBNull.Value),
                     new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
                     new MySqlParameter("@LastName", (object)student.LastName ?? DBNull.Value),
                     new MySqlParameter("@MiddleName", (object)student.MiddleName ?? DBNull.Value),
@@ -176,6 +236,9 @@ VALUES
                 : new[]
                 {
                     new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
+                    new MySqlParameter("@StudentType", (object)NormalizeStudentType(student.StudentType) ?? DBNull.Value),
+                    new MySqlParameter("@CurriculumId", (object)student.CurriculumId ?? DBNull.Value),
+                    new MySqlParameter("@AcademicStatus", (object)NormalizeAcademicStatus(student.AcademicStatus) ?? DBNull.Value),
                     new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
                     new MySqlParameter("@LastName", (object)student.LastName ?? DBNull.Value),
                     new MySqlParameter("@MiddleName", (object)student.MiddleName ?? DBNull.Value),
@@ -200,6 +263,9 @@ VALUES
 UPDATE student
 SET
     StudentNumber = @StudentNumber,
+    StudentType = @StudentType,
+    CurriculumId = @CurriculumId,
+    AcademicStatus = @AcademicStatus,
     FirstName = @FirstName,
     LastName = @LastName,
     MiddleName = @MiddleName,
@@ -215,6 +281,9 @@ WHERE StudentId = @StudentId;" : @"
 UPDATE student
 SET
     StudentNumber = @StudentNumber,
+    StudentType = @StudentType,
+    CurriculumId = @CurriculumId,
+    AcademicStatus = @AcademicStatus,
     FirstName = @FirstName,
     LastName = @LastName,
     MiddleName = @MiddleName,
@@ -232,6 +301,9 @@ WHERE StudentId = @StudentId;";
                 {
                     new MySqlParameter("@StudentId", student.StudentId),
                     new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
+                    new MySqlParameter("@StudentType", (object)NormalizeStudentType(student.StudentType) ?? DBNull.Value),
+                    new MySqlParameter("@CurriculumId", (object)student.CurriculumId ?? DBNull.Value),
+                    new MySqlParameter("@AcademicStatus", (object)NormalizeAcademicStatus(student.AcademicStatus) ?? DBNull.Value),
                     new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
                     new MySqlParameter("@LastName", (object)student.LastName ?? DBNull.Value),
                     new MySqlParameter("@MiddleName", (object)student.MiddleName ?? DBNull.Value),
@@ -247,6 +319,9 @@ WHERE StudentId = @StudentId;";
                 {
                     new MySqlParameter("@StudentId", student.StudentId),
                     new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
+                    new MySqlParameter("@StudentType", (object)NormalizeStudentType(student.StudentType) ?? DBNull.Value),
+                    new MySqlParameter("@CurriculumId", (object)student.CurriculumId ?? DBNull.Value),
+                    new MySqlParameter("@AcademicStatus", (object)NormalizeAcademicStatus(student.AcademicStatus) ?? DBNull.Value),
                     new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
                     new MySqlParameter("@LastName", (object)student.LastName ?? DBNull.Value),
                     new MySqlParameter("@MiddleName", (object)student.MiddleName ?? DBNull.Value),
@@ -316,6 +391,164 @@ ORDER BY e.EnrollDate DESC, s.SubjectName;";
                 });
         }
 
+        public DataTable GetEnrollmentHistory(int studentId)
+        {
+            const string sql = @"
+SELECT
+    e.EnrollmentId,
+    e.EnrollmentNumber,
+    e.EnrollDate,
+    e.Status,
+    e.StudentType,
+    c.CourseCode,
+    c.CourseName,
+    ay.Name AS AcademicYear,
+    sem.Name AS Semester,
+    yl.Name AS YearLevel,
+    sec.SectionCode,
+    sec.SectionName,
+    e.TotalUnits
+FROM enrollment e
+LEFT JOIN course c ON c.CourseId = e.CourseId
+LEFT JOIN academicyear ay ON ay.AcademicYearId = e.AcademicYearId
+LEFT JOIN semester sem ON sem.SemesterId = e.SemesterId
+LEFT JOIN yearlevel yl ON yl.YearLevelId = e.YearLevelId
+LEFT JOIN section sec ON sec.SectionId = e.SectionId
+WHERE e.StudentId = @StudentId
+  AND e.Status <> 'Cancelled'
+ORDER BY e.EnrollDate DESC, e.EnrollmentId DESC;";
+
+            return _db.ExecuteDataTable(
+                sql,
+                CommandType.Text,
+                new[] { new MySqlParameter("@StudentId", studentId) });
+        }
+
+        public DataTable GetCompletedSubjects(int studentId)
+        {
+            const string sql = @"
+SELECT DISTINCT
+    s.SubjectId,
+    s.SubjectCode,
+    s.SubjectName,
+    s.Units,
+    ed.Grade,
+    e.EnrollmentNumber,
+    ay.Name AS AcademicYear,
+    sem.Name AS Semester
+FROM enrollment e
+INNER JOIN enrollmentdetails ed ON ed.EnrollmentId = e.EnrollmentId
+INNER JOIN subject s ON s.SubjectId = ed.SubjectId
+LEFT JOIN academicyear ay ON ay.AcademicYearId = e.AcademicYearId
+LEFT JOIN semester sem ON sem.SemesterId = e.SemesterId
+WHERE e.StudentId = @StudentId
+  AND e.Status <> 'Cancelled'
+  AND ed.Grade IS NOT NULL
+  AND ed.Grade <= 3.00
+ORDER BY s.SubjectCode, s.SubjectName;";
+
+            return _db.ExecuteDataTable(
+                sql,
+                CommandType.Text,
+                new[] { new MySqlParameter("@StudentId", studentId) });
+        }
+
+        public DataTable GetFailedSubjects(int studentId)
+        {
+            const string sql = @"
+SELECT DISTINCT
+    s.SubjectId,
+    s.SubjectCode,
+    s.SubjectName,
+    s.Units,
+    ed.Grade,
+    e.EnrollmentNumber,
+    ay.Name AS AcademicYear,
+    sem.Name AS Semester
+FROM enrollment e
+INNER JOIN enrollmentdetails ed ON ed.EnrollmentId = e.EnrollmentId
+INNER JOIN subject s ON s.SubjectId = ed.SubjectId
+LEFT JOIN academicyear ay ON ay.AcademicYearId = e.AcademicYearId
+LEFT JOIN semester sem ON sem.SemesterId = e.SemesterId
+WHERE e.StudentId = @StudentId
+  AND e.Status <> 'Cancelled'
+  AND ed.Grade IS NOT NULL
+  AND ed.Grade > 3.00
+ORDER BY s.SubjectCode, s.SubjectName;";
+
+            return _db.ExecuteDataTable(
+                sql,
+                CommandType.Text,
+                new[] { new MySqlParameter("@StudentId", studentId) });
+        }
+
+        public DataTable GetRemainingSubjects(int studentId, int? curriculumId)
+        {
+            const string sql = @"
+SELECT
+    s.SubjectId,
+    s.SubjectCode,
+    s.SubjectName,
+    s.Units,
+    s.MaxStudents,
+    s.CurrentEnrolledCount
+FROM curriculumdetails cd
+INNER JOIN subject s ON s.SubjectId = cd.SubjectId
+WHERE (@CurriculumId IS NOT NULL AND cd.CurriculumId = @CurriculumId)
+  AND NOT EXISTS (
+      SELECT 1
+      FROM enrollment e
+      INNER JOIN enrollmentdetails ed ON ed.EnrollmentId = e.EnrollmentId
+      WHERE e.StudentId = @StudentId
+        AND e.Status <> 'Cancelled'
+        AND ed.SubjectId = s.SubjectId
+        AND ed.Grade IS NOT NULL
+        AND ed.Grade <= 3.00
+  )
+ORDER BY s.SubjectCode, s.SubjectName;";
+
+            return _db.ExecuteDataTable(
+                sql,
+                CommandType.Text,
+                new[]
+                {
+                    new MySqlParameter("@StudentId", studentId),
+                    new MySqlParameter("@CurriculumId", (object)curriculumId ?? DBNull.Value)
+                });
+        }
+
+        public DataTable GetAcademicProfile(int studentId)
+        {
+            const string sql = @"
+SELECT
+    st.StudentId,
+    st.StudentNumber,
+    st.StudentType,
+    st.AcademicStatus,
+    st.CurriculumId,
+    CONCAT(st.LastName, ', ', st.FirstName) AS StudentName,
+    cur.Name AS CurriculumName,
+    cur.CurriculumType,
+    c.CourseCode,
+    c.CourseName,
+    ay.Name AS AcademicYear,
+    sem.Name AS Semester,
+    yl.Name AS YearLevel
+FROM student st
+LEFT JOIN curriculum cur ON cur.CurriculumId = st.CurriculumId
+LEFT JOIN course c ON c.CourseId = cur.CourseId
+LEFT JOIN academicyear ay ON ay.AcademicYearId = cur.AcademicYearId
+LEFT JOIN semester sem ON sem.SemesterId = cur.SemesterId
+LEFT JOIN yearlevel yl ON yl.YearLevelId = cur.YearLevelId
+WHERE st.StudentId = @StudentId
+LIMIT 1;";
+
+            return _db.ExecuteDataTable(
+                sql,
+                CommandType.Text,
+                new[] { new MySqlParameter("@StudentId", studentId) });
+        }
+
         public int GetActiveCount()
         {
             const string sql = @"SELECT COUNT(1) FROM student WHERE IsActive = 1;";
@@ -345,6 +578,26 @@ WHERE table_schema = DATABASE()
   AND column_name = 'PhotoData';";
             _hasPhotoDataColumn = Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null)) > 0;
             return _hasPhotoDataColumn.Value;
+        }
+
+        private static string NormalizeStudentType(string value)
+        {
+            if (string.Equals(value, "Irregular", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Irregular";
+            }
+
+            if (string.Equals(value, "Summer", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Summer";
+            }
+
+            return "Regular";
+        }
+
+        private static string NormalizeAcademicStatus(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "Active" : value.Trim();
         }
     }
 }

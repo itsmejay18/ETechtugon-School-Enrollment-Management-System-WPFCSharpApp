@@ -39,7 +39,7 @@
                                FontWeight="Bold"
                                Foreground="{StaticResource TextBrush}" />
                     <TextBlock Margin="0,8,0,0"
-                               Text="Both section schedules and faculty assignments are now loaded from the live database."
+                               Text="{Binding ActiveTermText}"
                                TextWrapping="Wrap"
                                Foreground="{StaticResource MutedTextBrush}" />
                 </StackPanel>
@@ -82,8 +82,21 @@
                         </Grid>
 
                         <DataGrid Grid.Row="1"
-                                  AutoGenerateColumns="True"
-                                  ItemsSource="{Binding SectionScheduleRecords}" />
+                                  AutoGenerateColumns="False"
+                                  ItemsSource="{Binding SectionScheduleRecords}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Section Code" Binding="{Binding [SectionCode]}" Width="130" />
+                                <DataGridTextColumn Header="Section" Binding="{Binding [SectionName]}" Width="150" />
+                                <DataGridTextColumn Header="Semester" Binding="{Binding [Semester]}" Width="150" />
+                                <DataGridTextColumn Header="School Year" Binding="{Binding [AcademicYear]}" Width="150" />
+                                <DataGridTextColumn Header="Subject" Binding="{Binding [SubjectName]}" Width="*" />
+                                <DataGridTextColumn Header="Room" Binding="{Binding [Room]}" Width="110" />
+                                <DataGridTextColumn Header="Instructor" Binding="{Binding [FacultyName]}" Width="180" />
+                                <DataGridTextColumn Header="Day" Binding="{Binding [DayOfWeek]}" Width="110" />
+                                <DataGridTextColumn Header="Start" Binding="{Binding [StartTime]}" Width="95" />
+                                <DataGridTextColumn Header="End" Binding="{Binding [EndTime]}" Width="95" />
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </Grid>
                 </TabItem>
 

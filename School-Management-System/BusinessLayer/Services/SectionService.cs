@@ -25,6 +25,11 @@ namespace School_Management_System.BusinessLayer.Services
             return _sectionData.Search(search);
         }
 
+        public DataTable GetSections(string search, int? courseId)
+        {
+            return _sectionData.Search(search, courseId);
+        }
+
         public DataTable GetSectionsForTerm(int courseId, int academicYearId, int semesterId, int? yearLevelId)
         {
             return _sectionData.GetByCourseAndTerm(courseId, academicYearId, semesterId, yearLevelId);
@@ -42,6 +47,11 @@ namespace School_Management_System.BusinessLayer.Services
             if (string.IsNullOrWhiteSpace(section.SectionName))
             {
                 vr.Add("Section Name is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(section.SectionCode))
+            {
+                vr.Add("Section Code is required.");
             }
 
             if (section.CourseId <= 0) vr.Add("Course is required.");

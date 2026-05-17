@@ -20,15 +20,18 @@ namespace School_Management_System.DataLayer
         {
             const string sql = @"
 SELECT
-    CourseId,
-    CourseCode,
-    CourseName,
-    Description,
-    DepartmentId,
-    CreatedAt
-FROM course
-WHERE IsActive = 1
-ORDER BY CourseName;";
+    c.CourseId,
+    c.CourseCode,
+    c.CourseName,
+    c.Description,
+    c.DepartmentId,
+    d.DepartmentCode,
+    d.DepartmentName,
+    c.CreatedAt
+FROM course c
+LEFT JOIN department d ON d.DepartmentId = c.DepartmentId
+WHERE c.IsActive = 1
+ORDER BY c.CourseName;";
 
             return _db.ExecuteDataTable(sql, CommandType.Text, null);
         }
@@ -50,16 +53,19 @@ ORDER BY CourseName;";
 
             const string sql = @"
 SELECT
-    CourseId,
-    CourseCode,
-    CourseName,
-    Description,
-    DepartmentId,
-    CreatedAt
-FROM course
-WHERE IsActive = 1
-  AND (CourseCode LIKE @Q OR CourseName LIKE @Q)
-ORDER BY CourseName;";
+    c.CourseId,
+    c.CourseCode,
+    c.CourseName,
+    c.Description,
+    c.DepartmentId,
+    d.DepartmentCode,
+    d.DepartmentName,
+    c.CreatedAt
+FROM course c
+LEFT JOIN department d ON d.DepartmentId = c.DepartmentId
+WHERE c.IsActive = 1
+  AND (c.CourseCode LIKE @Q OR c.CourseName LIKE @Q OR d.DepartmentCode LIKE @Q OR d.DepartmentName LIKE @Q)
+ORDER BY c.CourseName;";
 
             return _db.ExecuteDataTable(
                 sql,

@@ -19,17 +19,37 @@ namespace School_Management_System.DataLayer
         public DataTable GetAllActive()
         {
             const string sql = @"
-SELECT DepartmentId, DepartmentCode, DepartmentName, Description, CreatedAt
-FROM department
-WHERE IsActive = 1
-ORDER BY DepartmentName;";
+SELECT
+    d.DepartmentId,
+    d.CollegeId,
+    c.CollegeCode,
+    c.CollegeName,
+    d.DepartmentCode,
+    d.DepartmentName,
+    d.DepartmentHead,
+    d.Description,
+    d.CreatedAt
+FROM department d
+LEFT JOIN college c ON c.CollegeId = d.CollegeId
+WHERE d.IsActive = 1
+ORDER BY d.DepartmentName;";
 
             return _db.ExecuteDataTable(sql, CommandType.Text, null);
         }
 
         public DataTable GetLookupActive()
         {
-            const string sql = @"SELECT DepartmentId, DepartmentCode, DepartmentName FROM department WHERE IsActive = 1 ORDER BY DepartmentName;";
+            const string sql = @"
+SELECT
+    d.DepartmentId,
+    d.CollegeId,
+    c.CollegeCode,
+    d.DepartmentCode,
+    d.DepartmentName
+FROM department d
+LEFT JOIN college c ON c.CollegeId = d.CollegeId
+WHERE d.IsActive = 1
+ORDER BY d.DepartmentName;";
             return _db.ExecuteDataTable(sql, CommandType.Text, null);
         }
 
@@ -38,11 +58,21 @@ ORDER BY DepartmentName;";
             query = (query ?? string.Empty).Trim();
 
             const string sql = @"
-SELECT DepartmentId, DepartmentCode, DepartmentName, Description, CreatedAt
-FROM department
-WHERE IsActive = 1
-  AND (DepartmentCode LIKE @Q OR DepartmentName LIKE @Q)
-ORDER BY DepartmentName;";
+SELECT
+    d.DepartmentId,
+    d.CollegeId,
+    c.CollegeCode,
+    c.CollegeName,
+    d.DepartmentCode,
+    d.DepartmentName,
+    d.DepartmentHead,
+    d.Description,
+    d.CreatedAt
+FROM department d
+LEFT JOIN college c ON c.CollegeId = d.CollegeId
+WHERE d.IsActive = 1
+  AND (d.DepartmentCode LIKE @Q OR d.DepartmentName LIKE @Q OR d.DepartmentHead LIKE @Q OR c.CollegeCode LIKE @Q OR c.CollegeName LIKE @Q)
+ORDER BY d.DepartmentName;";
 
             return _db.ExecuteDataTable(
                 sql,
@@ -55,16 +85,18 @@ ORDER BY DepartmentName;";
             Guard.NotNull(department, nameof(department));
 
             const string sql = @"
-INSERT INTO department (DepartmentCode, DepartmentName, Description, IsActive, CreatedAt)
-VALUES (@DepartmentCode, @DepartmentName, @Description, 1, UTC_TIMESTAMP());";
+INSERT INTO department (CollegeId, DepartmentCode, DepartmentName, DepartmentHead, Description, IsActive, CreatedAt)
+VALUES (@CollegeId, @DepartmentCode, @DepartmentName, @DepartmentHead, @Description, 1, UTC_TIMESTAMP());";
 
             var id = _db.ExecuteInsert(
                 sql,
                 CommandType.Text,
                 new[]
                 {
+                    new MySqlParameter("@CollegeId", (object)department.CollegeId ?? DBNull.Value),
                     new MySqlParameter("@DepartmentCode", (object)department.DepartmentCode ?? DBNull.Value),
                     new MySqlParameter("@DepartmentName", (object)department.DepartmentName ?? DBNull.Value),
+                    new MySqlParameter("@DepartmentHead", (object)department.DepartmentHead ?? DBNull.Value),
                     new MySqlParameter("@Description", (object)department.Description ?? DBNull.Value)
                 });
 
@@ -78,8 +110,10 @@ VALUES (@DepartmentCode, @DepartmentName, @Description, 1, UTC_TIMESTAMP());";
             const string sql = @"
 UPDATE department
 SET
+    CollegeId = @CollegeId,
     DepartmentCode = @DepartmentCode,
     DepartmentName = @DepartmentName,
+    DepartmentHead = @DepartmentHead,
     Description = @Description,
     UpdatedAt = UTC_TIMESTAMP()
 WHERE DepartmentId = @DepartmentId;";
@@ -90,8 +124,10 @@ WHERE DepartmentId = @DepartmentId;";
                 new[]
                 {
                     new MySqlParameter("@DepartmentId", department.DepartmentId),
+                    new MySqlParameter("@CollegeId", (object)department.CollegeId ?? DBNull.Value),
                     new MySqlParameter("@DepartmentCode", (object)department.DepartmentCode ?? DBNull.Value),
                     new MySqlParameter("@DepartmentName", (object)department.DepartmentName ?? DBNull.Value),
+                    new MySqlParameter("@DepartmentHead", (object)department.DepartmentHead ?? DBNull.Value),
                     new MySqlParameter("@Description", (object)department.Description ?? DBNull.Value)
                 });
         }

@@ -14,14 +14,14 @@ namespace School_Management_System.Wpf.Views.Courses
         private void CoursesGrid_OnMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             var viewModel = DataContext as CourseManagementViewModel;
-            if (viewModel == null || viewModel.EditCommand == null)
+            if (viewModel == null || viewModel.OpenDetailsCommand == null)
             {
                 return;
             }
 
-            if (viewModel.EditCommand.CanExecute(null))
+            if (viewModel.OpenDetailsCommand.CanExecute(null))
             {
-                viewModel.EditCommand.Execute(null);
+                viewModel.OpenDetailsCommand.Execute(null);
             }
         }
     }

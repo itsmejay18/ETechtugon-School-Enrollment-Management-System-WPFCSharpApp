@@ -1,3 +1,9 @@
 {
-    "dotnet.preferCSharpExtension": true
+    "dotnet.preferCSharpExtension": true,
+    "chat.tools.terminal.autoApprove": {
+        "/^powershell -ExecutionPolicy Bypass -Command \"Remove-Item -Path 'School-Management-System\\.Wpf\\\\obj' -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item -Path 'School-Management-System\\.Wpf\\\\bin' -Recurse -Force -ErrorAction SilentlyContinue; Write-Host 'Cleaned build directories'\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
 }

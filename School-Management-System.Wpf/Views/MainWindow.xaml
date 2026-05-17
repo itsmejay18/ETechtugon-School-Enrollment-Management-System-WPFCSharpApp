@@ -490,7 +490,7 @@
                     </Button>
 
                     <Button Command="{Binding ShowStudentsCommand}"
-                            ToolTip="Students">
+                            ToolTip="Student Profile">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
                                 <Style.Triggers>

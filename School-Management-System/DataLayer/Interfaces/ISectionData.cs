@@ -7,6 +7,7 @@ namespace School_Management_System.DataLayer.Interfaces
     {
         DataTable GetAllActive();
         DataTable Search(string query);
+        DataTable Search(string query, int? courseId);
         DataTable GetByCourseAndTerm(int courseId, int academicYearId, int semesterId, int? yearLevelId);
         int Insert(Section section);
         void Update(Section section);

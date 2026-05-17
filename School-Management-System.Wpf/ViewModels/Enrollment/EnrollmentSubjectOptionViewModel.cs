@@ -9,9 +9,26 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         public int SubjectId { get; set; }
         public int Units { get; set; }
         public int? ClassScheduleId { get; set; }
+        public int? MaxStudents { get; set; }
+        public int CurrentEnrolledCount { get; set; }
         public string SubjectCode { get; set; }
         public string SubjectName { get; set; }
         public string ScheduleText { get; set; }
+        public string EligibilityStatus { get; set; }
+        public bool IsFull
+        {
+            get { return MaxStudents.HasValue && MaxStudents.Value > 0 && CurrentEnrolledCount >= MaxStudents.Value; }
+        }
+
+        public string CapacityText
+        {
+            get
+            {
+                return MaxStudents.HasValue && MaxStudents.Value > 0
+                    ? CurrentEnrolledCount + " / " + MaxStudents.Value
+                    : CurrentEnrolledCount + " enrolled";
+            }
+        }
 
         public bool IsSelected
         {

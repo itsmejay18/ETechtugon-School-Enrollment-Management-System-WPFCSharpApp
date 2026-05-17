@@ -47,7 +47,7 @@ namespace School_Management_System.Presentation.Forms
         {
             _db = db;
 
-            Text = AppConstants.AppTitle + " - Register";
+            Text = "Register";
             MinimumSize = new Size(960, 620);
             FormBorderStyle = FormBorderStyle.Sizable;
             WindowState = FormWindowState.Maximized;
@@ -195,7 +195,7 @@ namespace School_Management_System.Presentation.Forms
         {
             var panel = new Panel { Dock = DockStyle.Left, Width = 640, BackColor = ThemeColors.Surface, Padding = new Padding(44, 34, 44, 34) };
             var visualHost = new Panel { Dock = DockStyle.Fill, BackColor = ThemeColors.Surface };
-            var cardLogo = BrandAssets.CreateLogoImage();
+            var cardLogo = BrandAssets.CreateLogoMarkImage();
             var logoCanvas = new Panel
             {
                 Dock = DockStyle.Fill,

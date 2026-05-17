@@ -154,23 +154,8 @@
                                        RenderOptions.BitmapScalingMode="HighQuality" />
                             </Grid>
 
-                            <TextBlock Text="{Binding ApplicationTitle}"
-                                       Margin="0,24,0,0"
-                                       FontSize="26"
-                                       FontWeight="Bold"
-                                       TextAlignment="Center"
-                                       TextWrapping="Wrap"
-                                       Foreground="White" />
-                            <TextBlock Text="{Binding ApplicationTagline}"
-                                       Margin="0,8,0,0"
-                                       FontSize="15"
-                                       LineHeight="22"
-                                       TextAlignment="Center"
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource HeroTextSoftBrush}" />
-
                             <TextBlock Text="{Binding LoginHeadline}"
-                                       Margin="0,34,0,0"
+                                       Margin="0,28,0,0"
                                        TextWrapping="Wrap"
                                        TextAlignment="Center"
                                        FontSize="32"

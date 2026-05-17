@@ -31,6 +31,7 @@
         </Style>
     </UserControl.Resources>
 
+    <Grid>
     <Border Style="{StaticResource CardBorderStyle}">
         <Grid>
             <Grid.RowDefinitions>
@@ -64,7 +65,10 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBox Margin="0,0,10,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding StudentSearchText, UpdateSourceTrigger=PropertyChanged}" />
-                        <Button Grid.Column="1" Style="{StaticResource NeutralButtonStyle}" Command="{Binding SearchStudentsCommand}" Content="Search" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Margin="0,0,10,0" Style="{StaticResource NeutralButtonStyle}" Command="{Binding SearchStudentsCommand}" Content="Search" />
+                            <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding OpenStudentProfileCommand}" Content="Open profile" />
+                        </StackPanel>
                     </Grid>
 
                     <DataGrid Grid.Row="2" AutoGenerateColumns="True" ItemsSource="{Binding StudentRecords}" SelectedItem="{Binding SelectedStudent, Mode=TwoWay}" />
@@ -117,6 +121,10 @@
                                       Content="By section"
                                       IsChecked="{Binding UseSectionMode, Mode=TwoWay}" />
                             <Button Margin="0,0,10,10"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding EnrollAllCommand}"
+                                    Content="Enroll all" />
+                            <Button Margin="0,0,10,10"
                                     Style="{StaticResource NeutralButtonStyle}"
                                     Command="{Binding LoadSubjectsCommand}"
                                     Content="Load subjects" />
@@ -144,6 +152,8 @@
                                 <DataGridTextColumn Binding="{Binding SubjectCode}" Header="Code" Width="110" />
                                 <DataGridTextColumn Binding="{Binding SubjectName}" Header="Subject" Width="*" />
                                 <DataGridTextColumn Binding="{Binding Units}" Header="Units" Width="80" />
+                                <DataGridTextColumn Binding="{Binding CapacityText}" Header="Capacity" Width="110" />
+                                <DataGridTextColumn Binding="{Binding EligibilityStatus}" Header="Status" Width="110" />
                                 <DataGridTextColumn Binding="{Binding ScheduleText}" Header="Schedule" Width="220" />
                             </DataGrid.Columns>
                         </DataGrid>
@@ -156,6 +166,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel>
                             <TextBlock Text="{Binding SelectedStudentSummary}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Margin="0,6,0,0" Text="{Binding SelectedStudentType}" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" />
                             <TextBlock Margin="0,10,0,0" Text="{Binding SummaryText}" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" />
                         </StackPanel>
                         <WrapPanel Grid.Column="1"
@@ -176,4 +187,62 @@
             </Grid>
         </Grid>
     </Border>
+
+        <Popup IsOpen="{Binding IsStudentProfileOpen, Mode=OneWay}"
+               AllowsTransparency="True"
+               Placement="Center"
+               PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+               PopupAnimation="Fade"
+               StaysOpen="True">
+            <Border Margin="44"
+                    MaxWidth="1100"
+                    MaxHeight="780"
+                    Style="{StaticResource ModalCardBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Border Padding="30,28,30,24"
+                            BorderBrush="{StaticResource BorderBrushSoft}"
+                            BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding SelectedStudentSummary}"
+                                           FontSize="30"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource TextBrush}" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="{Binding SelectedStudentType}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource PrimaryBrush}" />
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Style="{StaticResource ModalCloseButtonStyle}"
+                                    Command="{Binding CloseStudentProfileCommand}" />
+                        </Grid>
+                    </Border>
+                    <TabControl Grid.Row="1"
+                                Margin="24,18,24,24">
+                        <TabItem Header="Semester Records">
+                            <DataGrid AutoGenerateColumns="True" ItemsSource="{Binding ProfileEnrollmentHistory}" />
+                        </TabItem>
+                        <TabItem Header="Completed">
+                            <DataGrid AutoGenerateColumns="True" ItemsSource="{Binding ProfileCompletedSubjects}" />
+                        </TabItem>
+                        <TabItem Header="Failed">
+                            <DataGrid AutoGenerateColumns="True" ItemsSource="{Binding ProfileFailedSubjects}" />
+                        </TabItem>
+                        <TabItem Header="Remaining">
+                            <DataGrid AutoGenerateColumns="True" ItemsSource="{Binding ProfileRemainingSubjects}" />
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+            </Border>
+        </Popup>
+    </Grid>
 </UserControl>

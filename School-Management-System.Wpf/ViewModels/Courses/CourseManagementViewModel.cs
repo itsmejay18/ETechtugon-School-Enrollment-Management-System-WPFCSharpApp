@@ -37,11 +37,13 @@ namespace School_Management_System.Wpf.ViewModels.Courses
             Departments = new ObservableCollection<DepartmentOptionViewModel>();
 
             RefreshCommand = new RelayCommand(RefreshCourses);
+            OpenDetailsCommand = new RelayCommand(OpenDetails, () => SelectedCourse != null && !IsEditorActive);
             AddCommand = new RelayCommand(BeginAdd);
             EditCommand = new RelayCommand(BeginEdit, () => SelectedCourse != null && !IsEditorActive);
             DeleteCommand = new RelayCommand(DeleteCurrent, () => SelectedCourse != null && !IsEditorActive);
             SaveCommand = new RelayCommand(Save, () => IsEditorActive);
             CancelCommand = new RelayCommand(CancelEdit, () => IsEditorActive);
+            CloseModalCommand = new RelayCommand(CloseModal);
 
             LoadDepartments();
             RefreshCourses();
@@ -51,11 +53,13 @@ namespace School_Management_System.Wpf.ViewModels.Courses
         public ObservableCollection<DepartmentOptionViewModel> Departments { get; private set; }
 
         public RelayCommand RefreshCommand { get; private set; }
+        public RelayCommand OpenDetailsCommand { get; private set; }
         public RelayCommand AddCommand { get; private set; }
         public RelayCommand EditCommand { get; private set; }
         public RelayCommand DeleteCommand { get; private set; }
         public RelayCommand SaveCommand { get; private set; }
         public RelayCommand CancelCommand { get; private set; }
+        public RelayCommand CloseModalCommand { get; private set; }
 
         public string SearchText
         {
@@ -120,6 +124,7 @@ namespace School_Management_System.Wpf.ViewModels.Courses
                 if (SetProperty(ref _isEditorActive, value))
                 {
                     OnPropertyChanged(nameof(IsEditorReadOnly));
+                    OnPropertyChanged(nameof(IsPreviewMode));
                     OnPropertyChanged(nameof(EditorModeText));
                     OnPropertyChanged(nameof(EditorModalTitle));
                     OnPropertyChanged(nameof(EditorModalSubtitle));
@@ -150,6 +155,11 @@ namespace School_Management_System.Wpf.ViewModels.Courses
             get { return !IsEditorActive; }
         }
 
+        public bool IsPreviewMode
+        {
+            get { return !IsEditorActive; }
+        }
+
         public string EditorModeText
         {
             get
@@ -164,13 +174,13 @@ namespace School_Management_System.Wpf.ViewModels.Courses
         {
             get
             {
-                if (_editingCourseId == 0)
+                if (IsEditorActive && _editingCourseId == 0)
                 {
                     return "New course";
                 }
 
                 return SelectedCourse == null || string.IsNullOrWhiteSpace(SelectedCourse.CourseName)
-                    ? "Edit course"
+                    ? "Course details"
                     : SelectedCourse.CourseName;
             }
         }
@@ -179,14 +189,21 @@ namespace School_Management_System.Wpf.ViewModels.Courses
         {
             get
             {
-                if (_editingCourseId == 0)
+                if (IsEditorActive && _editingCourseId == 0)
                 {
                     return "Create a new course record inside the modal editor.";
                 }
 
+                if (IsEditorActive)
+                {
+                    return SelectedCourse == null || string.IsNullOrWhiteSpace(SelectedCourse.CourseCode)
+                        ? "Update the selected course information."
+                        : "Editing " + SelectedCourse.CourseCode + ".";
+                }
+
                 return SelectedCourse == null || string.IsNullOrWhiteSpace(SelectedCourse.CourseCode)
                     ? "Update the selected course information."
-                    : SelectedCourse.CourseCode + " is ready for editing in the modal workspace.";
+                    : SelectedCourse.CourseCode + " is open in preview mode.";
             }
         }
 
@@ -285,6 +302,19 @@ namespace School_Management_System.Wpf.ViewModels.Courses
             StatusMessage = "Creating a new course.";
         }
 
+        private void OpenDetails()
+        {
+            if (SelectedCourse == null)
+            {
+                return;
+            }
+
+            PreviewSelected();
+            IsEditorActive = false;
+            IsEditorModalOpen = true;
+            StatusMessage = "Previewing course " + SelectedCourse.CourseCode + ".";
+        }
+
         private void BeginEdit()
         {
             if (SelectedCourse == null)
@@ -301,19 +331,37 @@ namespace School_Management_System.Wpf.ViewModels.Courses
 
         private void CancelEdit()
         {
-            IsEditorActive = false;
-            IsEditorModalOpen = false;
+            EndEdit(false);
+        }
 
-            if (SelectedCourse != null)
+        private void EndEdit(bool closeModal)
+        {
+            var wasAdding = _editingCourseId == 0 || SelectedCourse == null;
+            IsEditorActive = false;
+
+            if (!wasAdding && SelectedCourse != null)
             {
                 PreviewSelected();
+                IsEditorModalOpen = !closeModal;
                 StatusMessage = "Edit canceled. Back to preview mode.";
             }
             else
             {
                 ResetEditorFields();
+                IsEditorModalOpen = false;
                 StatusMessage = "Edit canceled.";
             }
+        }
+
+        private void CloseModal()
+        {
+            if (IsEditorActive)
+            {
+                EndEdit(true);
+                return;
+            }
+
+            IsEditorModalOpen = false;
         }
 
         private void PreviewSelected()
@@ -445,6 +493,7 @@ namespace School_Management_System.Wpf.ViewModels.Courses
 
         private void RaiseCommandStates()
         {
+            OpenDetailsCommand.RaiseCanExecuteChanged();
             EditCommand.RaiseCanExecuteChanged();
             DeleteCommand.RaiseCanExecuteChanged();
             SaveCommand.RaiseCanExecuteChanged();

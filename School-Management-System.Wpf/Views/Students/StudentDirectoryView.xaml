@@ -24,14 +24,27 @@
             <Setter Property="Background" Value="#FFF8FBFF" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="16" />
-            <Setter Property="Padding" Value="14" />
-            <Setter Property="Margin" Value="0,0,12,12" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="Margin" Value="0,0,10,10" />
+        </Style>
+
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+        </Style>
+
+        <Style x:Key="FieldValueTextStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,4,0,0" />
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
 
         <Style x:Key="FieldTextBoxStyle" TargetType="TextBox">
-            <Setter Property="MinHeight" Value="36" />
-            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Padding" Value="8,4" />
             <Setter Property="FontSize" Value="13.5" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
@@ -45,7 +58,7 @@
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Background" Value="White" />
-            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="MinHeight" Value="32" />
         </Style>
 
         <Style x:Key="FieldDatePickerStyle" TargetType="DatePicker">
@@ -53,7 +66,7 @@
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Background" Value="White" />
-            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="MinHeight" Value="32" />
         </Style>
 
         <Style x:Key="ModalActionButtonStyle" TargetType="Button" BasedOn="{StaticResource NeutralButtonStyle}">
@@ -87,12 +100,12 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="0,0,8,0">
-                        <TextBlock Text="Student CRUD"
+                        <TextBlock Text="Student Profile"
                                    FontSize="24"
                                    FontWeight="Bold"
                                    Foreground="{StaticResource TextBrush}" />
                         <TextBlock Margin="0,8,0,0"
-                                   Text="Use this sidebar for search, refresh, and record actions. Edit and Delete stay inside the selected student profile modal."
+                                   Text="Search student profiles and filter records by Regular, Irregular, or Summer status."
                                    TextWrapping="Wrap"
                                    Foreground="{StaticResource MutedTextBrush}" />
 
@@ -103,6 +116,14 @@
                                    Foreground="{StaticResource PrimaryBrush}" />
                         <TextBox Style="{StaticResource ToolbarTextBoxStyle}"
                                  Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <TextBlock Margin="0,14,0,8"
+                                   Text="Student type"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource PrimaryBrush}" />
+                        <ComboBox ItemsSource="{Binding StudentTypeFilterOptions}"
+                                  SelectedItem="{Binding SelectedStudentTypeFilter, Mode=TwoWay}" />
 
                         <Button Margin="0,12,0,0"
                                 Style="{StaticResource NeutralButtonStyle}"
@@ -170,7 +191,7 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel>
-                            <TextBlock Text="Student directory"
+                            <TextBlock Text="Student profiles"
                                        FontSize="26"
                                        FontWeight="Bold"
                                        Foreground="{StaticResource TextBrush}" />
@@ -180,9 +201,9 @@
                                        Foreground="{StaticResource MutedTextBrush}" />
                         </StackPanel>
 
-                        <TextBlock Grid.Column="1"
-                                   VerticalAlignment="Top"
-                                   Text="{Binding RecordCountText}"
+                            <TextBlock Grid.Column="1"
+                                       VerticalAlignment="Top"
+                                       Text="{Binding RecordCountText}"
                                    FontSize="14"
                                    FontWeight="SemiBold"
                                    Foreground="{StaticResource PrimaryBrush}" />
@@ -248,10 +269,24 @@
                             <StackPanel Grid.Column="1"
                                         Margin="16,0,0,0"
                                         VerticalAlignment="Center">
-                                <TextBlock Text="{Binding DetailsModalTitle}"
-                                           FontSize="30"
-                                           FontWeight="Bold"
-                                           Foreground="{StaticResource TextBrush}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding DetailsModalTitle}"
+                                               FontSize="30"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource TextBrush}" />
+                                    <Border Margin="14,5,0,0"
+                                            Padding="10,4"
+                                            VerticalAlignment="Top"
+                                            Background="#FFEAF4FF"
+                                            BorderBrush="{StaticResource BorderBrushSoft}"
+                                            BorderThickness="1"
+                                            CornerRadius="12">
+                                        <TextBlock Text="{Binding StudentTypeBadgeText}"
+                                                   FontSize="12"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource PrimaryBrush}" />
+                                    </Border>
+                                </StackPanel>
                                 <TextBlock Margin="0,8,0,0"
                                            Text="{Binding DetailsModalSubtitle}"
                                            TextWrapping="Wrap"
@@ -279,23 +314,45 @@
                         </Grid>
                     </Border>
 
-                    <ScrollViewer Grid.Row="1"
-                                  Padding="30,24,30,24"
-                                  VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <Border Style="{StaticResource ModalSectionBorderStyle}">
-                                <StackPanel>
-                                    <TextBlock Text="Student form"
-                                               FontSize="18"
-                                               FontWeight="Bold"
-                                               Foreground="{StaticResource TextBrush}" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               Text="{Binding ModalStatusMessage}"
-                                               TextWrapping="Wrap"
-                                               Foreground="{StaticResource MutedTextBrush}" />
+                    <Grid Grid.Row="1"
+                          Margin="24,18,24,18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.55*" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
 
-                                    <StackPanel Margin="0,18,0,0"
+                        <Border Style="{StaticResource ModalSectionBorderStyle}"
+                                Margin="0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel>
+                                        <TextBlock Text="Student information"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource TextBrush}" />
+                                        <TextBlock Margin="0,4,0,0"
+                                                   Text="{Binding ModalStatusMessage}"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="12.5"
+                                                   Foreground="{StaticResource MutedTextBrush}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1"
+                                                Margin="12,0,0,0"
                                                 Orientation="Horizontal"
+                                                VerticalAlignment="Top"
                                                 Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <Button Style="{StaticResource ModalActionButtonStyle}"
                                                 Command="{Binding UploadPhotoCommand}"
@@ -304,185 +361,251 @@
                                                 Command="{Binding RemovePhotoCommand}"
                                                 Content="Remove photo" />
                                     </StackPanel>
+                                </Grid>
 
-                                    <Grid Margin="0,18,0,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-
-                                        <Border Style="{StaticResource FieldCardStyle}">
-                                            <StackPanel>
-                                                <TextBlock Text="Student Number"
-                                                           FontSize="12.5"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}" />
-                                                <TextBox Margin="0,8,0,0"
-                                                         Style="{StaticResource FieldTextBoxStyle}"
-                                                         IsReadOnly="True"
-                                                         Text="{Binding StudentNumber}" />
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Column="1"
-                                                Style="{StaticResource FieldCardStyle}">
-                                            <StackPanel>
-                                                <TextBlock Text="First Name"
-                                                           FontSize="12.5"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}" />
-                                                <TextBox Margin="0,8,0,0"
-                                                         Style="{StaticResource FieldTextBoxStyle}"
-                                                         IsReadOnly="{Binding IsEditorReadOnly}"
-                                                         Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Row="1"
-                                                Style="{StaticResource FieldCardStyle}">
-                                            <StackPanel>
-                                                <TextBlock Text="Last Name"
-                                                           FontSize="12.5"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}" />
-                                                <TextBox Margin="0,8,0,0"
-                                                         Style="{StaticResource FieldTextBoxStyle}"
-                                                         IsReadOnly="{Binding IsEditorReadOnly}"
-                                                         Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Row="1"
-                                                Grid.Column="1"
-                                                Style="{StaticResource FieldCardStyle}">
-                                            <StackPanel>
-                                                <TextBlock Text="Middle Name"
-                                                           FontSize="12.5"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}" />
-                                                <TextBox Margin="0,8,0,0"
-                                                         Style="{StaticResource FieldTextBoxStyle}"
-                                                         IsReadOnly="{Binding IsEditorReadOnly}"
-                                                         Text="{Binding MiddleName, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Row="2"
-                                                Style="{StaticResource FieldCardStyle}">
-                                            <StackPanel>
-                                                <TextBlock Text="Gender"
-                                                           FontSize="12.5"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}" />
-                                                <ComboBox Margin="0,8,0,0"
-                                                          Style="{StaticResource FieldComboBoxStyle}"
-                                                          IsEnabled="{Binding IsEditorActive}"
-                                                          ItemsSource="{Binding GenderOptions}"
-                                                          SelectedItem="{Binding SelectedGender, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Row="2"
-                                                Grid.Column="1"
-                                                Style="{StaticResource FieldCardStyle}">
-                                            <StackPanel>
-                                                <TextBlock Text="Birth Date"
-                                                           FontSize="12.5"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}" />
-                                                <DatePicker Margin="0,8,0,0"
-                                                            Style="{StaticResource FieldDatePickerStyle}"
-                                                            IsEnabled="{Binding IsEditorActive}"
-                                                            SelectedDate="{Binding BirthDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Row="3"
-                                                Style="{StaticResource FieldCardStyle}">
-                                            <StackPanel>
-                                                <TextBlock Text="Email"
-                                                           FontSize="12.5"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}" />
-                                                <TextBox Margin="0,8,0,0"
-                                                         Style="{StaticResource FieldTextBoxStyle}"
-                                                         IsReadOnly="{Binding IsEditorReadOnly}"
-                                                         Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Row="3"
-                                                Grid.Column="1"
-                                                Style="{StaticResource FieldCardStyle}">
-                                            <StackPanel>
-                                                <TextBlock Text="Phone"
-                                                           FontSize="12.5"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}" />
-                                                <TextBox Margin="0,8,0,0"
-                                                         Style="{StaticResource FieldTextBoxStyle}"
-                                                         IsReadOnly="{Binding IsEditorReadOnly}"
-                                                         Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                        </Border>
-
-                                        <Border Grid.Row="4"
-                                                Grid.ColumnSpan="2"
-                                                Style="{StaticResource FieldCardStyle}"
-                                                Margin="0,0,0,12">
-                                            <StackPanel>
-                                                <TextBlock Text="Address"
-                                                           FontSize="12.5"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{StaticResource PrimaryBrush}" />
-                                                <TextBox Margin="0,8,0,0"
-                                                         Height="110"
-                                                         AcceptsReturn="True"
-                                                         TextWrapping="Wrap"
-                                                         VerticalScrollBarVisibility="Auto"
-                                                         Style="{StaticResource FieldTextBoxStyle}"
-                                                         IsReadOnly="{Binding IsEditorReadOnly}"
-                                                         Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" />
-                                            </StackPanel>
-                                        </Border>
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Style="{StaticResource ModalSectionBorderStyle}"
-                                    Margin="0">
-                                <Grid>
+                                <Grid Grid.Row="2"
+                                      Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
                                     </Grid.RowDefinitions>
 
-                                    <StackPanel Margin="0,0,0,12">
-                                        <TextBlock Text="Current term enrolled subjects"
-                                                   FontSize="18"
-                                                   FontWeight="Bold"
-                                                   Foreground="{StaticResource TextBrush}" />
-                                        <TextBlock Margin="0,8,0,0"
-                                                   Text="Subject rows stay visible in the modal for existing students. New students will show this section after they are saved and enrolled."
-                                                   TextWrapping="Wrap"
-                                                   Foreground="{StaticResource MutedTextBrush}" />
-                                    </StackPanel>
+                                    <Border Style="{StaticResource FieldCardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="Student Number"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding StudentNumber}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBox Margin="0,6,0,0"
+                                                     Style="{StaticResource FieldTextBoxStyle}"
+                                                     IsReadOnly="True"
+                                                     Text="{Binding StudentNumber}"
+                                                     Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBlock Margin="0,12,0,0"
+                                                       Text="Student Type"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding SelectedStudentType}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <ComboBox Margin="0,6,0,0"
+                                                      Style="{StaticResource FieldComboBoxStyle}"
+                                                      ItemsSource="{Binding StudentTypeOptions}"
+                                                      SelectedItem="{Binding SelectedStudentType, UpdateSourceTrigger=PropertyChanged}"
+                                                      Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBlock Margin="0,12,0,0"
+                                                       Text="Academic Status"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding AcademicStatus}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBox Margin="0,6,0,0"
+                                                     Style="{StaticResource FieldTextBoxStyle}"
+                                                     Text="{Binding AcademicStatus, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Border>
 
-                                    <DataGrid Grid.Row="1"
-                                              Height="280"
-                                              AutoGenerateColumns="True"
-                                              ItemsSource="{Binding EnrolledSubjects}" />
+                                    <Border Grid.Column="1"
+                                            Style="{StaticResource FieldCardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="First Name"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding FirstName}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBox Margin="0,6,0,0"
+                                                     Style="{StaticResource FieldTextBoxStyle}"
+                                                     Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="1"
+                                            Style="{StaticResource FieldCardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="Last Name"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding LastName}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBox Margin="0,6,0,0"
+                                                     Style="{StaticResource FieldTextBoxStyle}"
+                                                     Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="1"
+                                            Grid.Column="1"
+                                            Style="{StaticResource FieldCardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="Middle Name"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding MiddleName}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBox Margin="0,6,0,0"
+                                                     Style="{StaticResource FieldTextBoxStyle}"
+                                                     Text="{Binding MiddleName, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="2"
+                                            Style="{StaticResource FieldCardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="Gender"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding SelectedGender}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <ComboBox Margin="0,6,0,0"
+                                                      Style="{StaticResource FieldComboBoxStyle}"
+                                                      ItemsSource="{Binding GenderOptions}"
+                                                      SelectedItem="{Binding SelectedGender, UpdateSourceTrigger=PropertyChanged}"
+                                                      Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="2"
+                                            Grid.Column="1"
+                                            Style="{StaticResource FieldCardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="Birth Date"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding BirthDate, StringFormat={}{0:M/d/yyyy}}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <DatePicker Margin="0,6,0,0"
+                                                        Style="{StaticResource FieldDatePickerStyle}"
+                                                        SelectedDate="{Binding BirthDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                        Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="3"
+                                            Style="{StaticResource FieldCardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="Email"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding Email}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBox Margin="0,6,0,0"
+                                                     Style="{StaticResource FieldTextBoxStyle}"
+                                                     Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="3"
+                                            Grid.Column="1"
+                                            Style="{StaticResource FieldCardStyle}">
+                                        <StackPanel>
+                                            <TextBlock Text="Phone"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding Phone}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBox Margin="0,6,0,0"
+                                                     Style="{StaticResource FieldTextBoxStyle}"
+                                                     Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="4"
+                                            Grid.ColumnSpan="2"
+                                            Style="{StaticResource FieldCardStyle}"
+                                            Margin="0">
+                                        <StackPanel>
+                                            <TextBlock Text="Address"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding Address}"
+                                                       MaxHeight="42"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBox Margin="0,6,0,0"
+                                                     Height="70"
+                                                     AcceptsReturn="True"
+                                                     TextWrapping="Wrap"
+                                                     VerticalScrollBarVisibility="Auto"
+                                                     Style="{StaticResource FieldTextBoxStyle}"
+                                                     Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"
+                                                     Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <TextBlock Margin="0,12,0,0"
+                                                       Text="Curriculum"
+                                                       Style="{StaticResource FieldLabelStyle}" />
+                                            <TextBlock Text="{Binding SelectedCurriculum.DisplayName}"
+                                                       Style="{StaticResource FieldValueTextStyle}"
+                                                       Visibility="{Binding IsPreviewMode, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <ComboBox Margin="0,6,0,0"
+                                                      Style="{StaticResource FieldComboBoxStyle}"
+                                                      ItemsSource="{Binding CurriculumOptions}"
+                                                      SelectedItem="{Binding SelectedCurriculum, Mode=TwoWay}"
+                                                      DisplayMemberPath="DisplayName"
+                                                      Visibility="{Binding IsEditorActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Border>
                                 </Grid>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="2"
+                                Style="{StaticResource ModalSectionBorderStyle}"
+                                Margin="0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Text="Academic records"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource TextBrush}" />
+                                    <TextBlock Margin="0,4,0,0"
+                                               Text="Current, completed, failed, remaining, and semester records for the selected student."
+                                               TextWrapping="Wrap"
+                                               FontSize="12.5"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+                                </StackPanel>
+
+                                <TabControl Grid.Row="1"
+                                            MinHeight="240">
+                                    <TabItem Header="Current">
+                                        <DataGrid AutoGenerateColumns="True"
+                                                  ItemsSource="{Binding EnrolledSubjects}" />
+                                    </TabItem>
+                                    <TabItem Header="History">
+                                        <DataGrid AutoGenerateColumns="True"
+                                                  ItemsSource="{Binding EnrollmentHistory}" />
+                                    </TabItem>
+                                    <TabItem Header="Completed">
+                                        <DataGrid AutoGenerateColumns="True"
+                                                  ItemsSource="{Binding CompletedSubjects}" />
+                                    </TabItem>
+                                    <TabItem Header="Failed">
+                                        <DataGrid AutoGenerateColumns="True"
+                                                  ItemsSource="{Binding FailedSubjects}" />
+                                    </TabItem>
+                                    <TabItem Header="Remaining">
+                                        <DataGrid AutoGenerateColumns="True"
+                                                  ItemsSource="{Binding RemainingSubjects}" />
+                                    </TabItem>
+                                </TabControl>
+                            </Grid>
+                        </Border>
+                    </Grid>
 
                     <Border Grid.Row="2"
                             Padding="24"

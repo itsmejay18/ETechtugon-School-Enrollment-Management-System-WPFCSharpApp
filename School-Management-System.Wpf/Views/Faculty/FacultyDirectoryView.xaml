@@ -24,11 +24,11 @@
             <Setter Property="Background" Value="#FFF8FBFF" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Padding" Value="12" />
-            <Setter Property="Margin" Value="0,0,12,12" />
-            <Setter Property="MinWidth" Value="260" />
-            <Setter Property="MaxWidth" Value="470" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="10" />
+            <Setter Property="Margin" Value="0,0,10,10" />
+            <Setter Property="MinWidth" Value="210" />
+            <Setter Property="MaxWidth" Value="360" />
         </Style>
     </UserControl.Resources>
 
@@ -172,74 +172,90 @@
                         </Grid>
                     </Border>
 
-                    <ScrollViewer Grid.Row="1"
-                                  Padding="30,24,30,30"
-                                  VerticalScrollBarVisibility="Auto">
-                        <StackPanel>
-                            <Border Style="{StaticResource ModalSectionBorderStyle}">
-                                <StackPanel>
+                    <Grid Grid.Row="1"
+                          Margin="24,18,24,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.25*" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Style="{StaticResource ModalSectionBorderStyle}"
+                                Margin="0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Margin="0,0,0,12">
                                     <TextBlock Text="Profile fields"
-                                               FontSize="18"
+                                               FontSize="16"
                                                FontWeight="Bold"
                                                Foreground="{StaticResource TextBrush}" />
-                                    <TextBlock Margin="0,8,0,0"
-                                               Text="Faculty details stay inside the modal so the table workspace keeps its full width."
+                                    <TextBlock Margin="0,4,0,0"
+                                               Text="Faculty details for the selected record."
                                                TextWrapping="Wrap"
+                                               FontSize="12.5"
                                                Foreground="{StaticResource MutedTextBrush}" />
-                                    <ItemsControl Margin="0,18,0,0"
-                                                  ItemsSource="{Binding DetailFields}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Style="{StaticResource DetailCardStyle}">
-                                                    <StackPanel>
-                                                        <TextBlock Text="{Binding Label}"
-                                                                   FontSize="12.5"
-                                                                   FontWeight="SemiBold"
-                                                                   Foreground="{StaticResource PrimaryBrush}" />
-                                                        <TextBlock Margin="0,6,0,0"
-                                                                   Text="{Binding Value}"
-                                                                   TextWrapping="Wrap"
-                                                                   Foreground="{StaticResource TextBrush}" />
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
                                 </StackPanel>
-                            </Border>
 
-                            <Border Style="{StaticResource ModalSectionBorderStyle}"
-                                    Margin="0">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
-                                    </Grid.RowDefinitions>
+                                <ItemsControl Grid.Row="1"
+                                              ItemsSource="{Binding DetailFields}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource DetailCardStyle}">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Label}"
+                                                               FontSize="12"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{StaticResource PrimaryBrush}" />
+                                                    <TextBlock Margin="0,4,0,0"
+                                                               Text="{Binding Value}"
+                                                               TextWrapping="Wrap"
+                                                               FontSize="13.5"
+                                                               Foreground="{StaticResource TextBrush}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Border>
 
-                                    <StackPanel Margin="0,0,0,12">
-                                        <TextBlock Text="Teaching assignments"
-                                                   FontSize="18"
-                                                   FontWeight="Bold"
-                                                   Foreground="{StaticResource TextBrush}" />
-                                        <TextBlock Margin="0,8,0,0"
-                                                   Text="Assignment rows are loaded from the class schedule table for the selected faculty member."
-                                                   TextWrapping="Wrap"
-                                                   Foreground="{StaticResource MutedTextBrush}" />
-                                    </StackPanel>
+                        <Border Grid.Column="2"
+                                Style="{StaticResource ModalSectionBorderStyle}"
+                                Margin="0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
 
-                                    <DataGrid Grid.Row="1"
-                                              Height="280"
-                                              AutoGenerateColumns="True"
-                                              ItemsSource="{Binding Assignments}" />
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Text="Teaching assignments"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource TextBrush}" />
+                                    <TextBlock Margin="0,4,0,0"
+                                               Text="Current class schedule rows."
+                                               TextWrapping="Wrap"
+                                               FontSize="12.5"
+                                               Foreground="{StaticResource MutedTextBrush}" />
+                                </StackPanel>
+
+                                <DataGrid Grid.Row="1"
+                                          MinHeight="260"
+                                          AutoGenerateColumns="True"
+                                          ItemsSource="{Binding Assignments}" />
+                            </Grid>
+                        </Border>
+                    </Grid>
                 </Grid>
             </Border>
         </Popup>

@@ -5,6 +5,7 @@ namespace School_Management_System.Models
     public sealed class Section
     {
         private int _sectionId;
+        private string _sectionCode;
         private string _sectionName;
         private int _courseId;
         private int _yearLevelId;
@@ -16,6 +17,7 @@ namespace School_Management_System.Models
         private DateTime? _updatedAt;
 
         public int SectionId { get { return _sectionId; } set { _sectionId = value; } }
+        public string SectionCode { get { return _sectionCode; } set { _sectionCode = value; } }
         public string SectionName { get { return _sectionName; } set { _sectionName = value; } }
         public int CourseId { get { return _courseId; } set { _courseId = value; } }
         public int YearLevelId { get { return _yearLevelId; } set { _yearLevelId = value; } }

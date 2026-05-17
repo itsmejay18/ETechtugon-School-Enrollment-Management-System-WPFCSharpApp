@@ -15,6 +15,30 @@
             <viewsSettings:CompanyBrandingView />
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vmSettings:GlobalSettingsViewModel}">
+            <viewsSettings:GlobalSettingsView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmSettings:CatalogCrudWorkspaceViewModel}">
+            <viewsSettings:CatalogCrudWorkspaceView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmSettings:CollegeManagementViewModel}">
+            <viewsSettings:CatalogCrudWorkspaceView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmSettings:DepartmentManagementViewModel}">
+            <viewsSettings:CatalogCrudWorkspaceView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmSettings:SectionManagementViewModel}">
+            <viewsSettings:CatalogCrudWorkspaceView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmSettings:SubjectManagementViewModel}">
+            <viewsSettings:CatalogCrudWorkspaceView />
+        </DataTemplate>
+
         <Style x:Key="TopSectionNavListStyle" TargetType="ListBox">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />

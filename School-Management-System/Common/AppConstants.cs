@@ -19,8 +19,11 @@ namespace School_Management_System.Common
             public const string User = "User";
             public const string Student = "Student";
             public const string Faculty = "Faculty";
+            public const string College = "College";
+            public const string Department = "Department";
             public const string Course = "Course";
             public const string Subject = "Subject";
+            public const string Section = "Section";
             public const string Curriculum = "Curriculum";
             public const string Enrollment = "Enrollment";
             public const string Database = "Database";

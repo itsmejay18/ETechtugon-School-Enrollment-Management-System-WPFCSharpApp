@@ -102,12 +102,14 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <ComboBox ItemsSource="{Binding Courses}" SelectedItem="{Binding SelectedCourse, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
-                <ComboBox Grid.Column="1" ItemsSource="{Binding AcademicYears}" SelectedItem="{Binding SelectedAcademicYear, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
-                <ComboBox Grid.Column="2" ItemsSource="{Binding YearLevels}" SelectedItem="{Binding SelectedYearLevel, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
-                <ComboBox Grid.Column="3" ItemsSource="{Binding Semesters}" SelectedItem="{Binding SelectedSemester, Mode=TwoWay}" DisplayMemberPath="DisplayName" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding CurriculumTypes}" SelectedItem="{Binding SelectedCurriculumType, Mode=TwoWay}" Margin="0,0,10,0" />
+                <ComboBox Grid.Column="2" ItemsSource="{Binding AcademicYears}" SelectedItem="{Binding SelectedAcademicYear, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
+                <ComboBox Grid.Column="3" ItemsSource="{Binding YearLevels}" SelectedItem="{Binding SelectedYearLevel, Mode=TwoWay}" DisplayMemberPath="DisplayName" Margin="0,0,10,0" />
+                <ComboBox Grid.Column="4" ItemsSource="{Binding Semesters}" SelectedItem="{Binding SelectedSemester, Mode=TwoWay}" DisplayMemberPath="DisplayName" />
             </Grid>
 
             <DataGrid Grid.Row="1"

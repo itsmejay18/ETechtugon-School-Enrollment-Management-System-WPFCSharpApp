@@ -22,6 +22,12 @@ namespace School_Management_System.Wpf.Services
                    ?? LoadImageSource(FindAppIconAssetPath());
         }
 
+        public static ImageSource LoadClientLogoMark()
+        {
+            var source = LoadClientLogo();
+            return CropLogoTagline(source) ?? source;
+        }
+
         public static ImageSource LoadCompanyLogo()
         {
             return LoadHeaderLogo();
@@ -356,6 +362,33 @@ namespace School_Management_System.Wpf.Services
             }
 
             return cropped;
+        }
+
+        private static ImageSource CropLogoTagline(ImageSource source)
+        {
+            var bitmap = source as BitmapSource;
+            if (bitmap == null || bitmap.PixelWidth <= 0 || bitmap.PixelHeight <= 0)
+            {
+                return source;
+            }
+
+            var aspectRatio = (double)bitmap.PixelWidth / bitmap.PixelHeight;
+            if (aspectRatio < 2.2)
+            {
+                return source;
+            }
+
+            var cropHeight = (int)Math.Round(bitmap.PixelHeight * 0.84);
+            if (cropHeight <= 0 || cropHeight >= bitmap.PixelHeight)
+            {
+                return source;
+            }
+
+            var cropped = new CroppedBitmap(
+                bitmap,
+                new Int32Rect(0, 0, bitmap.PixelWidth, cropHeight));
+
+            return PrepareImageSource(cropped);
         }
 
         private static string FindRasterBrandAssetPath()

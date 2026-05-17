@@ -20,9 +20,19 @@ namespace School_Management_System.BusinessLayer.Services
             return _classScheduleData.GetBySection(sectionId);
         }
 
+        public DataTable GetBySection(int sectionId, int? academicYearId, int? semesterId)
+        {
+            return _classScheduleData.GetBySection(sectionId, academicYearId, semesterId);
+        }
+
         public DataTable GetByFaculty(int facultyId)
         {
             return _classScheduleData.GetByFaculty(facultyId);
+        }
+
+        public DataTable GetByFaculty(int facultyId, int? academicYearId, int? semesterId)
+        {
+            return _classScheduleData.GetByFaculty(facultyId, academicYearId, semesterId);
         }
 
         public ValidationResult Validate(ClassSchedule schedule)

@@ -51,7 +51,7 @@ namespace School_Management_System.Wpf.Views
 
         private void ApplyBrandingAssets()
         {
-            var brandLogo = BrandingAssetLoader.LoadClientLogo();
+            var brandLogo = BrandingAssetLoader.LoadClientLogoMark();
             var appIcon = BrandingAssetLoader.LoadAppIcon();
 
             if (appIcon != null)

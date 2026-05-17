@@ -21,8 +21,10 @@ namespace School_Management_System.DataLayer
             const string sql = @"
 SELECT
     s.SectionId,
+    s.SectionCode,
     s.SectionName,
     s.CourseId,
+    c.CourseCode,
     c.CourseName,
     s.YearLevelId,
     yl.Name AS YearLevel,
@@ -49,8 +51,10 @@ ORDER BY s.SectionName;";
             const string sql = @"
 SELECT
     s.SectionId,
+    s.SectionCode,
     s.SectionName,
     s.CourseId,
+    c.CourseCode,
     c.CourseName,
     s.YearLevelId,
     yl.Name AS YearLevel,
@@ -66,7 +70,7 @@ INNER JOIN yearlevel yl ON yl.YearLevelId = s.YearLevelId
 INNER JOIN academicyear ay ON ay.AcademicYearId = s.AcademicYearId
 INNER JOIN semester sem ON sem.SemesterId = s.SemesterId
 WHERE s.IsActive = 1
-  AND (s.SectionName LIKE @Q OR c.CourseName LIKE @Q)
+  AND (s.SectionCode LIKE @Q OR s.SectionName LIKE @Q OR c.CourseCode LIKE @Q OR c.CourseName LIKE @Q)
 ORDER BY s.SectionName;";
 
             return _db.ExecuteDataTable(
@@ -75,11 +79,52 @@ ORDER BY s.SectionName;";
                 new[] { new MySqlParameter("@Q", "%" + query + "%") });
         }
 
+        public DataTable Search(string query, int? courseId)
+        {
+            query = (query ?? string.Empty).Trim();
+            const string sql = @"
+SELECT
+    s.SectionId,
+    s.SectionCode,
+    s.SectionName,
+    s.CourseId,
+    c.CourseCode,
+    c.CourseName,
+    s.YearLevelId,
+    yl.Name AS YearLevel,
+    s.AcademicYearId,
+    ay.Name AS AcademicYear,
+    s.SemesterId,
+    sem.Name AS Semester,
+    s.Capacity,
+    s.CreatedAt
+FROM section s
+INNER JOIN course c ON c.CourseId = s.CourseId
+INNER JOIN yearlevel yl ON yl.YearLevelId = s.YearLevelId
+INNER JOIN academicyear ay ON ay.AcademicYearId = s.AcademicYearId
+INNER JOIN semester sem ON sem.SemesterId = s.SemesterId
+WHERE s.IsActive = 1
+  AND (@CourseId IS NULL OR s.CourseId = @CourseId)
+  AND (@Q = '' OR s.SectionCode LIKE @LikeQ OR s.SectionName LIKE @LikeQ OR c.CourseCode LIKE @LikeQ OR c.CourseName LIKE @LikeQ)
+ORDER BY s.SectionName;";
+
+            return _db.ExecuteDataTable(
+                sql,
+                CommandType.Text,
+                new[]
+                {
+                    new MySqlParameter("@CourseId", (object)courseId ?? DBNull.Value),
+                    new MySqlParameter("@Q", query),
+                    new MySqlParameter("@LikeQ", "%" + query + "%")
+                });
+        }
+
         public DataTable GetByCourseAndTerm(int courseId, int academicYearId, int semesterId, int? yearLevelId)
         {
             const string sql = @"
 SELECT
     s.SectionId,
+    s.SectionCode,
     s.SectionName,
     s.CourseId,
     s.YearLevelId,
@@ -114,6 +159,7 @@ ORDER BY s.SectionName;";
 INSERT INTO section
 (
     SectionName,
+    SectionCode,
     CourseId,
     YearLevelId,
     AcademicYearId,
@@ -125,6 +171,7 @@ INSERT INTO section
 VALUES
 (
     @SectionName,
+    @SectionCode,
     @CourseId,
     @YearLevelId,
     @AcademicYearId,
@@ -140,6 +187,7 @@ VALUES
                 new[]
                 {
                     new MySqlParameter("@SectionName", (object)section.SectionName ?? DBNull.Value),
+                    new MySqlParameter("@SectionCode", (object)section.SectionCode ?? DBNull.Value),
                     new MySqlParameter("@CourseId", section.CourseId),
                     new MySqlParameter("@YearLevelId", section.YearLevelId),
                     new MySqlParameter("@AcademicYearId", section.AcademicYearId),
@@ -158,6 +206,7 @@ VALUES
 UPDATE section
 SET
     SectionName = @SectionName,
+    SectionCode = @SectionCode,
     CourseId = @CourseId,
     YearLevelId = @YearLevelId,
     AcademicYearId = @AcademicYearId,
@@ -173,6 +222,7 @@ WHERE SectionId = @SectionId;";
                 {
                     new MySqlParameter("@SectionId", section.SectionId),
                     new MySqlParameter("@SectionName", (object)section.SectionName ?? DBNull.Value),
+                    new MySqlParameter("@SectionCode", (object)section.SectionCode ?? DBNull.Value),
                     new MySqlParameter("@CourseId", section.CourseId),
                     new MySqlParameter("@YearLevelId", section.YearLevelId),
                     new MySqlParameter("@AcademicYearId", section.AcademicYearId),

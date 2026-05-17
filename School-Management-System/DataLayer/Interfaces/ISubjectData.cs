@@ -8,9 +8,11 @@ namespace School_Management_System.DataLayer.Interfaces
         DataTable GetAllActive();
         DataTable Search(string query);
         DataTable GetByCourse(int courseId);
+        DataTable GetSubjectCapacity(int subjectId);
         int Insert(Subject subject);
         void Update(Subject subject);
         void Delete(int subjectId);
+        void RefreshEnrollmentCounts();
         int GetActiveCount();
     }
 }

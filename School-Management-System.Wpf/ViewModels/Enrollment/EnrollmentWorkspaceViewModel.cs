@@ -15,7 +15,7 @@ using School_Management_System.Wpf.ViewModels.Shared;
 
 namespace School_Management_System.Wpf.ViewModels.Enrollment
 {
-    public sealed class EnrollmentWorkspaceViewModel : ViewModelBase
+    public sealed class EnrollmentWorkspaceViewModel : ViewModelBase, IModalStateHost
     {
         private readonly StudentService _studentService;
         private readonly EnrollmentService _enrollmentService;
@@ -40,6 +40,11 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         private string _summaryText;
         private bool _enrollmentSaved;
         private string _savedEnrollmentNumber;
+        private bool _isStudentProfileOpen;
+        private DataView _profileCompletedSubjects;
+        private DataView _profileFailedSubjects;
+        private DataView _profileRemainingSubjects;
+        private DataView _profileEnrollmentHistory;
 
         public EnrollmentWorkspaceViewModel(StudentService studentService, EnrollmentService enrollmentService, CourseService courseService, LookupService lookupService, SectionService sectionService, CurriculumService curriculumService, ClassScheduleService classScheduleService, SystemSettingService systemSettingService, ActivityLogService activityLogService)
         {
@@ -59,10 +64,17 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             Semesters = new ObservableCollection<LookupOptionViewModel>();
             Sections = new ObservableCollection<LookupOptionViewModel>();
             AvailableSubjects = new ObservableCollection<EnrollmentSubjectOptionViewModel>();
+            ProfileCompletedSubjects = new DataView(new DataTable());
+            ProfileFailedSubjects = new DataView(new DataTable());
+            ProfileRemainingSubjects = new DataView(new DataTable());
+            ProfileEnrollmentHistory = new DataView(new DataTable());
 
             SearchStudentsCommand = new RelayCommand(LoadStudents);
             RefreshLookupsCommand = new RelayCommand(RefreshLookups);
             LoadSubjectsCommand = new RelayCommand(LoadSubjects);
+            OpenStudentProfileCommand = new RelayCommand(OpenStudentProfile, () => SelectedStudent != null);
+            CloseStudentProfileCommand = new RelayCommand(CloseStudentProfile);
+            EnrollAllCommand = new RelayCommand(EnrollAll, () => AvailableSubjects.Count > 0);
             SaveEnrollmentCommand = new RelayCommand(SaveEnrollment, () => CanSaveEnrollment);
             PrintCorCommand = new RelayCommand(PrintCor, () => CanPrintCor);
 
@@ -82,6 +94,9 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         public RelayCommand SearchStudentsCommand { get; private set; }
         public RelayCommand RefreshLookupsCommand { get; private set; }
         public RelayCommand LoadSubjectsCommand { get; private set; }
+        public RelayCommand OpenStudentProfileCommand { get; private set; }
+        public RelayCommand CloseStudentProfileCommand { get; private set; }
+        public RelayCommand EnrollAllCommand { get; private set; }
         public RelayCommand SaveEnrollmentCommand { get; private set; }
         public RelayCommand PrintCorCommand { get; private set; }
 
@@ -96,6 +111,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                 {
                     InvalidateSavedEnrollment();
                     UpdateSelectedStudentSummary();
+                    LoadStudentProfilePreview();
                     RaiseCommandStates();
                 }
             }
@@ -133,6 +149,38 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         public string StatusMessage { get { return _statusMessage; } private set { SetProperty(ref _statusMessage, value); } }
         public string SelectedStudentSummary { get { return _selectedStudentSummary; } private set { SetProperty(ref _selectedStudentSummary, value); } }
         public string SummaryText { get { return _summaryText; } private set { SetProperty(ref _summaryText, value); } }
+        public bool IsStudentProfileOpen
+        {
+            get { return _isStudentProfileOpen; }
+            private set
+            {
+                if (SetProperty(ref _isStudentProfileOpen, value))
+                {
+                    OnPropertyChanged(nameof(IsModalOpen));
+                }
+            }
+        }
+
+        public bool IsModalOpen { get { return IsStudentProfileOpen; } }
+        public DataView ProfileCompletedSubjects { get { return _profileCompletedSubjects; } private set { SetProperty(ref _profileCompletedSubjects, value); } }
+        public DataView ProfileFailedSubjects { get { return _profileFailedSubjects; } private set { SetProperty(ref _profileFailedSubjects, value); } }
+        public DataView ProfileRemainingSubjects { get { return _profileRemainingSubjects; } private set { SetProperty(ref _profileRemainingSubjects, value); } }
+        public DataView ProfileEnrollmentHistory { get { return _profileEnrollmentHistory; } private set { SetProperty(ref _profileEnrollmentHistory, value); } }
+        public string SelectedStudentType { get { return SelectedStudent == null ? "Regular" : StudentService.NormalizeStudentType(Convert.ToString(SelectedStudent["StudentType"])); } }
+        public string SelectedAcademicStatus { get { return SelectedStudent == null ? "Active" : Convert.ToString(SelectedStudent["AcademicStatus"]); } }
+        public int? SelectedStudentCurriculumId
+        {
+            get
+            {
+                if (SelectedStudent == null || !SelectedStudent.Row.Table.Columns.Contains("CurriculumId") || SelectedStudent["CurriculumId"] == DBNull.Value)
+                {
+                    return null;
+                }
+
+                return Convert.ToInt32(SelectedStudent["CurriculumId"]);
+            }
+        }
+        public bool IsRegularStudent { get { return string.Equals(SelectedStudentType, "Regular", StringComparison.OrdinalIgnoreCase); } }
         public string TotalUnitsText { get { return AvailableSubjects.Where(s => s.IsSelected).Sum(s => s.Units) + " total unit(s) selected"; } }
         public string EnrollmentNumberPreview { get { return _enrollmentService.GetNextEnrollmentNumber(); } }
         public bool CanSaveEnrollment { get { return !_enrollmentSaved && SelectedStudent != null && AvailableSubjects.Any(s => s.IsSelected); } }
@@ -218,6 +266,76 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             OnPropertyChanged(nameof(TotalUnitsText));
         }
 
+        private void OpenStudentProfile()
+        {
+            if (SelectedStudent == null)
+            {
+                return;
+            }
+
+            LoadStudentProfilePreview();
+            IsStudentProfileOpen = true;
+        }
+
+        private void CloseStudentProfile()
+        {
+            IsStudentProfileOpen = false;
+        }
+
+        private void EnrollAll()
+        {
+            if (!IsRegularStudent)
+            {
+                MessageBox.Show(
+                    "Enroll All is available for Regular students only. Select individual subjects for Irregular or Summer students.",
+                    "Enroll All",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            foreach (var subject in AvailableSubjects)
+            {
+                if (subject != null && !subject.IsFull)
+                {
+                    subject.IsSelected = true;
+                }
+            }
+
+            InvalidateSavedEnrollment();
+            OnPropertyChanged(nameof(TotalUnitsText));
+            BuildSummary();
+            RaiseCommandStates();
+        }
+
+        private void LoadStudentProfilePreview()
+        {
+            if (SelectedStudent == null)
+            {
+                ProfileCompletedSubjects = new DataView(new DataTable());
+                ProfileFailedSubjects = new DataView(new DataTable());
+                ProfileRemainingSubjects = new DataView(new DataTable());
+                ProfileEnrollmentHistory = new DataView(new DataTable());
+                return;
+            }
+
+            try
+            {
+                var studentId = Convert.ToInt32(SelectedStudent["StudentId"]);
+                ProfileCompletedSubjects = (_studentService.GetCompletedSubjects(studentId) ?? new DataTable()).DefaultView;
+                ProfileFailedSubjects = (_studentService.GetFailedSubjects(studentId) ?? new DataTable()).DefaultView;
+                ProfileRemainingSubjects = (_studentService.GetRemainingSubjects(studentId, SelectedStudentCurriculumId) ?? new DataTable()).DefaultView;
+                ProfileEnrollmentHistory = (_studentService.GetEnrollmentHistory(studentId) ?? new DataTable()).DefaultView;
+            }
+            catch
+            {
+                ProfileCompletedSubjects = new DataView(new DataTable());
+                ProfileFailedSubjects = new DataView(new DataTable());
+                ProfileRemainingSubjects = new DataView(new DataTable());
+                ProfileEnrollmentHistory = new DataView(new DataTable());
+            }
+        }
+
         private void LoadSubjectsBySection()
         {
             if (SelectedSection == null)
@@ -236,8 +354,11 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                     SubjectName = Convert.ToString(row["SubjectName"]),
                     Units = row.Table.Columns.Contains("Units") ? Convert.ToInt32(row["Units"]) : 0,
                     ClassScheduleId = Convert.ToInt32(row["ClassScheduleId"]),
+                    MaxStudents = GetNullableInt(row, "MaxStudents"),
+                    CurrentEnrolledCount = GetInt(row, "CurrentEnrolledCount"),
                     ScheduleText = BuildScheduleText(row),
-                    IsSelected = true
+                    EligibilityStatus = BuildEligibilityStatus(row),
+                    IsSelected = IsRegularStudent && !IsFull(row)
                 });
             }
 
@@ -252,7 +373,8 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                 return;
             }
 
-            var curriculumId = _curriculumService.TryGetCurriculumId(SelectedCourse.Id, SelectedYearLevel.Id, SelectedSemester.Id, SelectedAcademicYear.Id);
+            var curriculumId = SelectedStudentCurriculumId ??
+                               _curriculumService.TryGetCurriculumId(SelectedCourse.Id, SelectedYearLevel.Id, SelectedSemester.Id, SelectedAcademicYear.Id);
             if (!curriculumId.HasValue)
             {
                 StatusMessage = "No curriculum was found for the selected course and term.";
@@ -268,8 +390,11 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                     SubjectCode = Convert.ToString(row["SubjectCode"]),
                     SubjectName = Convert.ToString(row["SubjectName"]),
                     Units = row.Table.Columns.Contains("Units") ? Convert.ToInt32(row["Units"]) : 0,
+                    MaxStudents = GetNullableInt(row, "MaxStudents"),
+                    CurrentEnrolledCount = GetInt(row, "CurrentEnrolledCount"),
                     ScheduleText = string.Empty,
-                    IsSelected = true
+                    EligibilityStatus = BuildEligibilityStatus(row),
+                    IsSelected = IsRegularStudent && !IsFull(row)
                 });
             }
 
@@ -297,11 +422,13 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                     YearLevelId = SelectedYearLevel == null ? 0 : SelectedYearLevel.Id,
                     SemesterId = SelectedSemester == null ? 0 : SelectedSemester.Id,
                     SectionId = SelectedSection == null ? 0 : SelectedSection.Id,
+                    CurriculumId = SelectedStudentCurriculumId,
+                    StudentType = SelectedStudentType,
                     EnrollDate = DateTime.Now.Date,
                     Status = "Posted"
                 };
 
-                var validation = _enrollmentService.Validate(enrollment, details);
+                var validation = _enrollmentService.ValidateEnrollmentRules(enrollment, details);
                 if (!validation.IsValid)
                 {
                     MessageBox.Show(validation.ToString(), "Enrollment Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -339,6 +466,10 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             else
             {
                 SelectedStudentSummary = Convert.ToString(SelectedStudent["StudentNumber"]) + " | " + Convert.ToString(SelectedStudent["LastName"]) + ", " + Convert.ToString(SelectedStudent["FirstName"]);
+                OnPropertyChanged(nameof(SelectedStudentType));
+                OnPropertyChanged(nameof(SelectedAcademicStatus));
+                OnPropertyChanged(nameof(SelectedStudentCurriculumId));
+                OnPropertyChanged(nameof(IsRegularStudent));
             }
 
             BuildSummary();
@@ -354,6 +485,8 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             var sb = new StringBuilder();
             sb.AppendLine("Enrollment No.: " + (enrollmentNumber ?? string.Empty));
             sb.AppendLine("Student: " + (SelectedStudentSummary ?? "(none)"));
+            sb.AppendLine("Student Type: " + SelectedStudentType);
+            sb.AppendLine("Academic Status: " + (string.IsNullOrWhiteSpace(SelectedAcademicStatus) ? "Active" : SelectedAcademicStatus));
             sb.AppendLine("Course: " + (SelectedCourse == null ? "(none)" : SelectedCourse.Title));
             sb.AppendLine("Academic Year: " + (SelectedAcademicYear == null ? "(none)" : SelectedAcademicYear.Title));
             sb.AppendLine("Year Level: " + (SelectedYearLevel == null ? "(none)" : SelectedYearLevel.Title));
@@ -376,6 +509,18 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         {
             if (string.Equals(e.PropertyName, nameof(EnrollmentSubjectOptionViewModel.IsSelected), StringComparison.Ordinal))
             {
+                var option = sender as EnrollmentSubjectOptionViewModel;
+                if (option != null && option.IsSelected && option.IsFull)
+                {
+                    option.IsSelected = false;
+                    MessageBox.Show(
+                        "This subject is already full.",
+                        "Subject Capacity",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
                 InvalidateSavedEnrollment();
                 OnPropertyChanged(nameof(TotalUnitsText));
                 BuildSummary();
@@ -435,6 +580,8 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         {
             SaveEnrollmentCommand.RaiseCanExecuteChanged();
             PrintCorCommand.RaiseCanExecuteChanged();
+            OpenStudentProfileCommand.RaiseCanExecuteChanged();
+            EnrollAllCommand.RaiseCanExecuteChanged();
             OnPropertyChanged(nameof(CanSaveEnrollment));
             OnPropertyChanged(nameof(CanPrintCor));
         }
@@ -488,7 +635,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Year Level", Value = SelectedYearLevel == null ? string.Empty : SelectedYearLevel.Title });
             data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Semester", Value = SelectedSemester == null ? string.Empty : SelectedSemester.Title });
             data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Section", Value = SelectedSection == null ? string.Empty : SelectedSection.DisplayName });
-            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Enrollment Type", Value = UseSectionMode ? "By Section (Regular)" : "By Subject (Irregular)" });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Enrollment Type", Value = SelectedStudentType + " | " + (UseSectionMode ? "By Section" : "By Subject") });
             data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Status", Value = includeSavedNotice ? "Posted / Ready for COR printing" : "Pending save" });
 
             foreach (var subject in details)
@@ -589,6 +736,38 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             var end = row.Table.Columns.Contains("EndTime") && row["EndTime"] is TimeSpan ? ((TimeSpan)row["EndTime"]).ToString(@"hh\:mm") : string.Empty;
             var time = string.IsNullOrWhiteSpace(start) || string.IsNullOrWhiteSpace(end) ? string.Empty : start + "-" + end;
             return string.Join(" | ", new[] { day, time, room }.Where(v => !string.IsNullOrWhiteSpace(v)));
+        }
+
+        private static string BuildEligibilityStatus(DataRow row)
+        {
+            return IsFull(row) ? "Full" : "Available";
+        }
+
+        private static bool IsFull(DataRow row)
+        {
+            var max = GetNullableInt(row, "MaxStudents");
+            var current = GetInt(row, "CurrentEnrolledCount");
+            return max.HasValue && max.Value > 0 && current >= max.Value;
+        }
+
+        private static int GetInt(DataRow row, string columnName)
+        {
+            if (row == null || string.IsNullOrWhiteSpace(columnName) || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return 0;
+            }
+
+            return Convert.ToInt32(row[columnName]);
+        }
+
+        private static int? GetNullableInt(DataRow row, string columnName)
+        {
+            if (row == null || string.IsNullOrWhiteSpace(columnName) || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return null;
+            }
+
+            return Convert.ToInt32(row[columnName]);
         }
 
         private void LogEnrollmentTransaction(int? enrollmentId, int selectedSubjectCount, string enrollmentNumber)

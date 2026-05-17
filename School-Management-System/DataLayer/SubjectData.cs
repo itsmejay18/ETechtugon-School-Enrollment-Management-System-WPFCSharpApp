@@ -26,6 +26,8 @@ SELECT
     s.Units,
     s.CourseId,
     c.CourseCode,
+    s.MaxStudents,
+    s.CurrentEnrolledCount,
     s.CreatedAt
 FROM subject s
 LEFT JOIN course c ON c.CourseId = s.CourseId
@@ -44,7 +46,9 @@ SELECT
     s.SubjectName,
     s.Units,
     s.CourseId,
-    c.CourseCode
+    c.CourseCode,
+    s.MaxStudents,
+    s.CurrentEnrolledCount
 FROM subject s
 LEFT JOIN course c ON c.CourseId = s.CourseId
 WHERE s.IsActive = 1
@@ -66,6 +70,8 @@ SELECT
     s.Units,
     s.CourseId,
     c.CourseCode,
+    s.MaxStudents,
+    s.CurrentEnrolledCount,
     s.CreatedAt
 FROM subject s
 LEFT JOIN course c ON c.CourseId = s.CourseId
@@ -81,8 +87,8 @@ ORDER BY s.SubjectName;";
             Guard.NotNull(subject, nameof(subject));
 
             const string sql = @"
-INSERT INTO subject (SubjectCode, SubjectName, Units, CourseId, IsActive, CreatedAt)
-VALUES (@SubjectCode, @SubjectName, @Units, @CourseId, 1, UTC_TIMESTAMP());";
+INSERT INTO subject (SubjectCode, SubjectName, Units, CourseId, MaxStudents, CurrentEnrolledCount, IsActive, CreatedAt)
+VALUES (@SubjectCode, @SubjectName, @Units, @CourseId, @MaxStudents, @CurrentEnrolledCount, 1, UTC_TIMESTAMP());";
 
             var id = _db.ExecuteInsert(
                 sql,
@@ -92,7 +98,9 @@ VALUES (@SubjectCode, @SubjectName, @Units, @CourseId, 1, UTC_TIMESTAMP());";
                     new MySqlParameter("@SubjectCode", (object)subject.SubjectCode ?? DBNull.Value),
                     new MySqlParameter("@SubjectName", (object)subject.SubjectName ?? DBNull.Value),
                     new MySqlParameter("@Units", subject.Units),
-                    new MySqlParameter("@CourseId", (object)subject.CourseId ?? DBNull.Value)
+                    new MySqlParameter("@CourseId", (object)subject.CourseId ?? DBNull.Value),
+                    new MySqlParameter("@MaxStudents", (object)subject.MaxStudents ?? DBNull.Value),
+                    new MySqlParameter("@CurrentEnrolledCount", subject.CurrentEnrolledCount)
                 });
 
             return Convert.ToInt32(id);
@@ -109,6 +117,7 @@ SET
     SubjectName = @SubjectName,
     Units = @Units,
     CourseId = @CourseId,
+    MaxStudents = @MaxStudents,
     UpdatedAt = UTC_TIMESTAMP()
 WHERE SubjectId = @SubjectId;";
 
@@ -121,7 +130,8 @@ WHERE SubjectId = @SubjectId;";
                     new MySqlParameter("@SubjectCode", (object)subject.SubjectCode ?? DBNull.Value),
                     new MySqlParameter("@SubjectName", (object)subject.SubjectName ?? DBNull.Value),
                     new MySqlParameter("@Units", subject.Units),
-                    new MySqlParameter("@CourseId", (object)subject.CourseId ?? DBNull.Value)
+                    new MySqlParameter("@CourseId", (object)subject.CourseId ?? DBNull.Value),
+                    new MySqlParameter("@MaxStudents", (object)subject.MaxStudents ?? DBNull.Value)
                 });
         }
 
@@ -135,6 +145,42 @@ WHERE SubjectId = @SubjectId;";
         {
             const string sql = @"SELECT COUNT(1) FROM subject WHERE IsActive = 1;";
             return Convert.ToInt32(_db.ExecuteScalar(sql, CommandType.Text, null));
+        }
+
+        public DataTable GetSubjectCapacity(int subjectId)
+        {
+            const string sql = @"
+SELECT
+    SubjectId,
+    SubjectCode,
+    SubjectName,
+    MaxStudents,
+    CurrentEnrolledCount,
+    CASE
+        WHEN MaxStudents IS NULL OR MaxStudents <= 0 THEN 0
+        WHEN CurrentEnrolledCount >= MaxStudents THEN 1
+        ELSE 0
+    END AS IsFull
+FROM subject
+WHERE SubjectId = @SubjectId
+LIMIT 1;";
+
+            return _db.ExecuteDataTable(sql, CommandType.Text, new[] { new MySqlParameter("@SubjectId", subjectId) });
+        }
+
+        public void RefreshEnrollmentCounts()
+        {
+            const string sql = @"
+UPDATE subject s
+SET s.CurrentEnrolledCount = (
+    SELECT COUNT(DISTINCT e.StudentId)
+    FROM enrollmentdetails ed
+    INNER JOIN enrollment e ON e.EnrollmentId = ed.EnrollmentId
+    WHERE ed.SubjectId = s.SubjectId
+      AND e.Status <> 'Cancelled'
+);";
+
+            _db.ExecuteNonQuery(sql, CommandType.Text, null);
         }
     }
 }

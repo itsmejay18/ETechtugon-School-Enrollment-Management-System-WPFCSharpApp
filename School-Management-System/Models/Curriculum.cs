@@ -10,6 +10,7 @@ namespace School_Management_System.Models
         private int _semesterId;
         private int _academicYearId;
         private string _name;
+        private string _curriculumType;
         private bool _isActive;
         private DateTime _createdAt;
 
@@ -19,6 +20,7 @@ namespace School_Management_System.Models
         public int SemesterId { get { return _semesterId; } set { _semesterId = value; } }
         public int AcademicYearId { get { return _academicYearId; } set { _academicYearId = value; } }
         public string Name { get { return _name; } set { _name = value; } }
+        public string CurriculumType { get { return _curriculumType; } set { _curriculumType = value; } }
         public bool IsActive { get { return _isActive; } set { _isActive = value; } }
         public DateTime CreatedAt { get { return _createdAt; } set { _createdAt = value; } }
     }

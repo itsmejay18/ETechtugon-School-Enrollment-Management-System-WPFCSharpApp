@@ -55,11 +55,13 @@ namespace School_Management_System.Wpf.ViewModels
         public CourseManagementViewModel CourseManagement { get; private set; }
         public CompanyBrandingViewModel CompanyModule { get; private set; }
         public DataTableWorkspaceViewModel SystemModule { get; private set; }
+        public GlobalSettingsViewModel GlobalSettingsModule { get; private set; }
         public DataTableWorkspaceViewModel DatabaseModule { get; private set; }
-        public DataTableWorkspaceViewModel DepartmentsModule { get; private set; }
+        public CollegeManagementViewModel CollegesModule { get; private set; }
+        public DepartmentManagementViewModel DepartmentsModule { get; private set; }
         public DataTableWorkspaceViewModel YearLevelsModule { get; private set; }
-        public DataTableWorkspaceViewModel SectionsModule { get; private set; }
-        public DataTableWorkspaceViewModel SubjectsModule { get; private set; }
+        public SectionManagementViewModel SectionsModule { get; private set; }
+        public SubjectManagementViewModel SubjectsModule { get; private set; }
         public CurriculumExplorerViewModel CurriculumModule { get; private set; }
         public DataTableWorkspaceViewModel UserManagementModule { get; private set; }
         public ObservableCollection<SettingsSectionItemViewModel> Sections { get; private set; }
@@ -136,6 +138,10 @@ namespace School_Management_System.Wpf.ViewModels
                 search => WpfUiDataHelper.CreateSettingsTable(bootstrapper.SystemSettingService.GetAll(), search));
             SystemModule.Refresh();
 
+            GlobalSettingsModule = new GlobalSettingsViewModel(
+                bootstrapper.SystemSettingService,
+                bootstrapper.LookupService);
+
             DatabaseModule = new DataTableWorkspaceViewModel(
                 "Database activity",
                 "Recent audit and connection activity is loaded directly from the activity log service.",
@@ -154,6 +160,7 @@ namespace School_Management_System.Wpf.ViewModels
             UserManagementModule.Refresh();
 
             Sections.Add(new SettingsSectionItemViewModel("Company", "Branding logos, landing-form copy, and shell identity stored in MySQL.", "\uE8D1", CompanyModule));
+            Sections.Add(new SettingsSectionItemViewModel("Global Settings", "Current semester and school year used by enrollment and scheduling.", "\uE713", GlobalSettingsModule));
             Sections.Add(new SettingsSectionItemViewModel("System", "School-wide controls, system variables, and operating preferences.", "\uE713", SystemModule));
             Sections.Add(new SettingsSectionItemViewModel("Database", "Activity history, connection records, and database monitoring details.", "\uE9F9", DatabaseModule));
             Sections.Add(new SettingsSectionItemViewModel("User Management", "Read-only account review for operators and administrators.", "\uE716", UserManagementModule));
@@ -166,12 +173,11 @@ namespace School_Management_System.Wpf.ViewModels
                 bootstrapper.DepartmentService,
                 bootstrapper.ActivityLogService);
 
-            DepartmentsModule = new DataTableWorkspaceViewModel(
-                "Department codes",
-                "Department code records and organizational structure are loaded from the active academic database.",
-                "Search department codes",
-                bootstrapper.DepartmentService.GetDepartments);
-            DepartmentsModule.Refresh();
+            CollegesModule = new CollegeManagementViewModel(bootstrapper.CollegeService);
+
+            DepartmentsModule = new DepartmentManagementViewModel(
+                bootstrapper.DepartmentService,
+                bootstrapper.CollegeService);
 
             YearLevelsModule = new DataTableWorkspaceViewModel(
                 "Year levels",
@@ -180,26 +186,23 @@ namespace School_Management_System.Wpf.ViewModels
                 bootstrapper.YearLevelService.GetYearLevels);
             YearLevelsModule.Refresh();
 
-            SectionsModule = new DataTableWorkspaceViewModel(
-                "Sections",
-                "Section assignments, labels, and active class groups are loaded from the active academic database.",
-                "Search sections",
-                bootstrapper.SectionService.GetSections);
-            SectionsModule.Refresh();
+            SectionsModule = new SectionManagementViewModel(
+                bootstrapper.SectionService,
+                bootstrapper.CourseService,
+                bootstrapper.LookupService,
+                bootstrapper.SystemSettingService);
 
-            SubjectsModule = new DataTableWorkspaceViewModel(
-                "Subject codes",
-                "Subject code catalog rows are loaded from the live school database.",
-                "Search subject codes",
-                bootstrapper.SubjectService.GetSubjects);
-            SubjectsModule.Refresh();
+            SubjectsModule = new SubjectManagementViewModel(
+                bootstrapper.SubjectService,
+                bootstrapper.CourseService);
 
             CurriculumModule = new CurriculumExplorerViewModel(
                 bootstrapper.CurriculumService,
                 bootstrapper.CourseService,
                 bootstrapper.LookupService);
 
-            Sections.Add(new SettingsSectionItemViewModel("Departments", "Academic department codes and organizational structure.", "\uE7EF", DepartmentsModule));
+            Sections.Add(new SettingsSectionItemViewModel("Colleges", "College records and department grouping.", "\uE80F", CollegesModule));
+            Sections.Add(new SettingsSectionItemViewModel("Departments", "Academic department codes, heads, and college assignments.", "\uE7EF", DepartmentsModule));
             Sections.Add(new SettingsSectionItemViewModel("Courses", "Course code maintenance, validation, and editing workspace.", "\uE82D", CourseManagement));
             Sections.Add(new SettingsSectionItemViewModel("Year Levels", "Year-level references used by enrollment and scheduling.", "\uE8D2", YearLevelsModule));
             Sections.Add(new SettingsSectionItemViewModel("Sections", "Section labels, class groups, and academic grouping references.", "\uE8C8", SectionsModule));
