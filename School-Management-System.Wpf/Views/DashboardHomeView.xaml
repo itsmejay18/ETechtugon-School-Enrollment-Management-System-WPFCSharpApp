@@ -94,6 +94,29 @@
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Foreground" Value="#EEF7FF" />
         </Style>
+
+        <Style x:Key="TileMetricStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,12,0,0" />
+            <Setter Property="FontSize" Value="34" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style x:Key="TileMetricCaptionStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,2,0,0" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="LineHeight" Value="15" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="#EEF7FF" />
+        </Style>
+
+        <Style x:Key="LightTileMetricStyle" TargetType="TextBlock" BasedOn="{StaticResource TileMetricStyle}">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        </Style>
+
+        <Style x:Key="LightTileMetricCaptionStyle" TargetType="TextBlock" BasedOn="{StaticResource TileMetricCaptionStyle}">
+            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+        </Style>
     </UserControl.Resources>
 
     <Grid Background="{StaticResource BoardBaseBrush}"
@@ -151,7 +174,8 @@
                 Margin="1"
                 Background="{StaticResource TileStudentBrush}"
                 Style="{StaticResource MetroTileButtonStyle}"
-                Command="{Binding DataContext.ShowStudentsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowStudentsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                Visibility="{Binding DataContext.CanAccessStudents, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Top">
                 <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE716;" />
                 <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Students" />
@@ -159,12 +183,27 @@
             </StackPanel>
         </Button>
 
+        <Border Grid.Row="2"
+                Grid.Column="0"
+                Margin="1"
+                Background="{StaticResource TileStudentBrush}"
+                Style="{StaticResource InfoTileBorderStyle}"
+                Visibility="{Binding DataContext.CanAccessStudents, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Top">
+                <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE716;" />
+                <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Students" />
+                <TextBlock Style="{StaticResource TileMetricStyle}" Text="{Binding StudentsCount, StringFormat={}{0:N0}}" />
+                <TextBlock Style="{StaticResource TileMetricCaptionStyle}" Text="active learner records" />
+            </StackPanel>
+        </Border>
+
         <Button Grid.Row="2"
                 Grid.Column="1"
                 Margin="1"
                 Background="{StaticResource TileFacultyBrush}"
                 Style="{StaticResource MetroTileButtonStyle}"
-                Command="{Binding DataContext.ShowFacultyCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowFacultyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                Visibility="{Binding DataContext.CanAccessFaculty, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Top">
                 <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE77B;" />
                 <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Faculty" />
@@ -172,12 +211,27 @@
             </StackPanel>
         </Button>
 
+        <Border Grid.Row="2"
+                Grid.Column="1"
+                Margin="1"
+                Background="{StaticResource TileFacultyBrush}"
+                Style="{StaticResource InfoTileBorderStyle}"
+                Visibility="{Binding DataContext.CanAccessFaculty, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Top">
+                <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE77B;" />
+                <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Faculty" />
+                <TextBlock Style="{StaticResource TileMetricStyle}" Text="{Binding FacultyCount, StringFormat={}{0:N0}}" />
+                <TextBlock Style="{StaticResource TileMetricCaptionStyle}" Text="active staff records" />
+            </StackPanel>
+        </Border>
+
         <Button Grid.Row="2"
                 Grid.Column="2"
                 Margin="1"
                 Background="{StaticResource TileEnrollmentBrush}"
                 Style="{StaticResource MetroTileButtonStyle}"
-                Command="{Binding DataContext.ShowEnrollmentCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowEnrollmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                Visibility="{Binding DataContext.CanAccessEnrollment, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Top">
                 <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE8C8;" />
                 <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Enrollment" />
@@ -185,12 +239,27 @@
             </StackPanel>
         </Button>
 
+        <Border Grid.Row="2"
+                Grid.Column="2"
+                Margin="1"
+                Background="{StaticResource TileEnrollmentBrush}"
+                Style="{StaticResource InfoTileBorderStyle}"
+                Visibility="{Binding DataContext.CanAccessEnrollment, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Top">
+                <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE8C8;" />
+                <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Programs" />
+                <TextBlock Style="{StaticResource TileMetricStyle}" Text="{Binding CoursesCount, StringFormat={}{0:N0}}" />
+                <TextBlock Style="{StaticResource TileMetricCaptionStyle}" Text="courses available for enrollment" />
+            </StackPanel>
+        </Border>
+
         <Button Grid.Row="2"
                 Grid.Column="3"
                 Margin="1"
                 Background="{StaticResource TileScheduleBrush}"
                 Style="{StaticResource MetroTileButtonStyle}"
-                Command="{Binding DataContext.ShowScheduleCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowScheduleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                Visibility="{Binding DataContext.CanAccessSchedule, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Top">
                 <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE787;" />
                 <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Schedule" />
@@ -251,7 +320,8 @@
                 Margin="1"
                 Background="{StaticResource TileCalendarBrush}"
                 Style="{StaticResource MetroTileButtonStyle}"
-                Command="{Binding DataContext.ShowCalendarCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowCalendarCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                Visibility="{Binding DataContext.CanAccessCalendar, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Top">
                 <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE163;" />
                 <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Calendar" />
@@ -288,11 +358,26 @@
                 Margin="1"
                 Background="{StaticResource TileSettingsBrush}"
                 Style="{StaticResource MetroTileButtonStyle}"
-                Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                Visibility="{Binding DataContext.CanAccessSettings, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Top">
                 <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE713;" />
                 <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="Settings" />
                 <TextBlock Style="{StaticResource TileBodyStyle}" Text="Branding, users, and system setup." />
+            </StackPanel>
+        </Button>
+
+        <Button Grid.Row="3"
+                Grid.Column="5"
+                Margin="1"
+                Background="{StaticResource TileSettingsBrush}"
+                Style="{StaticResource MetroTileButtonStyle}"
+                Command="{Binding DataContext.ShowProfileCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                Visibility="{Binding DataContext.CanAccessSettings, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Top">
+                <TextBlock Style="{StaticResource TileGlyphStyle}" Text="&#xE77B;" />
+                <TextBlock Margin="0,10,0,0" Style="{StaticResource TileTitleStyle}" Text="{Binding CurrentUserName}" />
+                <TextBlock Style="{StaticResource TileBodyStyle}" Text="{Binding WorkspaceLabel}" />
             </StackPanel>
         </Button>
 
@@ -302,7 +387,8 @@
                 Margin="1"
                 Background="{StaticResource TileCountThreeBrush}"
                 Style="{StaticResource LightTileButtonStyle}"
-                Command="{Binding DataContext.ShowCurriculumSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowCurriculumSettingsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                Visibility="{Binding DataContext.CanAccessCurriculumSettings, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Top">
                 <TextBlock FontFamily="Segoe MDL2 Assets"
                            FontSize="36"
@@ -323,13 +409,77 @@
             </StackPanel>
         </Button>
 
+        <Border Grid.Row="4"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Margin="1"
+                Background="{StaticResource TileCountThreeBrush}"
+                Style="{StaticResource LightInfoTileBorderStyle}"
+                Visibility="{Binding DataContext.CanAccessCurriculumSettings, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,18,0" VerticalAlignment="Top">
+                    <TextBlock FontFamily="Segoe MDL2 Assets"
+                               FontSize="34"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               Text="&#xE7BE;" />
+                    <TextBlock Margin="0,12,0,0"
+                               Text="Subjects"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Style="{StaticResource LightTileMetricStyle}" Text="{Binding SubjectsCount, StringFormat={}{0:N0}}" />
+                    <TextBlock Style="{StaticResource LightTileMetricCaptionStyle}" Text="active subject records" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="0,0,18,0" VerticalAlignment="Top">
+                    <TextBlock FontFamily="Segoe MDL2 Assets"
+                               FontSize="34"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               Text="&#xE8F1;" />
+                    <TextBlock Margin="0,12,0,0"
+                               Text="Departments"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Style="{StaticResource LightTileMetricStyle}" Text="{Binding DepartmentsCount, StringFormat={}{0:N0}}" />
+                    <TextBlock Style="{StaticResource LightTileMetricCaptionStyle}" Text="academic departments" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                    <TextBlock FontFamily="Segoe MDL2 Assets"
+                               FontSize="34"
+                               Foreground="{StaticResource PrimaryBrush}"
+                               Text="&#xE8A5;" />
+                    <TextBlock Margin="0,12,0,0"
+                               Text="Workspace"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Margin="0,12,0,0"
+                               Text="{Binding TotalRecordsText}"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Style="{StaticResource LightTileMetricCaptionStyle}" Text="{Binding OperatorLine}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
         <Button Grid.Row="4"
                 Grid.Column="3"
                 Grid.ColumnSpan="2"
                 Margin="1"
                 Background="{StaticResource TileCountFiveBrush}"
                 Style="{StaticResource LightTileButtonStyle}"
-                Command="{Binding DataContext.ShowAnalyticsCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                Command="{Binding DataContext.ShowAnalyticsCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                Visibility="{Binding DataContext.CanAccessAnalytics, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Top">
                 <TextBlock FontFamily="Segoe MDL2 Assets"
                            FontSize="36"
@@ -349,6 +499,39 @@
                            Foreground="{StaticResource MutedTextBrush}" />
             </StackPanel>
         </Button>
+
+        <Border Grid.Row="4"
+                Grid.Column="3"
+                Grid.ColumnSpan="2"
+                Margin="1"
+                Background="{StaticResource TileCountFiveBrush}"
+                Style="{StaticResource LightInfoTileBorderStyle}"
+                Visibility="{Binding DataContext.CanAccessAnalytics, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Top">
+                <TextBlock FontFamily="Segoe MDL2 Assets"
+                           FontSize="36"
+                           Foreground="{StaticResource PrimaryBrush}"
+                           Text="&#xE9D2;" />
+                <TextBlock Margin="0,12,0,0"
+                           Text="School Overview"
+                           FontSize="17"
+                           FontWeight="Bold"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Margin="0,12,0,0"
+                           Text="{Binding TotalRecordsText}"
+                           FontSize="22"
+                           FontWeight="Bold"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Margin="0,10,0,0"
+                           Text="{Binding DatabaseStatusDetail}"
+                           FontSize="11"
+                           LineHeight="15"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource MutedTextBrush}" />
+            </StackPanel>
+        </Border>
 
         <Button Grid.Row="4"
                 Grid.Column="5"

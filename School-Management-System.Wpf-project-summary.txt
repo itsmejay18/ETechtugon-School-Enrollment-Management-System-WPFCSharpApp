@@ -1,0 +1,192 @@
+School-Management-System.Wpf Project Summary
+============================================
+
+Project path:
+School-Management-System.Wpf
+
+Project file:
+School-Management-System.Wpf.csproj
+
+Target framework:
+net472
+
+WPF configuration:
+- OutputType: WinExe
+- UseWPF: true
+- ApplicationIcon: ..\School-Management-System\assets\app-logo.ico
+- ApplicationManifest: app.manifest
+- LangVersion: latest
+- RootNamespace: School_Management_System.Wpf
+- AssemblyName: School-Management-System.Wpf
+- Nullable: disable
+
+References and dependencies:
+- ProjectReference: ..\School-Management-System\School-Management-System.csproj
+- PackageReference: MySqlConnector 2.4.0
+- PackageReference: System.Configuration.ConfigurationManager 8.0.0
+- Reference: System.Configuration
+- Content assets pulled from legacy project and root: app-logo.ico, brand-logo.png, newbranding.png, companylogo.png, clientlogo.png
+
+Build behavior:
+- Copies WinForms output DLLs from ..\School-Management-System\bin\$(Configuration) to the WPF output folder after build
+- Excludes School-Management-System.dll from the copied transitive dependencies
+
+Startup and application flow:
+- Entry point: App.xaml / App.xaml.cs
+- App.OnStartup:
+  - sets ShutdownMode = OnExplicitShutdown
+  - wires global exception handlers for Dispatcher, AppDomain, and TaskScheduler
+  - initializes runtime database connection mode from command-line args
+  - executes RunLoginShellLoop()
+  - login loop:
+    - constructs LoginViewModel with LoginConnectionService
+    - displays LoginWindow
+    - if the dialog closes without a valid authenticated user, shuts down cleanly
+    - if login succeeds:
+      - creates AppBootstrapper for current mode
+      - starts UserSession for authenticated user
+      - opens MainWindow and assigns it as Application.MainWindow
+      - after window closes, ends UserSession
+      - if logout was requested, loop continues; otherwise app shuts down
+
+AppBootstrapper responsibilities:
+- Builds runtime configuration and services for WPF using the legacy WinForms data layer
+- Reads database configuration and applies current connection mode
+- Tests DB connection and throws if it fails
+- Ensures schema is current via SchemaMigrationRunner.EnsureCurrent(database)
+- Creates data access adapters and services:
+  - StudentData / StudentService
+  - FacultyData / FacultyService
+  - CollegeData / CollegeService
+  - DepartmentData / DepartmentService
+  - CourseData / CourseService
+  - SubjectData / SubjectService
+  - YearLevelData / YearLevelService
+  - SectionData / SectionService
+  - LookupData / LookupService
+  - CurriculumData / CurriculumService
+  - SystemSettingData / SystemSettingService
+  - BrandingProfileData / BrandingProfileService
+  - UserManagementData / UserManagementService
+  - EnrollmentData / EnrollmentService
+  - ClassScheduleData / ClassScheduleService
+  - UserData / AuthService
+  - ActivityLogData / ActivityLogService
+- Applies current branding profile via SchoolBranding.Apply(...)
+
+Connection mode flags supported:
+- --network / --wired => Wired
+- --wireless => Wireless
+- --local => Local
+- --online / --hostinger => Online
+- --db-mode=<mode> => custom mode
+
+UI architecture:
+- MVVM pattern
+- Main shell: MainWindow.xaml / MainWindow.xaml.cs
+- Shell ViewModel: ShellViewModel.cs
+- Login flow: LoginWindow.xaml / LoginWindow.xaml.cs, LoginViewModel.cs
+
+Infrastructure support classes:
+- Infrastructure/ViewModelBase.cs
+- Infrastructure/RelayCommand.cs
+- Infrastructure/InverseBooleanToVisibilityConverter.cs
+
+Services and helpers:
+- Services/AppBootstrapper.cs
+- Services/WpfUiDataHelper.cs
+- Services/WindowFullscreenHelper.cs
+- Services/SchoolBranding.cs
+- Services/LoginConnectionService.cs
+- Services/DataGridColumnDisplay.cs
+- Services/BrandingAssetLoader.cs
+
+View modules:
+- Views/MainWindow.xaml
+- Views/LoginWindow.xaml
+- Views/ModulePlaceholderView.xaml
+- Views/ProfileWorkspaceView.xaml
+- Views/SettingsView.xaml
+- Views/AnalyticsView.xaml
+- Views/DashboardHomeView.xaml
+- Views/Shared/DataTableWorkspaceView.xaml
+- Views/Students/StudentDirectoryView.xaml
+- Views/Faculty/FacultyDirectoryView.xaml
+- Views/Schedule/ScheduleBoardView.xaml
+- Views/Calendar/AcademicCalendarView.xaml
+- Views/Enrollment/EnrollmentWorkspaceView.xaml
+- Views/Enrollment/CorPrintPreviewWindow.xaml
+- Views/Settings/GlobalSettingsView.xaml
+- Views/Settings/CurriculumExplorerView.xaml
+- Views/Settings/CompanyBrandingView.xaml
+- Views/Settings/CatalogCrudWorkspaceView.xaml
+
+ViewModel modules:
+- ViewModels/ShellViewModel.cs
+- ViewModels/LoginViewModel.cs
+- ViewModels/ModulePlaceholderViewModel.cs
+- ViewModels/ProfileWorkspaceViewModel.cs
+- ViewModels/SettingsViewModel.cs
+- ViewModels/AnalyticsViewModel.cs
+- ViewModels/DashboardHomeViewModel.cs
+- ViewModels/Shared/DataTableWorkspaceViewModel.cs
+- ViewModels/Shared/LookupOptionViewModel.cs
+- ViewModels/Shared/DetailFieldViewModel.cs
+- ViewModels/Students/StudentDirectoryViewModel.cs
+- ViewModels/Faculty/FacultyDirectoryViewModel.cs
+- ViewModels/Courses/CourseManagementViewModel.cs
+- ViewModels/Courses/CourseListItemViewModel.cs
+- ViewModels/Courses/DepartmentOptionViewModel.cs
+- ViewModels/Enrollment/EnrollmentWorkspaceViewModel.cs
+- ViewModels/Enrollment/EnrollmentSubjectOptionViewModel.cs
+- ViewModels/Schedule/ScheduleBoardViewModel.cs
+- ViewModels/Calendar/AcademicCalendarViewModel.cs
+- ViewModels/Settings/GlobalSettingsViewModel.cs
+- ViewModels/Settings/CurriculumExplorerViewModel.cs
+- ViewModels/Settings/CompanyBrandingViewModel.cs
+- ViewModels/Settings/CatalogCrudWorkspaceViewModel.cs
+- ViewModels/Settings/DepartmentManagementViewModel.cs
+- ViewModels/Settings/SubjectManagementViewModel.cs
+- ViewModels/Settings/SectionManagementViewModel.cs
+- ViewModels/Settings/CollegeManagementViewModel.cs
+- ViewModels/Settings/SettingsSectionItemViewModel.cs
+
+MainWindow behavior overview:
+- Borderless custom window chrome with title bar buttons
+- Window state toggles between normal and fullscreen using WindowFullscreenHelper
+- Uses a shell view model for navigation and current module activation
+- Loads branding assets for icon and header logo dynamically
+- Handles logout via request callback
+
+Shell navigation and permissions:
+- Modules available:
+  - Dashboard
+  - Students
+  - Faculty
+  - Enrollment
+  - Schedule
+  - Calendar
+  - Analytics
+  - Curriculum Settings
+  - System Settings
+  - Profile
+  - Notifications
+- Role-based access:
+  - Admin: full access
+  - Registrar: students, faculty, enrollment, schedule, calendar, analytics, curriculum settings
+  - Faculty: schedule, calendar
+- Notifications feed built from ActivityLogService
+
+App.xaml resources:
+- Brushes for window, shell, cards, sidebar, text, accent, danger, modal overlay
+- Gradient for shell header
+- Styles for borders, text boxes, combo boxes, date pickers
+- Button styles: BaseActionButtonStyle, PrimaryButtonStyle, NeutralButtonStyle, DangerButtonStyle
+- Modal styles: ModalCardBorderStyle, ModalCloseButtonStyle, ModalSectionBorderStyle
+
+Important notes:
+- The WPF project is primarily a UI shell that reuses the legacy WinForms project for business and data access.
+- Most core data services and models come from the referenced project `School-Management-System`.
+- The WPF layer adds a modern shell, role-based navigation, dashboard, notifications, and branding.
+
+If you want, I can also generate a second file with a full file listing from the WPF project or a mapping from views to services.

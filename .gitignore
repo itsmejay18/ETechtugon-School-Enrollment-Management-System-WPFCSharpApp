@@ -18,6 +18,13 @@ packages/
 *.nupkg
 *.snupkg
 
+# Local signing certificates and secrets
+*.pfx
+*.snk
+*.key
+*.pem
+*.env
+
 # VS Code (keep shared workspace settings if present)
 .vscode/*
 !.vscode/settings.json

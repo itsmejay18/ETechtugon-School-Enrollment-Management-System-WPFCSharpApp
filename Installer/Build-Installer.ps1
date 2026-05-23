@@ -11,6 +11,150 @@ $projectOutDir = Join-Path $repoRoot "School-Management-System.Wpf\bin\$Configur
 $exePath = Join-Path $projectOutDir "School-Management-System.Wpf.exe"
 $issPath = Join-Path $repoRoot "Installer\SchoolManagementSystem.iss"
 $distDir = Join-Path $repoRoot "dist\installer"
+$installReadmePath = Join-Path $distDir "README_INSTALL.txt"
+$bundlePath = Join-Path $distDir "SchoolManagementSystemInstallerBundle.zip"
+
+function Get-AppSettingMap {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ConfigPath
+    )
+
+    [xml]$xml = Get-Content -LiteralPath $ConfigPath
+    $settings = @{}
+    foreach ($node in $xml.configuration.appSettings.add) {
+        $settings[[string]$node.key] = [string]$node.value
+    }
+
+    return $settings
+}
+
+function Test-OnlineProfileComplete {
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Settings
+    )
+
+    return -not [string]::IsNullOrWhiteSpace($Settings["DbHostOnline"]) -and
+           -not [string]::IsNullOrWhiteSpace($Settings["DbNameOnline"]) -and
+           -not [string]::IsNullOrWhiteSpace($Settings["DbUserOnline"]) -and
+           -not [string]::IsNullOrWhiteSpace($Settings["DbPasswordOnline"])
+}
+
+function Find-InitializedConfig {
+    $candidates = @()
+
+    if (-not [string]::IsNullOrWhiteSpace($env:SMS_INSTALLER_PROFILE_CONFIG)) {
+        $candidates += $env:SMS_INSTALLER_PROFILE_CONFIG
+    }
+
+    $candidates += @(
+        (Join-Path $repoRoot "School-Management-System\bin\Debug\SMSApp.exe.config"),
+        (Join-Path $repoRoot "School-Management-System\bin\Release\SMSApp.exe.config"),
+        (Join-Path $repoRoot "School-Management-System.Wpf\bin\Debug\net472\SMSApp.exe.config"),
+        (Join-Path $repoRoot "School-Management-System.Wpf\bin\Release\net472\SMSApp.exe.config")
+    )
+
+    foreach ($candidate in $candidates) {
+        if (-not (Test-Path $candidate)) {
+            continue
+        }
+
+        try {
+            $settings = Get-AppSettingMap -ConfigPath $candidate
+            if (Test-OnlineProfileComplete -Settings $settings) {
+                return (Resolve-Path -LiteralPath $candidate).Path
+            }
+        }
+        catch {
+            Write-Warning "Skipping unreadable config profile: $candidate"
+        }
+    }
+
+    return $null
+}
+
+function Set-AppSetting {
+    param(
+        [Parameter(Mandatory = $true)]
+        [xml]$Xml,
+        [Parameter(Mandatory = $true)]
+        [string]$Key,
+        [AllowNull()]
+        [string]$Value
+    )
+
+    $appSettings = $Xml.SelectSingleNode("/configuration/appSettings")
+    if ($null -eq $appSettings) {
+        $appSettings = $Xml.CreateElement("appSettings")
+        $configuration = $Xml.SelectSingleNode("/configuration")
+        [void]$configuration.AppendChild($appSettings)
+    }
+
+    $node = $Xml.SelectSingleNode("/configuration/appSettings/add[@key='$Key']")
+    if ($null -eq $node) {
+        $node = $Xml.CreateElement("add")
+        [void]$node.SetAttribute("key", $Key)
+        [void]$appSettings.AppendChild($node)
+    }
+
+    $settingValue = ""
+    if ($null -ne $Value) {
+        $settingValue = $Value
+    }
+
+    [void]$node.SetAttribute("value", $settingValue)
+}
+
+function Copy-InstallerProfileSettings {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceConfig,
+        [Parameter(Mandatory = $true)]
+        [string]$OutputDirectory
+    )
+
+    $sourceSettings = Get-AppSettingMap -ConfigPath $SourceConfig
+    $keysToCopy = @(
+        "DbHost",
+        "DbPort",
+        "DbName",
+        "DbUser",
+        "DbPassword",
+        "DbMode",
+        "DbHostOnline",
+        "DbPortOnline",
+        "DbNameOnline",
+        "DbUserOnline",
+        "DbPasswordOnline",
+        "DbSslModeOnline",
+        "DbSslCaPathOnline",
+        "BackupEncryptionKey"
+    )
+
+    $targetConfigs = @(
+        (Join-Path $OutputDirectory "School-Management-System.Wpf.exe.config"),
+        (Join-Path $OutputDirectory "School-Management-System.exe.config"),
+        (Join-Path $OutputDirectory "SMSApp.exe.config")
+    )
+
+    foreach ($targetConfig in $targetConfigs) {
+        if (-not (Test-Path $targetConfig)) {
+            Copy-Item -LiteralPath (Join-Path $OutputDirectory "School-Management-System.Wpf.exe.config") -Destination $targetConfig -Force
+        }
+
+        [xml]$targetXml = Get-Content -LiteralPath $targetConfig
+        foreach ($key in $keysToCopy) {
+            if ($sourceSettings.ContainsKey($key)) {
+                Set-AppSetting -Xml $targetXml -Key $key -Value $sourceSettings[$key]
+            }
+        }
+
+        $targetXml.Save($targetConfig)
+    }
+
+    Write-Host "Installer database profile copied from initialized local config."
+}
 
 function Find-MsBuild {
     $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
@@ -63,6 +207,14 @@ if (-not (Test-Path $exePath)) {
     throw "Build completed but executable not found at: $exePath"
 }
 
+$initializedConfig = Find-InitializedConfig
+if ($initializedConfig) {
+    Copy-InstallerProfileSettings -SourceConfig $initializedConfig -OutputDirectory $projectOutDir
+}
+else {
+    Write-Warning "No initialized online database config was found. The installer will keep the built app config values."
+}
+
 $iscc = Find-Iscc
 if (-not $iscc -and $InstallInnoSetup) {
     Write-Host "Inno Setup not found. Installing via winget..."
@@ -87,3 +239,12 @@ if (-not $setup) {
 }
 
 Write-Host "Installer created: $($setup.FullName)"
+
+if (Test-Path $installReadmePath) {
+    if (Test-Path $bundlePath) {
+        Remove-Item -LiteralPath $bundlePath -Force
+    }
+
+    Compress-Archive -LiteralPath @($setup.FullName, $installReadmePath) -DestinationPath $bundlePath -Force
+    Write-Host "Installer bundle created: $bundlePath"
+}

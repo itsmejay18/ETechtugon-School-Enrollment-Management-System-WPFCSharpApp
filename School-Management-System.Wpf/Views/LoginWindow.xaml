@@ -303,14 +303,16 @@
                                 <TextBlock Grid.Row="2"
                                            Margin="0,24,0,0"
                                            Style="{StaticResource SectionLabelStyle}"
-                                           Text="Quick login preset" />
+                                           Text="Quick login preset"
+                                           Visibility="{Binding HasQuickLoginOptions, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                                 <ComboBox x:Name="QuickLoginCombo"
                                           Grid.Row="3"
                                           Style="{StaticResource FieldComboStyle}"
                                           ItemsSource="{Binding QuickLoginOptions}"
                                           SelectedItem="{Binding SelectedQuickLogin}"
-                                          SelectionChanged="QuickLoginCombo_SelectionChanged" />
+                                          SelectionChanged="QuickLoginCombo_SelectionChanged"
+                                          Visibility="{Binding HasQuickLoginOptions, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                                 <Grid Grid.Row="4"
                                       Margin="0,20,0,0">

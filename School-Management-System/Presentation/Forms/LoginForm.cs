@@ -28,6 +28,7 @@ namespace School_Management_System.Presentation.Forms
         private Label _lblDbStatus;
         private Label _lblConnectionProfileTitle;
         private Label _lblConnectionProfileNote;
+        private Label _lblQuickLogin;
         private ComboBox _cmbQuickLogin;
         private TextBox _txtUsername;
         private TextBox _txtPassword;
@@ -36,12 +37,7 @@ namespace School_Management_System.Presentation.Forms
         private Button _btnLogin;
         private Button _btnRegister;
 
-        private readonly List<QuickLoginPreset> _quickLoginPresets = new List<QuickLoginPreset>
-        {
-            new QuickLoginPreset("Admin", "admin", "admin123"),
-            new QuickLoginPreset("Faculty", "faculty1", "faculty123"),
-            new QuickLoginPreset("Registrar", "registrar", "registrar123")
-        };
+        private readonly List<QuickLoginPreset> _quickLoginPresets = BuildQuickLoginPresets();
 
         private DatabaseHelper _db;
         private AuthService _authService;
@@ -98,15 +94,15 @@ namespace School_Management_System.Presentation.Forms
                 _txtUsername.Text = string.Empty;
             }
 
-            if (_cmbQuickLogin != null)
+            if (_cmbQuickLogin != null && _cmbQuickLogin.Visible && _cmbQuickLogin.Items.Count > 0)
             {
                 if (!string.IsNullOrWhiteSpace(_txtUsername.Text))
                 {
                     SyncQuickLoginSelection(_txtUsername.Text);
                 }
-                else if (_cmbQuickLogin.Items.Count > 1)
+                else
                 {
-                    _cmbQuickLogin.SelectedIndex = 1;
+                    _cmbQuickLogin.SelectedIndex = 0;
                 }
             }
 
@@ -327,7 +323,7 @@ namespace School_Management_System.Presentation.Forms
             var lblConnectionMode = MakeLabel("Database Profile");
             var lblUser = MakeLabel("Username");
             var lblPass = MakeLabel("Password");
-            var lblQuickLogin = MakeLabel("Quick Login Account");
+            _lblQuickLogin = MakeLabel("Quick Login Account");
 
             var connectionModeRow = new Panel
             {
@@ -417,7 +413,7 @@ namespace School_Management_System.Presentation.Forms
             stack.Controls.Add(subtitle, 0, 1);
             stack.Controls.Add(lblConnectionMode, 0, 2);
             stack.Controls.Add(connectionModeRow, 0, 3);
-            stack.Controls.Add(lblQuickLogin, 0, 4);
+            stack.Controls.Add(_lblQuickLogin, 0, 4);
             stack.Controls.Add(_cmbQuickLogin, 0, 5);
             stack.Controls.Add(_lblDbStatus, 0, 6);
             stack.Controls.Add(lblUser, 0, 7);
@@ -433,6 +429,7 @@ namespace School_Management_System.Presentation.Forms
 
             shell.Controls.Add(stack);
 
+            ApplyQuickLoginVisibility();
             LoadConnectionProfileSummary();
 
             _txtUsername.KeyDown += (s, e) =>
@@ -462,10 +459,36 @@ namespace School_Management_System.Presentation.Forms
             }
 
             _cmbQuickLogin.Items.Clear();
+            if (_quickLoginPresets.Count == 0)
+            {
+                return;
+            }
+
             _cmbQuickLogin.Items.Add("Select account...");
             for (var i = 0; i < _quickLoginPresets.Count; i++)
             {
                 _cmbQuickLogin.Items.Add(_quickLoginPresets[i]);
+            }
+        }
+
+        private void ApplyQuickLoginVisibility()
+        {
+            var enabled = _quickLoginPresets.Count > 0;
+
+            if (_lblQuickLogin != null)
+            {
+                _lblQuickLogin.Visible = enabled;
+            }
+
+            if (_cmbQuickLogin != null)
+            {
+                _cmbQuickLogin.Visible = enabled;
+            }
+
+            if (_stack != null)
+            {
+                _stack.RowStyles[4] = new RowStyle(SizeType.Absolute, enabled ? 22 : 0);
+                _stack.RowStyles[5] = new RowStyle(SizeType.Absolute, enabled ? 44 : 0);
             }
         }
 
@@ -725,6 +748,17 @@ namespace School_Management_System.Presentation.Forms
             {
                 return Label;
             }
+        }
+
+        private static List<QuickLoginPreset> BuildQuickLoginPresets()
+        {
+            var presets = new List<QuickLoginPreset>();
+            foreach (var account in AppRuntimeSettings.GetDemoQuickLoginAccounts())
+            {
+                presets.Add(new QuickLoginPreset(account.Label, account.Username, account.Password));
+            }
+
+            return presets;
         }
 
         private sealed class ServiceInitializationResult

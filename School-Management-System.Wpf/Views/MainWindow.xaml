@@ -490,7 +490,8 @@
                     </Button>
 
                     <Button Command="{Binding ShowStudentsCommand}"
-                            ToolTip="Student Profile">
+                            ToolTip="Student Profile"
+                            Visibility="{Binding CanAccessStudents, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
                                 <Style.Triggers>
@@ -508,7 +509,8 @@
                     </Button>
 
                     <Button Command="{Binding ShowFacultyCommand}"
-                            ToolTip="Faculty">
+                            ToolTip="Faculty"
+                            Visibility="{Binding CanAccessFaculty, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
                                 <Style.Triggers>
@@ -526,7 +528,8 @@
                     </Button>
 
                     <Button Command="{Binding ShowEnrollmentCommand}"
-                            ToolTip="Enrollment">
+                            ToolTip="Enrollment"
+                            Visibility="{Binding CanAccessEnrollment, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
                                 <Style.Triggers>
@@ -544,7 +547,8 @@
                     </Button>
 
                     <Button Command="{Binding ShowScheduleCommand}"
-                            ToolTip="Schedule">
+                            ToolTip="Schedule"
+                            Visibility="{Binding CanAccessSchedule, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
                                 <Style.Triggers>
@@ -562,7 +566,8 @@
                     </Button>
 
                     <Button Command="{Binding ShowCalendarCommand}"
-                            ToolTip="Calendar">
+                            ToolTip="Calendar"
+                            Visibility="{Binding CanAccessCalendar, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
                                 <Style.Triggers>
@@ -580,7 +585,8 @@
                     </Button>
 
                     <Button Command="{Binding ShowAnalyticsCommand}"
-                            ToolTip="Analytics">
+                            ToolTip="Analytics"
+                            Visibility="{Binding CanAccessAnalytics, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
                                 <Style.Triggers>
@@ -598,7 +604,8 @@
                     </Button>
 
                     <Button Command="{Binding ShowCurriculumSettingsCommand}"
-                            ToolTip="Curriculum settings">
+                            ToolTip="Curriculum settings"
+                            Visibility="{Binding CanAccessCurriculumSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
                                 <Style.Triggers>
@@ -616,7 +623,8 @@
                     </Button>
 
                     <Button Command="{Binding ShowSettingsCommand}"
-                            ToolTip="Settings">
+                            ToolTip="Settings"
+                            Visibility="{Binding CanAccessSettings, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource SidebarCircleButtonStyle}">
                                 <Style.Triggers>

@@ -1059,22 +1059,22 @@ namespace School_Management_System.Presentation.UserControls
                 return;
             }
 
-            var fallbackHost = ConfigurationManager.AppSettings["DbHost"] ?? "localhost";
-            var fallbackPort = ConfigurationManager.AppSettings["DbPort"] ?? "3306";
-            var fallbackDbName = ConfigurationManager.AppSettings["DbName"] ?? "schoolmanagementsystem";
-            var fallbackUser = ConfigurationManager.AppSettings["DbUser"] ?? string.Empty;
-            var fallbackPassword = ConfigurationManager.AppSettings["DbPassword"] ?? string.Empty;
-            var fallbackMode = ConfigurationManager.AppSettings["DbMode"] ?? "Local";
+            var fallbackHost = RuntimeConfiguration.ReadAppSetting("DbHost") ?? "localhost";
+            var fallbackPort = RuntimeConfiguration.ReadAppSetting("DbPort") ?? "3306";
+            var fallbackDbName = RuntimeConfiguration.ReadAppSetting("DbName") ?? "schoolmanagementsystem";
+            var fallbackUser = RuntimeConfiguration.ReadAppSetting("DbUser") ?? string.Empty;
+            var fallbackPassword = RuntimeConfiguration.ReadAppSetting("DbPassword") ?? string.Empty;
+            var fallbackMode = RuntimeConfiguration.ReadDbMode("Local") ?? "Local";
             var fallbackOnlineHost = ReadAppSettingOrFallback("DbHostOnline", fallbackHost);
             var fallbackOnlinePort = ReadAppSettingOrFallback("DbPortOnline", fallbackPort);
             var fallbackOnlineDbName = ReadAppSettingOrFallback("DbNameOnline", fallbackDbName);
             var fallbackOnlineUser = ReadAppSettingOrFallback("DbUserOnline", fallbackUser);
             var fallbackOnlinePassword = ReadAppSettingOrFallback("DbPasswordOnline", fallbackPassword);
-            var fallbackOnlineSslMode = ConfigurationManager.AppSettings["DbSslModeOnline"]
-                                        ?? ConfigurationManager.AppSettings["DbSslMode"]
+            var fallbackOnlineSslMode = RuntimeConfiguration.ReadAppSetting("DbSslModeOnline")
+                                        ?? RuntimeConfiguration.ReadAppSetting("DbSslMode")
                                         ?? "Required";
-            var fallbackOnlineSslCaPath = ConfigurationManager.AppSettings["DbSslCaPathOnline"]
-                                          ?? ConfigurationManager.AppSettings["DbSslCaPath"]
+            var fallbackOnlineSslCaPath = RuntimeConfiguration.ReadAppSetting("DbSslCaPathOnline")
+                                          ?? RuntimeConfiguration.ReadAppSetting("DbSslCaPath")
                                           ?? string.Empty;
 
             try
@@ -1155,7 +1155,7 @@ namespace School_Management_System.Presentation.UserControls
 
         private static string ReadAppSettingOrFallback(string key, string fallbackValue)
         {
-            var value = ConfigurationManager.AppSettings[key];
+            var value = RuntimeConfiguration.ReadAppSetting(key);
             return string.IsNullOrWhiteSpace(value) ? fallbackValue : value;
         }
 

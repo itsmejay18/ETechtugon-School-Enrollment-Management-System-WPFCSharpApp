@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Configuration;
-using System.Net;
-using System.Net.Sockets;
 using MySqlConnector;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Configuration;
@@ -185,7 +182,7 @@ namespace School_Management_System.DataLayer
             var mode = Environment.GetEnvironmentVariable("SMS_DB_MODE");
             if (string.IsNullOrWhiteSpace(mode))
             {
-                mode = ConfigurationManager.AppSettings["DbMode"];
+                mode = RuntimeConfiguration.ReadDbMode("Local");
             }
 
             if (string.IsNullOrWhiteSpace(mode))
@@ -257,45 +254,19 @@ namespace School_Management_System.DataLayer
                 return envValue.Trim();
             }
 
-            var value = ConfigurationManager.AppSettings[primaryAppSettingKey];
+            var value = RuntimeConfiguration.ReadAppSetting(primaryAppSettingKey);
             if (!string.IsNullOrWhiteSpace(value))
             {
                 return value.Trim();
             }
 
-            value = ConfigurationManager.AppSettings[fallbackAppSettingKey];
+            value = RuntimeConfiguration.ReadAppSetting(fallbackAppSettingKey);
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
 
         private static string ResolveIpv4(string host)
         {
-            if (string.IsNullOrWhiteSpace(host))
-            {
-                return null;
-            }
-
-            IPAddress parsed;
-            if (IPAddress.TryParse(host, out parsed))
-            {
-                return parsed.AddressFamily == AddressFamily.InterNetwork ? parsed.ToString() : null;
-            }
-
-            try
-            {
-                var addresses = Dns.GetHostAddresses(host.Trim());
-                for (var i = 0; i < addresses.Length; i++)
-                {
-                    if (addresses[i].AddressFamily == AddressFamily.InterNetwork)
-                    {
-                        return addresses[i].ToString();
-                    }
-                }
-            }
-            catch
-            {
-            }
-
-            return null;
+            return NetworkNameResolver.ResolveIpv4(host);
         }
 
         public int ExecuteNonQuery(string sql, CommandType commandType, IEnumerable<MySqlParameter> parameters)

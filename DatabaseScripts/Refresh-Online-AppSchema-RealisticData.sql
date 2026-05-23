@@ -313,6 +313,23 @@ SET u.Username = s.Username,
     u.UpdatedAt = UTC_TIMESTAMP()
 WHERE u.UserId BETWEEN 1 AND 30;
 
+UPDATE users
+SET PasswordHash = CASE Username
+        WHEN 'admin' THEN UNHEX('491B306728DB9AB65DC7504B3EF8DA1293693F2E55A958405C4BB7BB6672A934')
+        WHEN 'registrar' THEN UNHEX('828F4E3EE279C5D766D8C58C257E87C0CB44F4843EDC051D1A41219B72738523')
+        WHEN 'faculty1' THEN UNHEX('DD9B92F18FDBD92BE8126B29ECF7362CA8DD9ACAFEFDCA7803CC62EB46B945AF')
+        ELSE PasswordHash
+    END,
+    PasswordSalt = CASE Username
+        WHEN 'admin' THEN UNHEX('2C8FA907A42255A3FB0F3C02B49C7473')
+        WHEN 'registrar' THEN UNHEX('474715AC6A02F482A85FA09479BE5C30')
+        WHEN 'faculty1' THEN UNHEX('42E2DBAFA5230A27DA3A31C49A8203F0')
+        ELSE PasswordSalt
+    END,
+    IsActive = 1,
+    UpdatedAt = UTC_TIMESTAMP()
+WHERE Username IN ('admin', 'registrar', 'faculty1');
+
 UPDATE section s
 INNER JOIN course c ON c.CourseId = s.SectionId
 SET s.SectionName = CONCAT(c.CourseCode, '-', ((s.SectionId - 1) MOD 4) + 1, 'A'),

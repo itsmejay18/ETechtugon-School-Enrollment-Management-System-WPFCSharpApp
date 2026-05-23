@@ -22,6 +22,7 @@ namespace School_Management_System.DataLayer.Configuration
                 ApplyMigration2026031501(db);
                 ApplyMigration2026041701(db);
                 ApplyMigration2026050801(db);
+                ApplyMigration2026051901(db);
             }
         }
 
@@ -311,6 +312,130 @@ WHERE (`SectionCode` IS NULL OR `SectionCode` = '')
             RefreshSubjectEnrollmentCounts(db);
 
             MarkApplied(db, migrationId, "Upgrade enrollment profile, college, department, curriculum, section, and subject capacity schema.");
+        }
+
+        private static void ApplyMigration2026051901(DatabaseHelper db)
+        {
+            const string migrationId = "2026051901";
+            if (IsApplied(db, migrationId))
+            {
+                return;
+            }
+
+            EnsureStarterLoginAccount(
+                db,
+                1,
+                "admin",
+                "491B306728DB9AB65DC7504B3EF8DA1293693F2E55A958405C4BB7BB6672A934",
+                "2C8FA907A42255A3FB0F3C02B49C7473",
+                AppConstants.Roles.Admin,
+                "System Administrator");
+
+            EnsureStarterLoginAccount(
+                db,
+                2,
+                "registrar",
+                "828F4E3EE279C5D766D8C58C257E87C0CB44F4843EDC051D1A41219B72738523",
+                "474715AC6A02F482A85FA09479BE5C30",
+                AppConstants.Roles.Registrar,
+                "Registrar Office");
+
+            EnsureStarterLoginAccount(
+                db,
+                3,
+                "faculty1",
+                "DD9B92F18FDBD92BE8126B29ECF7362CA8DD9ACAFEFDCA7803CC62EB46B945AF",
+                "42E2DBAFA5230A27DA3A31C49A8203F0",
+                AppConstants.Roles.Faculty,
+                "Default Faculty");
+
+            MarkApplied(db, migrationId, "Ensure starter login accounts match documented credentials.");
+        }
+
+        private static void EnsureStarterLoginAccount(
+            DatabaseHelper db,
+            int preferredUserId,
+            string username,
+            string passwordHashHex,
+            string passwordSaltHex,
+            string role,
+            string displayName)
+        {
+            const string updatePreferredSlotSql = @"
+UPDATE `users` u
+LEFT JOIN `users` existing
+  ON existing.`Username` = @Username
+ AND existing.`UserId` <> u.`UserId`
+SET
+  u.`Username` = @Username,
+  u.`PasswordHash` = UNHEX(@PasswordHashHex),
+  u.`PasswordSalt` = UNHEX(@PasswordSaltHex),
+  u.`Role` = @Role,
+  u.`DisplayName` = @DisplayName,
+  u.`IsActive` = 1,
+  u.`UpdatedAt` = UTC_TIMESTAMP()
+WHERE u.`UserId` = @PreferredUserId
+  AND existing.`UserId` IS NULL;";
+
+            db.ExecuteNonQuery(
+                updatePreferredSlotSql,
+                CommandType.Text,
+                BuildStarterLoginParameters(preferredUserId, username, passwordHashHex, passwordSaltHex, role, displayName));
+
+            const string upsertByUsernameSql = @"
+INSERT INTO `users`
+(
+  `Username`,
+  `PasswordHash`,
+  `PasswordSalt`,
+  `Role`,
+  `DisplayName`,
+  `IsActive`,
+  `CreatedAt`,
+  `UpdatedAt`
+)
+VALUES
+(
+  @Username,
+  UNHEX(@PasswordHashHex),
+  UNHEX(@PasswordSaltHex),
+  @Role,
+  @DisplayName,
+  1,
+  UTC_TIMESTAMP(),
+  UTC_TIMESTAMP()
+)
+ON DUPLICATE KEY UPDATE
+  `PasswordHash` = VALUES(`PasswordHash`),
+  `PasswordSalt` = VALUES(`PasswordSalt`),
+  `Role` = VALUES(`Role`),
+  `DisplayName` = VALUES(`DisplayName`),
+  `IsActive` = 1,
+  `UpdatedAt` = UTC_TIMESTAMP();";
+
+            db.ExecuteNonQuery(
+                upsertByUsernameSql,
+                CommandType.Text,
+                BuildStarterLoginParameters(preferredUserId, username, passwordHashHex, passwordSaltHex, role, displayName));
+        }
+
+        private static MySqlParameter[] BuildStarterLoginParameters(
+            int preferredUserId,
+            string username,
+            string passwordHashHex,
+            string passwordSaltHex,
+            string role,
+            string displayName)
+        {
+            return new[]
+            {
+                new MySqlParameter("@PreferredUserId", preferredUserId),
+                new MySqlParameter("@Username", username),
+                new MySqlParameter("@PasswordHashHex", passwordHashHex),
+                new MySqlParameter("@PasswordSaltHex", passwordSaltHex),
+                new MySqlParameter("@Role", role),
+                new MySqlParameter("@DisplayName", displayName)
+            };
         }
 
         private static void EnsureActivityLogTable(DatabaseHelper db)

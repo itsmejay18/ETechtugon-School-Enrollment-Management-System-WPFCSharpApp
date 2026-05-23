@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using System.Windows.Forms;
 using School_Management_System.DataLayer.Configuration;
 using School_Management_System.DataLayer.Logging;
@@ -28,7 +27,7 @@ namespace School_Management_System
 
         private static void ApplyDefaultConnectionMode()
         {
-            var mode = ConfigurationManager.AppSettings["DbMode"];
+            var mode = RuntimeConfiguration.ReadDbMode("Online");
             if (string.IsNullOrWhiteSpace(mode))
             {
                 mode = "Online";

@@ -101,11 +101,11 @@ dotnet test .\School-Management-System.Tests\School-Management-System.Tests.cspr
 - Do not commit real DB credentials
 - Rotate DB credentials if previously exposed
 - Change seeded default users/passwords immediately in production
+- Database credentials are expected from environment variables, installer-time configuration, or the in-app database profile settings. The committed `App.config` files intentionally contain no production password.
+- Demo quick-login presets are disabled by default. For a temporary classroom demo only, set `EnableDemoQuickLogin=true` and provide `DemoQuickLoginAccounts` as `Label|username|password;Label|username|password`, then disable it before release.
 
-## Default seeded users (for first local setup only)
-- `admin` / `admin123`
-- `registrar` / `registrar123`
-- `faculty1` / `faculty123`
+## Seeded users
+The seed script may create starter accounts for local setup. Reset all starter passwords immediately before any production or defense deployment, and do not enable demo quick-login on deployed machines.
 
 ## Architecture
 - `School-Management-System/Presentation`: WinForms UI

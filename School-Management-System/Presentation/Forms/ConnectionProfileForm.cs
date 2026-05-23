@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Drawing;
 using System.Windows.Forms;
 using MySqlConnector;
@@ -874,7 +873,7 @@ namespace School_Management_System.Presentation.Forms
 
         private static string ReadAppSetting(string key, string fallbackValue = "")
         {
-            var value = ConfigurationManager.AppSettings[key];
+            var value = RuntimeConfiguration.ReadAppSetting(key);
             return string.IsNullOrWhiteSpace(value) ? fallbackValue : value.Trim();
         }
 

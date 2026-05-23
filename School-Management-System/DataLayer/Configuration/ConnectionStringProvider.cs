@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Net;
-using System.Net.Sockets;
 using MySqlConnector;
 using School_Management_System.Common;
 
@@ -244,27 +242,10 @@ namespace School_Management_System.DataLayer.Configuration
                 return;
             }
 
-            IPAddress parsed;
-            if (IPAddress.TryParse(builder.Server, out parsed))
+            var ipv4 = NetworkNameResolver.ResolveIpv4(builder.Server);
+            if (!string.IsNullOrWhiteSpace(ipv4))
             {
-                return;
-            }
-
-            try
-            {
-                var addresses = Dns.GetHostAddresses(builder.Server.Trim());
-                for (var i = 0; i < addresses.Length; i++)
-                {
-                    if (addresses[i].AddressFamily == AddressFamily.InterNetwork)
-                    {
-                        builder.Server = addresses[i].ToString();
-                        return;
-                    }
-                }
-            }
-            catch
-            {
-                // Keep original host if DNS resolution fails.
+                builder.Server = ipv4;
             }
         }
 
@@ -435,7 +416,7 @@ WHERE SettingKey = @ModeKey
                 return envValue;
             }
 
-            var appValue = ConfigurationManager.AppSettings[appSettingKey];
+            var appValue = RuntimeConfiguration.ReadAppSetting(appSettingKey);
             return string.IsNullOrWhiteSpace(appValue) ? null : appValue;
         }
 
@@ -450,14 +431,14 @@ WHERE SettingKey = @ModeKey
             var profileAppSettingKey = ResolveProfileAppSettingKey(appSettingKey, mode);
             if (!string.IsNullOrWhiteSpace(profileAppSettingKey))
             {
-                var profileAppValue = ConfigurationManager.AppSettings[profileAppSettingKey];
+                var profileAppValue = RuntimeConfiguration.ReadAppSetting(profileAppSettingKey);
                 if (!string.IsNullOrWhiteSpace(profileAppValue))
                 {
                     return profileAppValue;
                 }
             }
 
-            var appValue = ConfigurationManager.AppSettings[appSettingKey];
+            var appValue = RuntimeConfiguration.ReadAppSetting(appSettingKey);
             return string.IsNullOrWhiteSpace(appValue) ? null : appValue;
         }
 

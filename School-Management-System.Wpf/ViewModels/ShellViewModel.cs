@@ -81,14 +81,14 @@ namespace School_Management_System.Wpf.ViewModels
             Notifications = new ObservableCollection<NotificationItemViewModel>();
 
             ShowDashboardCommand = new RelayCommand(ShowDashboard);
-            ShowStudentsCommand = new RelayCommand(ShowStudents);
-            ShowFacultyCommand = new RelayCommand(ShowFaculty);
-            ShowEnrollmentCommand = new RelayCommand(ShowEnrollment);
-            ShowScheduleCommand = new RelayCommand(ShowSchedule);
-            ShowCalendarCommand = new RelayCommand(ShowCalendar);
-            ShowAnalyticsCommand = new RelayCommand(ShowAnalytics);
-            ShowCurriculumSettingsCommand = new RelayCommand(ShowCurriculumSettings);
-            ShowSettingsCommand = new RelayCommand(ShowSettings);
+            ShowStudentsCommand = new RelayCommand(ShowStudents, () => CanAccessStudents);
+            ShowFacultyCommand = new RelayCommand(ShowFaculty, () => CanAccessFaculty);
+            ShowEnrollmentCommand = new RelayCommand(ShowEnrollment, () => CanAccessEnrollment);
+            ShowScheduleCommand = new RelayCommand(ShowSchedule, () => CanAccessSchedule);
+            ShowCalendarCommand = new RelayCommand(ShowCalendar, () => CanAccessCalendar);
+            ShowAnalyticsCommand = new RelayCommand(ShowAnalytics, () => CanAccessAnalytics);
+            ShowCurriculumSettingsCommand = new RelayCommand(ShowCurriculumSettings, () => CanAccessCurriculumSettings);
+            ShowSettingsCommand = new RelayCommand(ShowSettings, () => CanAccessSettings);
             ShowProfileCommand = new RelayCommand(ShowProfile);
             ShowNotificationsCommand = new RelayCommand(ToggleNotifications);
             CloseNotificationsCommand = new RelayCommand(CloseNotifications);
@@ -170,6 +170,61 @@ namespace School_Management_System.Wpf.ViewModels
         public string WorkspaceLabel
         {
             get { return CurrentUserRole + " workspace"; }
+        }
+
+        public bool IsAdmin
+        {
+            get { return HasRole(AppConstants.Roles.Admin); }
+        }
+
+        public bool IsRegistrar
+        {
+            get { return HasRole(AppConstants.Roles.Registrar); }
+        }
+
+        public bool IsFaculty
+        {
+            get { return HasRole(AppConstants.Roles.Faculty); }
+        }
+
+        public bool CanAccessStudents
+        {
+            get { return IsAdmin || IsRegistrar; }
+        }
+
+        public bool CanAccessFaculty
+        {
+            get { return IsAdmin || IsRegistrar; }
+        }
+
+        public bool CanAccessEnrollment
+        {
+            get { return IsAdmin || IsRegistrar; }
+        }
+
+        public bool CanAccessSchedule
+        {
+            get { return IsAdmin || IsRegistrar || IsFaculty; }
+        }
+
+        public bool CanAccessCalendar
+        {
+            get { return IsAdmin || IsRegistrar || IsFaculty; }
+        }
+
+        public bool CanAccessAnalytics
+        {
+            get { return IsAdmin || IsRegistrar; }
+        }
+
+        public bool CanAccessCurriculumSettings
+        {
+            get { return IsAdmin || IsRegistrar; }
+        }
+
+        public bool CanAccessSettings
+        {
+            get { return IsAdmin; }
         }
 
         public string CurrentUserInitial
@@ -570,6 +625,13 @@ namespace School_Management_System.Wpf.ViewModels
             OnPropertyChanged(nameof(ApplicationSubtitle));
             OnPropertyChanged(nameof(SupportSummary));
             OnPropertyChanged(nameof(CurrentUserAccountSummary));
+        }
+
+        private bool HasRole(string role)
+        {
+            return CurrentUser != null &&
+                   !string.IsNullOrWhiteSpace(CurrentUser.Role) &&
+                   string.Equals(CurrentUser.Role, role, StringComparison.OrdinalIgnoreCase);
         }
 
         private void AttachModalHost(object module)

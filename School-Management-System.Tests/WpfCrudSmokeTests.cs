@@ -15,12 +15,17 @@ namespace School_Management_System.Tests.Integration
     [TestFixture]
     [NonParallelizable]
     [Apartment(ApartmentState.STA)]
+    [Category("Database")]
     public sealed class WpfCrudSmokeTests
     {
         [SetUp]
         public void SetUp()
         {
             ConnectionModeHelper.ApplyRuntimeMode("Local");
+            if (!HasSmokeTestDatabaseConfiguration())
+            {
+                Assert.Ignore("Database smoke tests require local MySQL credentials. Set SMS_DB_USER and SMS_DB_PASSWORD to run them.");
+            }
         }
 
         [Test]
@@ -255,6 +260,12 @@ namespace School_Management_System.Tests.Integration
             }
 
             return table.Rows.Cast<DataRow>().Any(row => row[columnName] != DBNull.Value && Convert.ToInt32(row[columnName]) == expectedValue);
+        }
+
+        private static bool HasSmokeTestDatabaseConfiguration()
+        {
+            return !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SMS_DB_USER")) ||
+                   !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SMS_DB_USER_LOCAL"));
         }
 
         private static void TryDeleteStudent(AppBootstrapper bootstrapper, int studentId)

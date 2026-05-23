@@ -195,13 +195,9 @@ Notes:
 The `Forgot password?` link tells the user to contact an administrator. There is no self-service reset flow.
 
 ## 5. Demo or Seeded Accounts
-If you loaded the seeded sample data, these default accounts may exist:
+If you loaded the seeded sample data, starter accounts may exist. Ask the system administrator for the current credentials, then change starter passwords before production use.
 
-- `admin` / `admin123`
-- `registrar` / `registrar123`
-- `faculty1` / `faculty123`
-
-Change seeded passwords before production use.
+Demo quick-login presets are disabled in production builds by default. Administrators should only enable them temporarily for local demonstrations, never for deployed machines.
 
 ## 6. Main Layout and Navigation
 After sign-in, the dashboard opens with:

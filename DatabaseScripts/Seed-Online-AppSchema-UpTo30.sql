@@ -33,9 +33,17 @@ BEGIN
     DECLARE v_academic_year_name VARCHAR(20) DEFAULT NULL;
     DECLARE v_password_hash VARBINARY(32);
     DECLARE v_password_salt VARBINARY(16);
+    DECLARE v_registrar_password_hash VARBINARY(32);
+    DECLARE v_registrar_password_salt VARBINARY(16);
+    DECLARE v_faculty_password_hash VARBINARY(32);
+    DECLARE v_faculty_password_salt VARBINARY(16);
 
     SET v_password_hash = UNHEX('491B306728DB9AB65DC7504B3EF8DA1293693F2E55A958405C4BB7BB6672A934');
     SET v_password_salt = UNHEX('2C8FA907A42255A3FB0F3C02B49C7473');
+    SET v_registrar_password_hash = UNHEX('828F4E3EE279C5D766D8C58C257E87C0CB44F4843EDC051D1A41219B72738523');
+    SET v_registrar_password_salt = UNHEX('474715AC6A02F482A85FA09479BE5C30');
+    SET v_faculty_password_hash = UNHEX('DD9B92F18FDBD92BE8126B29ECF7362CA8DD9ACAFEFDCA7803CC62EB46B945AF');
+    SET v_faculty_password_salt = UNHEX('42E2DBAFA5230A27DA3A31C49A8203F0');
 
     SELECT COALESCE(
         (SELECT CAST(SettingValue AS UNSIGNED) FROM systemsetting WHERE SettingKey = 'CurrentAcademicYearId' LIMIT 1),
@@ -194,6 +202,65 @@ BEGIN
     END WHILE;
 
     -- Users
+    CREATE TEMPORARY TABLE IF NOT EXISTS starter_login_account (
+        PreferredUserId INT NOT NULL PRIMARY KEY,
+        Username VARCHAR(50) NOT NULL,
+        PasswordHash VARBINARY(32) NOT NULL,
+        PasswordSalt VARBINARY(16) NOT NULL,
+        RoleName VARCHAR(30) NOT NULL,
+        DisplayName VARCHAR(100) NOT NULL,
+        UNIQUE KEY UX_StarterLogin_Username (Username)
+    ) ENGINE=MEMORY;
+
+    TRUNCATE TABLE starter_login_account;
+
+    INSERT INTO starter_login_account
+    (PreferredUserId, Username, PasswordHash, PasswordSalt, RoleName, DisplayName)
+    VALUES
+        (1, 'admin', v_password_hash, v_password_salt, 'Admin', 'System Administrator'),
+        (2, 'registrar', v_registrar_password_hash, v_registrar_password_salt, 'Registrar', 'Registrar Office'),
+        (3, 'faculty1', v_faculty_password_hash, v_faculty_password_salt, 'Faculty', 'Default Faculty');
+
+    UPDATE users u
+    INNER JOIN starter_login_account a ON a.PreferredUserId = u.UserId
+    LEFT JOIN users existing ON existing.Username = a.Username AND existing.UserId <> u.UserId
+    SET
+        u.Username = a.Username,
+        u.PasswordHash = a.PasswordHash,
+        u.PasswordSalt = a.PasswordSalt,
+        u.Role = a.RoleName,
+        u.DisplayName = a.DisplayName,
+        u.IsActive = 1,
+        u.UpdatedAt = UTC_TIMESTAMP()
+    WHERE existing.UserId IS NULL;
+
+    INSERT INTO users
+    (
+        Username, PasswordHash, PasswordSalt, Role, DisplayName,
+        PhotoPath, IsActive, CreatedAt, UpdatedAt, LastLoginAt
+    )
+    SELECT
+        a.Username,
+        a.PasswordHash,
+        a.PasswordSalt,
+        a.RoleName,
+        a.DisplayName,
+        NULL,
+        1,
+        UTC_TIMESTAMP(),
+        UTC_TIMESTAMP(),
+        NULL
+    FROM starter_login_account a
+    ON DUPLICATE KEY UPDATE
+        PasswordHash = VALUES(PasswordHash),
+        PasswordSalt = VALUES(PasswordSalt),
+        Role = VALUES(Role),
+        DisplayName = VALUES(DisplayName),
+        IsActive = 1,
+        UpdatedAt = UTC_TIMESTAMP();
+
+    DROP TEMPORARY TABLE IF EXISTS starter_login_account;
+
     SELECT COUNT(*) INTO v_count FROM users;
     WHILE v_count < 30 DO
         SET v_seq = v_count + 1;

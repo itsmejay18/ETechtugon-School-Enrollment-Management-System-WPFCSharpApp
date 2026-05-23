@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using Microsoft.Win32;
@@ -332,7 +331,19 @@ namespace School_Management_System.Wpf.ViewModels.Settings
                 return null;
             }
 
-            return File.ReadAllBytes(dialog.FileName);
+            byte[] bytes;
+            string errorMessage;
+            if (ImageFileReader.TryReadImageBytes(dialog.FileName, out bytes, out errorMessage))
+            {
+                return bytes;
+            }
+
+            MessageBox.Show(
+                errorMessage,
+                "Company Branding",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            return null;
         }
 
         private void LogBrandingTransaction(BrandingProfile profile)

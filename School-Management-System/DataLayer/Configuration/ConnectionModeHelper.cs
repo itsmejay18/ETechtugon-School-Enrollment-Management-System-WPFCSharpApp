@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 
 namespace School_Management_System.DataLayer.Configuration
 {
@@ -47,7 +46,7 @@ namespace School_Management_System.DataLayer.Configuration
                 return Normalize(mode, defaultMode);
             }
 
-            mode = ConfigurationManager.AppSettings["DbMode"];
+            mode = RuntimeConfiguration.ReadDbMode(defaultMode);
             return Normalize(mode, defaultMode);
         }
 

@@ -844,7 +844,13 @@ namespace School_Management_System.Presentation.UserControls
                 ofd.Title = "Select faculty photo";
                 if (ofd.ShowDialog() != DialogResult.OK) return;
 
-                _selectedPhotoBytes = PhotoStorageHelper.ReadPhotoBytes(ofd.FileName);
+                string photoError;
+                if (!PhotoStorageHelper.TryReadPhotoBytes(ofd.FileName, out _selectedPhotoBytes, out photoError))
+                {
+                    ThemedMessageBox.ShowError(this, photoError, "Invalid Photo");
+                    return;
+                }
+
                 ShowPhoto(_selectedPhotoBytes);
                 if (_btnRemovePhoto != null)
                 {

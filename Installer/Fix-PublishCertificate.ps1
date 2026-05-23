@@ -2,12 +2,16 @@
     [string]$ProjectPath = ".\School-Management-System\School-Management-System.csproj",
     [string]$PfxPath = ".\School-Management-System\Properties\ClickOnce\SchoolManagementSystem_ClickOnce.pfx",
     [string]$Subject = "CN=School Management System ClickOnce",
-    [string]$Password = "sms123!"
+    [string]$Password = $env:SMS_CLICKONCE_CERT_PASSWORD
 )
 
 $ErrorActionPreference = "Stop"
 
 $projectFullPath = (Resolve-Path $ProjectPath).Path
+if ([string]::IsNullOrWhiteSpace($Password)) {
+    throw "Certificate password is required. Pass -Password <strong-password> or set SMS_CLICKONCE_CERT_PASSWORD."
+}
+
 $pfxDir = Split-Path $PfxPath -Parent
 if (-not (Test-Path $pfxDir)) {
     New-Item -ItemType Directory -Force -Path $pfxDir | Out-Null

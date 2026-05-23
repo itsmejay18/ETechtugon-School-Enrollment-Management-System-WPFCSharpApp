@@ -20,6 +20,10 @@ ArchitecturesAllowed=x86compatible and x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\{#MyAppExeName}
 SetupIconFile=..\School-Management-System\assets\app-logo.ico
+MinVersion=6.1sp1
+PrivilegesRequired=admin
+CloseApplications=yes
+RestartApplications=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -28,11 +32,24 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
+; Application binaries
 Source: "..\School-Management-System.Wpf\bin\Release\net472\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion; Excludes: "*.pdb,*.xml,*.vshost.exe,*.vshost.exe.config,app.publish\*"
+; Database deployment scripts (operator-run, optional)
+Source: "..\DatabaseScripts\*"; DestDir: "{app}\DatabaseScripts"; Flags: recursesubdirs createallsubdirs ignoreversion; Excludes: "*.bak"
+; End-user documentation
+Source: "..\USER_MANUAL.TXT"; DestDir: "{app}\docs"; DestName: "User Manual.txt"; Flags: ignoreversion
+Source: "..\README.md"; DestDir: "{app}\docs"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\assets\app-logo.ico"
+Name: "{autoprograms}\{#MyAppName}\User Manual"; Filename: "{app}\docs\User Manual.txt"
+Name: "{autoprograms}\{#MyAppName}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\assets\app-logo.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+; Application logs and per-user data live under %LOCALAPPDATA%\SchoolManagementSystem
+; and are intentionally preserved so backups, photos, and audit logs survive a reinstall.
+Type: filesandordirs; Name: "{app}\logs"

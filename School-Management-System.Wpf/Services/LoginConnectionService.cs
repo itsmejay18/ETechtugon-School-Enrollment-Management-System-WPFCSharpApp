@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using School_Management_System.BusinessLayer.Services;
 using School_Management_System.DataLayer;
 using School_Management_System.DataLayer.Configuration;
@@ -23,11 +22,7 @@ namespace School_Management_System.Wpf.Services
             var currentMode = ConnectionModeHelper.GetCurrentMode("Online");
             for (var i = 0; i < profiles.Count; i++)
             {
-                if (string.Equals(profiles[i].Mode, currentMode, StringComparison.OrdinalIgnoreCase))
-                {
-                    ApplyEnvironmentOverrides(profiles[i]);
-                    break;
-                }
+                ApplyEnvironmentOverrides(profiles[i], currentMode);
             }
 
             return profiles;
@@ -43,6 +38,12 @@ namespace School_Management_System.Wpf.Services
             if (profile == null)
             {
                 return new ConnectionProbeResult(false, "Connection not selected", "Choose a database profile before signing in.");
+            }
+
+            var validationMessage = ValidateProfile(profile);
+            if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                return new ConnectionProbeResult(false, "Profile incomplete", validationMessage);
             }
 
             ApplyRuntimeSelection(profile);
@@ -65,6 +66,13 @@ namespace School_Management_System.Wpf.Services
             if (profile == null)
             {
                 statusMessage = "Select a database connection profile first.";
+                return false;
+            }
+
+            var validationMessage = ValidateProfile(profile);
+            if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                statusMessage = validationMessage;
                 return false;
             }
 
@@ -173,31 +181,69 @@ namespace School_Management_System.Wpf.Services
                 "Online",
                 "Online",
                 "Hosted internet database",
-                ReadAppSetting("DbHostOnline", ReadAppSetting("DbHost")),
+                ReadAppSetting("DbHostOnline"),
                 ReadAppSetting("DbPortOnline", ReadAppSetting("DbPort", "3306")),
                 ReadAppSetting("DbNameOnline", ReadAppSetting("DbName", "schoolmanagementsystem")),
-                ReadAppSetting("DbUserOnline", ReadAppSetting("DbUser")),
-                ReadAppSetting("DbPasswordOnline", ReadAppSetting("DbPassword")));
+                ReadAppSetting("DbUserOnline"),
+                ReadAppSetting("DbPasswordOnline"));
         }
 
-        private static void ApplyEnvironmentOverrides(ConnectionProfile profile)
+        private static void ApplyEnvironmentOverrides(ConnectionProfile profile, string currentMode)
         {
             if (profile == null)
             {
                 return;
             }
 
-            var host = Environment.GetEnvironmentVariable("SMS_DB_HOST");
-            var port = Environment.GetEnvironmentVariable("SMS_DB_PORT");
-            var database = Environment.GetEnvironmentVariable("SMS_DB_NAME");
-            var user = Environment.GetEnvironmentVariable("SMS_DB_USER");
-            var password = Environment.GetEnvironmentVariable("SMS_DB_PASSWORD");
+            var host = ReadProfileEnvironmentValue("SMS_DB_HOST", profile.Mode, currentMode);
+            var port = ReadProfileEnvironmentValue("SMS_DB_PORT", profile.Mode, currentMode);
+            var database = ReadProfileEnvironmentValue("SMS_DB_NAME", profile.Mode, currentMode);
+            var user = ReadProfileEnvironmentValue("SMS_DB_USER", profile.Mode, currentMode);
+            var password = ReadProfileEnvironmentValue("SMS_DB_PASSWORD", profile.Mode, currentMode);
 
             if (!string.IsNullOrWhiteSpace(host)) profile.Host = host.Trim();
             if (!string.IsNullOrWhiteSpace(port)) profile.Port = port.Trim();
             if (!string.IsNullOrWhiteSpace(database)) profile.Database = database.Trim();
             if (!string.IsNullOrWhiteSpace(user)) profile.Username = user.Trim();
             if (!string.IsNullOrWhiteSpace(password)) profile.Password = password;
+        }
+
+        private static string ReadProfileEnvironmentValue(string baseName, string mode, string currentMode)
+        {
+            var suffix = BuildEnvironmentSuffix(mode);
+            if (!string.IsNullOrWhiteSpace(suffix))
+            {
+                var value = Environment.GetEnvironmentVariable(baseName + "_" + suffix);
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value;
+                }
+
+                var prefix = "SMS_DB_" + suffix + "_";
+                var keyWithoutPrefix = baseName.StartsWith("SMS_DB_", StringComparison.OrdinalIgnoreCase)
+                    ? baseName.Substring("SMS_DB_".Length)
+                    : baseName;
+
+                value = Environment.GetEnvironmentVariable(prefix + keyWithoutPrefix);
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value;
+                }
+            }
+
+            return string.Equals(mode, currentMode, StringComparison.OrdinalIgnoreCase)
+                ? Environment.GetEnvironmentVariable(baseName)
+                : null;
+        }
+
+        private static string BuildEnvironmentSuffix(string mode)
+        {
+            if (string.IsNullOrWhiteSpace(mode))
+            {
+                return string.Empty;
+            }
+
+            return mode.Trim().ToUpperInvariant();
         }
 
         private static void ApplyRuntimeSelection(ConnectionProfile profile)
@@ -223,6 +269,37 @@ namespace School_Management_System.Wpf.Services
             ConnectionStringProvider.ResetDatabaseProfileCache();
         }
 
+        public static string ValidateProfile(ConnectionProfile profile)
+        {
+            if (profile == null)
+            {
+                return "Choose a database profile before signing in.";
+            }
+
+            if (string.IsNullOrWhiteSpace(profile.Host))
+            {
+                return "The " + profile.DisplayName + " database profile has no MySQL host. Update the profile in Settings > Database or the application config.";
+            }
+
+            uint port;
+            if (string.IsNullOrWhiteSpace(profile.Port) || !uint.TryParse(profile.Port.Trim(), out port) || port == 0)
+            {
+                return "The " + profile.DisplayName + " database profile has an invalid MySQL port. Update the profile in Settings > Database or the application config.";
+            }
+
+            if (string.IsNullOrWhiteSpace(profile.Database))
+            {
+                return "The " + profile.DisplayName + " database profile has no database name. Update the profile in Settings > Database or the application config.";
+            }
+
+            if (string.IsNullOrWhiteSpace(profile.Username))
+            {
+                return "The " + profile.DisplayName + " database profile has no MySQL username. Update the profile in Settings > Database or the application config.";
+            }
+
+            return null;
+        }
+
         private static void SetProcessVariable(string name, string value)
         {
             Environment.SetEnvironmentVariable(name, string.IsNullOrWhiteSpace(value) ? null : value.Trim(), EnvironmentVariableTarget.Process);
@@ -230,7 +307,7 @@ namespace School_Management_System.Wpf.Services
 
         private static string ReadAppSetting(string key, string fallback = "")
         {
-            var value = ConfigurationManager.AppSettings[key];
+            var value = RuntimeConfiguration.ReadAppSetting(key);
             return string.IsNullOrWhiteSpace(value) ? (fallback ?? string.Empty) : value.Trim();
         }
 
@@ -242,6 +319,12 @@ namespace School_Management_System.Wpf.Services
 
         private static string BuildFailureSummary(ConnectionProfile profile, string errorMessage)
         {
+            var validationMessage = ValidateProfile(profile);
+            if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                return validationMessage;
+            }
+
             var baseMessage = "Unable to connect using the " + profile.DisplayName + " profile.";
             var hint = BuildConnectionHint(profile, errorMessage);
 

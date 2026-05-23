@@ -3,6 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using School_Management_System.Common;
 
 namespace School_Management_System.Presentation.Helpers
 {
@@ -98,9 +99,14 @@ namespace School_Management_System.Presentation.Helpers
 
         public static byte[] ReadPhotoBytes(string filePath)
         {
-            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return null;
-            try { return File.ReadAllBytes(filePath); }
-            catch { return null; }
+            byte[] bytes;
+            string errorMessage;
+            return TryReadPhotoBytes(filePath, out bytes, out errorMessage) ? bytes : null;
+        }
+
+        public static bool TryReadPhotoBytes(string filePath, out byte[] bytes, out string errorMessage)
+        {
+            return ImageFileReader.TryReadImageBytes(filePath, out bytes, out errorMessage);
         }
 
         public static string PersistPhoto(string sourcePath, string folderName, string entityKey, string fallbackPath)

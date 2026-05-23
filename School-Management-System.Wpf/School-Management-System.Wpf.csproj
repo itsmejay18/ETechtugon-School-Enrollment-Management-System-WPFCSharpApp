@@ -12,7 +12,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\School-Management-System\School-Management-System.csproj" />
+    <ProjectReference Include="..\School-Management-System\School-Management-System.csproj">
+      <Private>true</Private>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!--
+    Declare the runtime-only dependencies the legacy WinForms project pulls
+    in. Listing them here lets MSBuild's AutoGenerateBindingRedirects emit
+    correct redirects in the produced .exe.config so the deployed app does
+    not hit FileLoadException on the client PC.
+  -->
+  <ItemGroup>
+    <PackageReference Include="MySqlConnector" Version="2.4.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,4 +53,26 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <!--
+    The referenced WinForms project uses packages.config and references
+    several assemblies (BouncyCastle, K4os, Google.Protobuf, ZstdSharp, etc.)
+    that the SDK-style WPF project does not flow transitively. Copy every DLL
+    produced in the WinForms output folder into this project's output so the
+    deployed app has all runtime dependencies for MySqlConnector + backups.
+  -->
+  <Target Name="CopyWinFormsTransitiveDependencies"
+          AfterTargets="AfterBuild"
+          Condition="Exists('..\School-Management-System\bin\$(Configuration)')">
+    <ItemGroup>
+      <_WinFormsTransitiveDeps Include="..\School-Management-System\bin\$(Configuration)\*.dll" />
+      <_WinFormsTransitiveDeps Remove="..\School-Management-System\bin\$(Configuration)\School-Management-System.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WinFormsTransitiveDeps)"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true"
+          OverwriteReadOnlyFiles="true"
+          Retries="3"
+          RetryDelayMilliseconds="200" />
+  </Target>
 </Project>

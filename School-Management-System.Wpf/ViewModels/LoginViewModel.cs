@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using School_Management_System.Common;
 using School_Management_System.Models;
 using School_Management_System.Wpf.Infrastructure;
 using School_Management_System.Wpf.Services;
@@ -25,13 +26,7 @@ namespace School_Management_System.Wpf.ViewModels
         {
             _connectionService = connectionService ?? throw new ArgumentNullException(nameof(connectionService));
 
-            QuickLoginOptions = new ObservableCollection<QuickLoginOption>
-            {
-                new QuickLoginOption("Select account...", string.Empty, string.Empty),
-                new QuickLoginOption("Admin", "admin", "admin123"),
-                new QuickLoginOption("Faculty", "faculty1", "faculty123"),
-                new QuickLoginOption("Registrar", "registrar", "registrar123")
-            };
+            QuickLoginOptions = BuildQuickLoginOptions();
 
             ConnectionProfiles = new ObservableCollection<ConnectionProfileOption>();
             CancelCommand = new RelayCommand(() => RequestClose(false));
@@ -39,13 +34,18 @@ namespace School_Management_System.Wpf.ViewModels
 
             StatusMessage = string.Empty;
             LoadConnectionProfiles();
-            SelectedQuickLogin = QuickLoginOptions.Count > 1 ? QuickLoginOptions[1] : QuickLoginOptions[0];
+            SelectedQuickLogin = QuickLoginOptions.Count > 0 ? QuickLoginOptions[0] : null;
         }
 
         public event Action<bool?> CloseRequested;
 
         public ObservableCollection<QuickLoginOption> QuickLoginOptions { get; private set; }
         public ObservableCollection<ConnectionProfileOption> ConnectionProfiles { get; private set; }
+
+        public bool HasQuickLoginOptions
+        {
+            get { return QuickLoginOptions != null && QuickLoginOptions.Count > 1; }
+        }
 
         public RelayCommand CancelCommand { get; private set; }
         public RelayCommand RefreshConnectionCommand { get; private set; }
@@ -209,7 +209,8 @@ namespace School_Management_System.Wpf.ViewModels
                 }
 
                 var profile = SelectedConnectionProfile.Profile;
-                return "Server: " + profile.Host + ":" + profile.Port + "   Database: " + profile.Database;
+                return "Server: " + DisplayValue(profile.Host) + ":" + DisplayValue(profile.Port) +
+                       "   Database: " + DisplayValue(profile.Database);
             }
         }
 
@@ -310,6 +311,11 @@ namespace School_Management_System.Wpf.ViewModels
             OnPropertyChanged(nameof(LoginFormSubtitle));
         }
 
+        private static string DisplayValue(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? "(not set)" : value.Trim();
+        }
+
         private void RequestClose(bool? result)
         {
             var handler = CloseRequested;
@@ -317,6 +323,21 @@ namespace School_Management_System.Wpf.ViewModels
             {
                 handler(result);
             }
+        }
+
+        private static ObservableCollection<QuickLoginOption> BuildQuickLoginOptions()
+        {
+            var options = new ObservableCollection<QuickLoginOption>
+            {
+                new QuickLoginOption("Select account...", string.Empty, string.Empty)
+            };
+
+            foreach (var account in AppRuntimeSettings.GetDemoQuickLoginAccounts())
+            {
+                options.Add(new QuickLoginOption(account.Label, account.Username, account.Password));
+            }
+
+            return options;
         }
 
         public sealed class QuickLoginOption

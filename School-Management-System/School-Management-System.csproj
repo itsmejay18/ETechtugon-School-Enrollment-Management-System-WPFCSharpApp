@@ -286,7 +286,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="App.config" />
-    <None Include="Properties\ClickOnce\SchoolManagementSystem_ClickOnce.pfx" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

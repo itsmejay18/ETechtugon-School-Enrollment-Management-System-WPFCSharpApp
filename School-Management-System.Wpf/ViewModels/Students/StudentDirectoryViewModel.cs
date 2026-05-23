@@ -1,7 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Data;
-using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
@@ -628,21 +627,22 @@ namespace School_Management_System.Wpf.ViewModels.Students
                 return;
             }
 
-            try
-            {
-                _selectedPhotoSourcePath = dialog.FileName;
-                _selectedPhotoBytes = File.ReadAllBytes(dialog.FileName);
-                StudentPhoto = WpfUiDataHelper.LoadImage(_selectedPhotoBytes);
-                ModalStatusMessage = "Student photo loaded. Save the record to keep the new photo.";
-            }
-            catch (Exception ex)
+            byte[] bytes;
+            string photoError;
+            if (!ImageFileReader.TryReadImageBytes(dialog.FileName, out bytes, out photoError))
             {
                 MessageBox.Show(
-                    ex.Message,
+                    photoError,
                     "Student Photo",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
+                return;
             }
+
+            _selectedPhotoSourcePath = dialog.FileName;
+            _selectedPhotoBytes = bytes;
+            StudentPhoto = WpfUiDataHelper.LoadImage(_selectedPhotoBytes);
+            ModalStatusMessage = "Student photo loaded. Save the record to keep the new photo.";
         }
 
         private void RemovePhoto()
