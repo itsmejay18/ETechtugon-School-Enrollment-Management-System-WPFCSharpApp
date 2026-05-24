@@ -14,7 +14,7 @@ namespace School_Management_System.BusinessLayer.Security
 
     public static class PasswordHasher
     {
-        // Reasonable defaults for WinForms + SQL storage; can be tuned later.
+        // Reasonable defaults for desktop app + SQL storage; can be tuned later.
         private const int SaltSizeBytes = 16;
         private const int HashSizeBytes = 32;
         private const int Iterations = 100000;

@@ -1,4 +1,4 @@
-# School Management System (WinForms, .NET Framework 4.7.2)
+# School Management System (WPF, .NET Framework 4.7.2)
 
 ## User manual
 End-user documentation is available in [USER_MANUAL.TXT](USER_MANUAL.TXT).
@@ -108,10 +108,11 @@ dotnet test .\School-Management-System.Tests\School-Management-System.Tests.cspr
 The seed script may create starter accounts for local setup. Reset all starter passwords immediately before any production or defense deployment, and do not enable demo quick-login on deployed machines.
 
 ## Architecture
-- `School-Management-System/Presentation`: WinForms UI
-- `School-Management-System/BusinessLayer`: business logic/services
-- `School-Management-System/DataLayer`: MySQL data access
-- `School-Management-System/Models`: domain models
+- `School-Management-System.Wpf/Views` and `School-Management-System.Wpf/ViewModels`: WPF MVVM UI
+- `School-Management-System.Wpf/BusinessLayer`: business logic/services
+- `School-Management-System.Wpf/DataLayer`: MySQL data access
+- `School-Management-System.Wpf/Models`: domain models
+- `School-Management-System.Wpf/Common`: shared utilities
 - `DatabaseScripts/`: bootstrap, patch, and migration scripts
 
 Technical integration note: [DATA_INTEGRATION_NOTES.md](DATA_INTEGRATION_NOTES.md)

@@ -13,7 +13,7 @@ net472
 WPF configuration:
 - OutputType: WinExe
 - UseWPF: true
-- ApplicationIcon: ..\School-Management-System\assets\app-logo.ico
+- ApplicationIcon: assets\app-logo.ico
 - ApplicationManifest: app.manifest
 - LangVersion: latest
 - RootNamespace: School_Management_System.Wpf
@@ -21,15 +21,13 @@ WPF configuration:
 - Nullable: disable
 
 References and dependencies:
-- ProjectReference: ..\School-Management-System\School-Management-System.csproj
 - PackageReference: MySqlConnector 2.4.0
 - PackageReference: System.Configuration.ConfigurationManager 8.0.0
 - Reference: System.Configuration
-- Content assets pulled from legacy project and root: app-logo.ico, brand-logo.png, newbranding.png, companylogo.png, clientlogo.png
+- Content assets: app-logo.ico, brand-logo.png, newbranding.png, companylogo.png, clientlogo.png
 
 Build behavior:
-- Copies WinForms output DLLs from ..\School-Management-System\bin\$(Configuration) to the WPF output folder after build
-- Excludes School-Management-System.dll from the copied transitive dependencies
+- Builds the WPF application directly, including the business, data, common, and model source now stored inside this project
 
 Startup and application flow:
 - Entry point: App.xaml / App.xaml.cs
@@ -50,7 +48,7 @@ Startup and application flow:
       - if logout was requested, loop continues; otherwise app shuts down
 
 AppBootstrapper responsibilities:
-- Builds runtime configuration and services for WPF using the legacy WinForms data layer
+- Builds runtime configuration and services for WPF using the local data layer
 - Reads database configuration and applies current connection mode
 - Tests DB connection and throws if it fails
 - Ensures schema is current via SchemaMigrationRunner.EnsureCurrent(database)
@@ -185,8 +183,7 @@ App.xaml resources:
 - Modal styles: ModalCardBorderStyle, ModalCloseButtonStyle, ModalSectionBorderStyle
 
 Important notes:
-- The WPF project is primarily a UI shell that reuses the legacy WinForms project for business and data access.
-- Most core data services and models come from the referenced project `School-Management-System`.
+- The WPF project now owns the UI, business layer, data layer, common utilities, models, and assets.
 - The WPF layer adds a modern shell, role-based navigation, dashboard, notifications, and branding.
 
 If you want, I can also generate a second file with a full file listing from the WPF project or a mapping from views to services.

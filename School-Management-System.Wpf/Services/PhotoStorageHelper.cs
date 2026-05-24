@@ -1,17 +1,14 @@
 using System;
-using System.Drawing;
 using System.IO;
 using System.Text;
-using System.Windows.Forms;
 using School_Management_System.Common;
 
-namespace School_Management_System.Presentation.Helpers
+namespace School_Management_System.Wpf.Services
 {
     public static class PhotoStorageHelper
     {
         private static string GetStorageRoot()
         {
-            // Use a per-user writable folder so installed builds can persist photos.
             var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             if (string.IsNullOrWhiteSpace(localAppData))
             {
@@ -19,82 +16,6 @@ namespace School_Management_System.Presentation.Helpers
             }
 
             return Path.Combine(localAppData, "SchoolManagementSystem");
-        }
-
-        public static string ResolvePhotoPath(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return null;
-            }
-
-            if (Path.IsPathRooted(path))
-            {
-                return path;
-            }
-
-            var relativePath = path.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            var appDataPath = Path.Combine(GetStorageRoot(), relativePath);
-            if (File.Exists(appDataPath))
-            {
-                return appDataPath;
-            }
-
-            // Backward compatibility for records created before LocalAppData storage.
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
-        }
-
-        public static void ShowPhoto(PictureBox pictureBox, string path)
-        {
-            if (pictureBox == null) return;
-
-            var oldImage = pictureBox.Image;
-            pictureBox.Image = null;
-            if (oldImage != null)
-            {
-                oldImage.Dispose();
-            }
-
-            var fullPath = ResolvePhotoPath(path);
-            if (string.IsNullOrWhiteSpace(fullPath) || !File.Exists(fullPath))
-            {
-                return;
-            }
-
-            try
-            {
-                using (var img = Image.FromFile(fullPath))
-                {
-                    pictureBox.Image = new Bitmap(img);
-                }
-            }
-            catch
-            {
-                pictureBox.Image = null;
-            }
-        }
-
-        public static void ShowPhotoFromBytes(PictureBox pictureBox, byte[] data)
-        {
-            if (pictureBox == null) return;
-
-            var oldImage = pictureBox.Image;
-            pictureBox.Image = null;
-            oldImage?.Dispose();
-
-            if (data == null || data.Length == 0) return;
-
-            try
-            {
-                using (var ms = new MemoryStream(data))
-                {
-                    pictureBox.Image = new Bitmap(Image.FromStream(ms));
-                }
-            }
-            catch
-            {
-                pictureBox.Image = null;
-            }
         }
 
         public static byte[] ReadPhotoBytes(string filePath)

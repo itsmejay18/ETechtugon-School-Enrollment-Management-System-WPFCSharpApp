@@ -1,7 +1,7 @@
 # School Enrollment Management System User Manual
 
 ## Scope
-This manual documents the current end-user behavior of the main WinForms application in `School-Management-System`. The repository also contains a WPF project, but the fully implemented day-to-day workflows still come from the WinForms system.
+This manual documents the current end-user behavior of the WPF application in `School-Management-System.Wpf`.
 
 ## 1. System Overview
 The School Enrollment Management System is used to:

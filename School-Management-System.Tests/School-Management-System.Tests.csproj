@@ -12,7 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\School-Management-System\School-Management-System.csproj" />
     <ProjectReference Include="..\School-Management-System.Wpf\School-Management-System.Wpf.csproj" />
   </ItemGroup>
 </Project>

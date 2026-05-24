@@ -9,10 +9,10 @@ The repository now includes a focused data-integration feature that reads:
 
 Main implementation files:
 
-- `School-Management-System/BusinessLayer/Services/Integration/StudentProfileXmlReader.cs`
-- `School-Management-System/BusinessLayer/Services/Integration/EnrollmentRecordJsonReader.cs`
-- `School-Management-System/BusinessLayer/Services/Integration/StudentEnrollmentIntegrationService.cs`
-- `School-Management-System/Models/IntegratedStudentEnrollmentRecord.cs`
+- `School-Management-System.Wpf/BusinessLayer/Services/Integration/StudentProfileXmlReader.cs`
+- `School-Management-System.Wpf/BusinessLayer/Services/Integration/EnrollmentRecordJsonReader.cs`
+- `School-Management-System.Wpf/BusinessLayer/Services/Integration/StudentEnrollmentIntegrationService.cs`
+- `School-Management-System.Wpf/Models/IntegratedStudentEnrollmentRecord.cs`
 
 ## Why It Fits The Rubric
 - XML well-formedness: the XML reader uses `XmlReader` plus `XmlSerializer` and throws `InvalidDataException` when the XML is malformed or mismatched to the expected structure.

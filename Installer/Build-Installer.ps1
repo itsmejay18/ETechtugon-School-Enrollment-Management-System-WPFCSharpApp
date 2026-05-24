@@ -49,8 +49,6 @@ function Find-InitializedConfig {
     }
 
     $candidates += @(
-        (Join-Path $repoRoot "School-Management-System\bin\Debug\SMSApp.exe.config"),
-        (Join-Path $repoRoot "School-Management-System\bin\Release\SMSApp.exe.config"),
         (Join-Path $repoRoot "School-Management-System.Wpf\bin\Debug\net472\SMSApp.exe.config"),
         (Join-Path $repoRoot "School-Management-System.Wpf\bin\Release\net472\SMSApp.exe.config")
     )
@@ -133,9 +131,7 @@ function Copy-InstallerProfileSettings {
     )
 
     $targetConfigs = @(
-        (Join-Path $OutputDirectory "School-Management-System.Wpf.exe.config"),
-        (Join-Path $OutputDirectory "School-Management-System.exe.config"),
-        (Join-Path $OutputDirectory "SMSApp.exe.config")
+        (Join-Path $OutputDirectory "School-Management-System.Wpf.exe.config")
     )
 
     foreach ($targetConfig in $targetConfigs) {
