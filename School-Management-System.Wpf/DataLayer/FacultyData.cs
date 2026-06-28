@@ -345,8 +345,7 @@ WHERE FacultyId = @FacultyId;";
                 sql,
                 CommandType.Text,
                 new[] { new MySqlParameter("@FacultyId", facultyId) });
-            if (result == null || result == DBNull.Value) return null;
-            return (byte[])result;
+            return DatabaseHelper.ToByteArray(result);
         }
 
         private bool HasPhotoPathColumn()

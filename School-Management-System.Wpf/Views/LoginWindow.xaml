@@ -303,7 +303,7 @@
                                 <TextBlock Grid.Row="2"
                                            Margin="0,24,0,0"
                                            Style="{StaticResource SectionLabelStyle}"
-                                           Text="Quick login preset"
+                                           Text="Select user"
                                            Visibility="{Binding HasQuickLoginOptions, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                                 <ComboBox x:Name="QuickLoginCombo"
@@ -477,7 +477,7 @@
                                         </Grid.ColumnDefinitions>
 
                                         <Button Margin="0,0,10,0"
-                                                Content="Sign in"
+                                                Content="Sign in selected user"
                                                 Style="{StaticResource LoginPrimaryButtonStyle}"
                                                 Click="LoginButton_Click" />
 

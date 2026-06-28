@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using MySqlConnector;
 using School_Management_System.Common;
 using School_Management_System.DataLayer.Configuration;
@@ -303,6 +304,46 @@ namespace School_Management_System.DataLayer
                 FileLogger.LogError("DatabaseHelper.ExecuteScalar", ex);
                 throw;
             }
+        }
+
+        public static byte[] ToByteArray(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return null;
+            }
+
+            var bytes = value as byte[];
+            if (bytes != null)
+            {
+                return bytes.Length == 0 ? null : bytes;
+            }
+
+            var stream = value as Stream;
+            if (stream != null)
+            {
+                using (var memory = new MemoryStream())
+                {
+                    stream.CopyTo(memory);
+                    return memory.Length == 0 ? null : memory.ToArray();
+                }
+            }
+
+            var text = value as string;
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                try
+                {
+                    var decoded = Convert.FromBase64String(text.Trim());
+                    return decoded.Length == 0 ? null : decoded;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            return null;
         }
 
         public long ExecuteInsert(string sql, CommandType commandType, IEnumerable<MySqlParameter> parameters)

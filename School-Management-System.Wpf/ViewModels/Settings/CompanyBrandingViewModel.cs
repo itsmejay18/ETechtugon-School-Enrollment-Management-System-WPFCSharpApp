@@ -326,7 +326,7 @@ namespace School_Management_System.Wpf.ViewModels.Settings
                 Title = title
             };
 
-            if (dialog.ShowDialog() != true)
+            if (dialog.ShowDialog(GetDialogOwner()) != true)
             {
                 return null;
             }
@@ -339,11 +339,17 @@ namespace School_Management_System.Wpf.ViewModels.Settings
             }
 
             MessageBox.Show(
+                GetDialogOwner(),
                 errorMessage,
                 "Company Branding",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             return null;
+        }
+
+        private static Window GetDialogOwner()
+        {
+            return Application.Current == null ? null : Application.Current.MainWindow;
         }
 
         private void LogBrandingTransaction(BrandingProfile profile)

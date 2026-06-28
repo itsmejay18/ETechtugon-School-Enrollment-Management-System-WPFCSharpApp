@@ -74,8 +74,8 @@ LIMIT 1;";
                 SupportEmail = Convert.ToString(row["SupportEmail"]),
                 SupportPhoneNumber = Convert.ToString(row["SupportPhoneNumber"]),
                 CompanyAddress = Convert.ToString(row["CompanyAddress"]),
-                BrandLogoData = row["BrandLogoData"] == DBNull.Value ? null : (byte[])row["BrandLogoData"],
-                CompactLogoData = row["CompactLogoData"] == DBNull.Value ? null : (byte[])row["CompactLogoData"]
+                BrandLogoData = DatabaseHelper.ToByteArray(row["BrandLogoData"]),
+                CompactLogoData = DatabaseHelper.ToByteArray(row["CompactLogoData"])
             };
         }
 

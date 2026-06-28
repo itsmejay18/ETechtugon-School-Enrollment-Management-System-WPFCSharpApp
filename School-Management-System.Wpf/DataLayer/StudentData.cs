@@ -563,8 +563,7 @@ LIMIT 1;";
                 sql,
                 CommandType.Text,
                 new[] { new MySqlParameter("@StudentId", studentId) });
-            if (result == null || result == DBNull.Value) return null;
-            return (byte[])result;
+            return DatabaseHelper.ToByteArray(result);
         }
 
         private bool HasPhotoDataColumn()

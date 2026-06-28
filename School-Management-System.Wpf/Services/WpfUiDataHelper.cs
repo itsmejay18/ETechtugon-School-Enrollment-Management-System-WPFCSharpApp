@@ -27,6 +27,7 @@ namespace School_Management_System.Wpf.Services
                     var image = new BitmapImage();
                     image.BeginInit();
                     image.CacheOption = BitmapCacheOption.OnLoad;
+                    image.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
                     image.StreamSource = stream;
                     image.EndInit();
                     image.Freeze();
@@ -58,6 +59,7 @@ namespace School_Management_System.Wpf.Services
                 var image = new BitmapImage();
                 image.BeginInit();
                 image.CacheOption = BitmapCacheOption.OnLoad;
+                image.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
                 image.UriSource = new Uri(fullPath, UriKind.Absolute);
                 image.EndInit();
                 image.Freeze();

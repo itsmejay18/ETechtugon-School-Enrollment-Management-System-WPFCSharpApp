@@ -16,8 +16,8 @@ namespace School_Management_System.Wpf.Services
 
         public static ImageSource LoadClientLogo()
         {
-            return LoadImageSource(FindClientLogoAssetPath(), true)
-                   ?? LoadImageSource(SchoolBranding.BrandLogoData, true)
+            return LoadImageSource(SchoolBranding.BrandLogoData, true)
+                   ?? LoadImageSource(FindClientLogoAssetPath(), true)
                    ?? LoadImageSource(FindRasterBrandAssetPath(), true)
                    ?? LoadImageSource(FindAppIconAssetPath());
         }
@@ -35,9 +35,9 @@ namespace School_Management_System.Wpf.Services
 
         public static ImageSource LoadHeaderLogo()
         {
-            return LoadImageSource(FindCompanyLogoAssetPath(), true)
-                   ?? LoadImageSource(SchoolBranding.CompactLogoData, true)
+            return LoadImageSource(SchoolBranding.CompactLogoData, true)
                    ?? LoadImageSource(SchoolBranding.BrandLogoData, true)
+                   ?? LoadImageSource(FindCompanyLogoAssetPath(), true)
                    ?? LoadBrandLogo();
         }
 
@@ -64,6 +64,7 @@ namespace School_Management_System.Wpf.Services
                     var image = new BitmapImage();
                     image.BeginInit();
                     image.CacheOption = BitmapCacheOption.OnLoad;
+                    image.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
                     image.StreamSource = stream;
                     image.EndInit();
                     return PrepareImageSource(image, stripSolidWhiteBackground);
@@ -105,6 +106,7 @@ namespace School_Management_System.Wpf.Services
                 var image = new BitmapImage();
                 image.BeginInit();
                 image.CacheOption = BitmapCacheOption.OnLoad;
+                image.CreateOptions = BitmapCreateOptions.IgnoreColorProfile;
                 image.UriSource = new Uri(path, UriKind.Absolute);
                 image.EndInit();
                 return PrepareImageSource(image, stripSolidWhiteBackground);

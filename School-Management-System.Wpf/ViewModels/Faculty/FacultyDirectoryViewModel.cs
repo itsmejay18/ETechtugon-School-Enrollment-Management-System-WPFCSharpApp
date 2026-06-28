@@ -96,8 +96,11 @@ namespace School_Management_System.Wpf.ViewModels.Faculty
                 var facultyCode = WpfUiDataHelper.FormatValue(CurrentSelectedRecord["FacultyCode"]);
                 var lastName = WpfUiDataHelper.FormatValue(CurrentSelectedRecord["LastName"]);
                 var firstName = WpfUiDataHelper.FormatValue(CurrentSelectedRecord["FirstName"]);
+                var photoPath = CurrentSelectedRecord.Row.Table.Columns.Contains("PhotoPath")
+                    ? WpfUiDataHelper.FormatValue(CurrentSelectedRecord["PhotoPath"])
+                    : string.Empty;
 
-                FacultyPhoto = WpfUiDataHelper.LoadImage(_facultyService.GetPhotoData(facultyId));
+                FacultyPhoto = WpfUiDataHelper.LoadImage(_facultyService.GetPhotoData(facultyId), photoPath);
                 Assignments = (_classScheduleService.GetByFaculty(facultyId) ?? new DataTable()).DefaultView;
                 ProfileSummary = facultyCode + " | " + lastName + ", " + firstName;
             }

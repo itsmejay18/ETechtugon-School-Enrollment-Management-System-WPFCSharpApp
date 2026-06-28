@@ -17,6 +17,7 @@ namespace School_Management_System.DataLayer.Configuration
             {
                 EnsureMigrationTable(db);
                 ApplyMigration2026030701(db);
+                ApplyMigration2026030704(db);
                 ApplyMigration2026030702(db);
                 ApplyMigration2026030703(db);
                 ApplyMigration2026031501(db);
@@ -87,6 +88,24 @@ ON DUPLICATE KEY UPDATE
             EnsureColumnExists(db, "student", "PhotoPath", "ALTER TABLE `student` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `Address`;");
 
             MarkApplied(db, migrationId, "Ensure photo-path columns in users/faculty/student.");
+        }
+
+        private static void ApplyMigration2026030704(DatabaseHelper db)
+        {
+            const string migrationId = "2026030704";
+            if (IsApplied(db, migrationId))
+            {
+                return;
+            }
+
+            EnsureColumnExists(db, "users", "PhotoPath", "ALTER TABLE `users` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `DisplayName`;");
+            EnsureColumnExists(db, "faculty", "PhotoPath", "ALTER TABLE `faculty` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `Address`;");
+            EnsureColumnExists(db, "student", "PhotoPath", "ALTER TABLE `student` ADD COLUMN `PhotoPath` varchar(260) DEFAULT NULL AFTER `Address`;");
+            EnsureColumnExists(db, "users", "PhotoData", "ALTER TABLE `users` ADD COLUMN `PhotoData` LONGBLOB NULL AFTER `PhotoPath`;");
+            EnsureColumnExists(db, "faculty", "PhotoData", "ALTER TABLE `faculty` ADD COLUMN `PhotoData` LONGBLOB NULL AFTER `PhotoPath`;");
+            EnsureColumnExists(db, "student", "PhotoData", "ALTER TABLE `student` ADD COLUMN `PhotoData` LONGBLOB NULL AFTER `PhotoPath`;");
+
+            MarkApplied(db, migrationId, "Ensure photo BLOB columns in users/faculty/student.");
         }
 
         private static void ApplyMigration2026030702(DatabaseHelper db)

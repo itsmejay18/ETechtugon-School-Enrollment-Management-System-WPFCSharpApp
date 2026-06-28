@@ -6,7 +6,7 @@ namespace School_Management_System.Common
 {
     public static class ImageFileReader
     {
-        public const int MaxImageBytes = 2 * 1024 * 1024;
+        public const int MaxImageBytes = 8 * 1024 * 1024;
 
         public static bool TryReadImageBytes(string filePath, out byte[] bytes, out string errorMessage)
         {
@@ -45,7 +45,7 @@ namespace School_Management_System.Common
 
             if (info.Length > MaxImageBytes)
             {
-                errorMessage = "The selected image is too large. Use an image up to 2 MB.";
+                errorMessage = "The selected image is too large. Use an image up to 8 MB.";
                 return false;
             }
 

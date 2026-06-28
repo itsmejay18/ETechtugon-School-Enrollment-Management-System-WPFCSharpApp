@@ -1,0 +1,496 @@
+<UserControl x:Class="School_Management_System.Wpf.Views.Academic.LegacyAcademicWorkspaceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <Style x:Key="LegacyFieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+        </Style>
+
+        <Style x:Key="LegacySectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Margin" Value="0,0,0,12" />
+        </Style>
+
+        <Style x:Key="LegacyFieldTextBoxStyle" TargetType="TextBox">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="LegacySectionBorderStyle" TargetType="Border">
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="Margin" Value="0,0,0,18" />
+            <Setter Property="Background" Value="#FFF8FBFF" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+        </Style>
+
+        <Style x:Key="LegacyDataGridStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="True" />
+            <Setter Property="CanUserDeleteRows" Value="True" />
+            <Setter Property="CanUserResizeRows" Value="False" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="RowHeaderWidth" Value="0" />
+            <Setter Property="SelectionMode" Value="Single" />
+            <Setter Property="SelectionUnit" Value="FullRow" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="White" />
+        </Style>
+
+        <ItemsPanelTemplate x:Key="WrapFieldsPanelTemplate">
+            <WrapPanel />
+        </ItemsPanelTemplate>
+
+        <DataTemplate x:Key="GeneratedFieldTemplate">
+            <StackPanel Width="{Binding Width}"
+                        Margin="0,0,12,12">
+                <TextBlock Text="{Binding Label}"
+                           Style="{StaticResource LegacyFieldLabelStyle}" />
+                <TextBox Margin="0,6,0,0"
+                         Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource LegacyFieldTextBoxStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsMultiline}" Value="True">
+                                    <Setter Property="Height" Value="78" />
+                                    <Setter Property="AcceptsReturn" Value="True" />
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                    <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+                                    <Setter Property="VerticalContentAlignment" Value="Top" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource CardBorderStyle}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Margin="0,0,0,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="{Binding Title}"
+                               FontSize="26"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextBrush}" />
+                    <TextBlock Margin="0,8,0,0"
+                               Text="{Binding Description}"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                </StackPanel>
+
+                <Border Grid.Column="1"
+                        Margin="18,0,0,0"
+                        Padding="12,7"
+                        VerticalAlignment="Top"
+                        Background="#FFEAF4FF"
+                        BorderBrush="{StaticResource BorderBrushSoft}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                    <TextBlock Text="{Binding StatusText}"
+                               FontSize="12.5"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryBrush}" />
+                </Border>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <Grid>
+                    <StackPanel Visibility="{Binding IsStudentDataFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Header fields"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <ItemsControl ItemsSource="{Binding StudentHeaderFields}"
+                                              ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                              ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                            </StackPanel>
+                        </Border>
+
+                        <TabControl MinHeight="360"
+                                    Margin="0,0,0,18">
+                            <TabItem Header="Personal Data">
+                                <ScrollViewer Padding="16"
+                                              VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding StudentPersonalFields}"
+                                                  ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                                  ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                                </ScrollViewer>
+                            </TabItem>
+                            <TabItem Header="Other Info">
+                                <ScrollViewer Padding="16"
+                                              VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding StudentOtherInfoFields}"
+                                                  ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                                  ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
+
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Footer tags"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <ItemsControl ItemsSource="{Binding StudentFooterFields}"
+                                              ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                              ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsSubjectEntryFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Inputs"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <ItemsControl ItemsSource="{Binding SubjectCoreFields}"
+                                              ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                              ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Units/Hours"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <ItemsControl ItemsSource="{Binding SubjectUnitsFields}"
+                                              ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                              ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Others"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <ItemsControl ItemsSource="{Binding SubjectOtherFields}"
+                                              ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                              ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                                <StackPanel Orientation="Horizontal"
+                                            Margin="0,4,0,0">
+                                    <StackPanel Width="190"
+                                                Margin="0,0,12,12">
+                                        <TextBlock Text="Lab Type (C, L, or BLANK)"
+                                                   Style="{StaticResource LegacyFieldLabelStyle}" />
+                                        <ComboBox Margin="0,6,0,0"
+                                                  ItemsSource="{Binding LabTypeOptions}"
+                                                  SelectedItem="{Binding SelectedLabType, Mode=TwoWay}" />
+                                    </StackPanel>
+                                    <CheckBox Margin="6,25,0,0"
+                                              VerticalAlignment="Top"
+                                              Content="Include Grade in GPA"
+                                              IsChecked="{Binding IncludeGradeInGpa, Mode=TwoWay}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsPrerequisiteFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Pre-requisite mapping"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <DataGrid MinHeight="320"
+                                          Style="{StaticResource LegacyDataGridStyle}"
+                                          ItemsSource="{Binding PrerequisiteRows}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Subject Code" Binding="{Binding SubjectCode}" Width="170" />
+                                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*" />
+                                        <DataGridTextColumn Header="Pre-requisite" Binding="{Binding Prerequisite}" Width="200" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsOfferedSubjectFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Dropdowns/Inputs"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <ItemsControl ItemsSource="{Binding OfferedSubjectFields}"
+                                              ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                              ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                                <TextBlock Margin="0,8,0,8"
+                                           Text="Offering Type"
+                                           Style="{StaticResource LegacyFieldLabelStyle}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton Content="Regular"
+                                                 GroupName="OfferingType"
+                                                 IsChecked="True"
+                                                 Margin="0,0,22,0" />
+                                    <RadioButton Content="Requested"
+                                                 GroupName="OfferingType" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Lecture Schedule"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <DataGrid MinHeight="260"
+                                          Style="{StaticResource LegacyDataGridStyle}"
+                                          ItemsSource="{Binding LectureSchedules}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Day" Binding="{Binding Day}" Width="160" />
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="220" />
+                                        <DataGridTextColumn Header="Room" Binding="{Binding Room}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsBlockSetupVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="280" />
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Style="{StaticResource LegacySectionBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Block Codes"
+                                               Style="{StaticResource LegacySectionTitleStyle}" />
+                                    <ListBox MinHeight="340"
+                                             ItemsSource="{Binding BlockCodes}"
+                                             DisplayMemberPath="DisplayName" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2"
+                                    Style="{StaticResource LegacySectionBorderStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Linked subjects"
+                                               Style="{StaticResource LegacySectionTitleStyle}" />
+                                    <DataGrid MinHeight="340"
+                                              Style="{StaticResource LegacyDataGridStyle}"
+                                              ItemsSource="{Binding BlockSchedules}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Subcode" Binding="{Binding Subcode}" Width="170" />
+                                            <DataGridTextColumn Header="Section" Binding="{Binding Section}" Width="150" />
+                                            <DataGridTextColumn Header="Days" Binding="{Binding Days}" Width="150" />
+                                            <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="*" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsFeeMatrixVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding MatrixTitle}"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <DataGrid MinHeight="390"
+                                          Style="{StaticResource LegacyDataGridStyle}"
+                                          ItemsSource="{Binding FeeMatrixRows}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="PROG CODE" Binding="{Binding ProgCode}" Width="170" />
+                                        <DataGridCheckBoxColumn Header="NightClass" Binding="{Binding NightClass}" Width="150" />
+                                        <DataGridTextColumn Header="AMOUNT per UNIT" Binding="{Binding AmountPerUnit}" Width="210" />
+                                        <DataGridTextColumn Header="SY" Binding="{Binding SY}" Width="170" />
+                                        <DataGridTextColumn Header="Semester" Binding="{Binding Semester}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsValidGradesVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Valid Grades Setup"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <DataGrid MinHeight="390"
+                                          Style="{StaticResource LegacyDataGridStyle}"
+                                          ItemsSource="{Binding ValidGradeRows}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Grade" Binding="{Binding Grade}" Width="120" />
+                                        <DataGridTextColumn Header="Grade Equiv" Binding="{Binding GradeEquiv}" Width="190" />
+                                        <DataGridCheckBoxColumn Header="Allow Completion Grade" Binding="{Binding AllowCompletionGrade}" Width="190" />
+                                        <DataGridCheckBoxColumn Header="Need Completion" Binding="{Binding NeedCompletion}" Width="160" />
+                                        <DataGridCheckBoxColumn Header="Passing Grade" Binding="{Binding PassingGrade}" Width="150" />
+                                        <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsSemesterListVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Semester List Setup"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <DataGrid MinHeight="390"
+                                          Style="{StaticResource LegacyDataGridStyle}"
+                                          ItemsSource="{Binding SemesterRows}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="SY" Binding="{Binding SY}" Width="170" />
+                                        <DataGridTextColumn Header="Semester" Binding="{Binding Semester}" Width="170" />
+                                        <DataGridCheckBoxColumn Header="CONTROL" Binding="{Binding Control}" Width="130" />
+                                        <DataGridCheckBoxColumn Header="CURRENT" Binding="{Binding Current}" Width="130" />
+                                        <DataGridCheckBoxColumn Header="BLOCK" Binding="{Binding Block}" Width="130" />
+                                        <DataGridTextColumn Header="COR Remarks" Binding="{Binding CorRemarks}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsRegistrationFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="User Access Toggles"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <ItemsControl ItemsSource="{Binding RegistrationAccessToggles}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Margin="0,0,24,12"
+                                                      Content="{Binding Label}"
+                                                      IsChecked="{Binding Enabled, Mode=TwoWay}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Student Header"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <ItemsControl ItemsSource="{Binding RegistrationStudentFields}"
+                                              ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                              ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Enrolled Subjects"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <DataGrid MinHeight="320"
+                                          Style="{StaticResource LegacyDataGridStyle}"
+                                          ItemsSource="{Binding EnrolledSubjects}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Course No" Binding="{Binding CourseNo}" Width="130" />
+                                        <DataGridTextColumn Header="Sctn" Binding="{Binding Sctn}" Width="80" />
+                                        <DataGridTextColumn Header="Descriptive Title" Binding="{Binding DescriptiveTitle}" Width="*" />
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="140" />
+                                        <DataGridTextColumn Header="Days" Binding="{Binding Days}" Width="100" />
+                                        <DataGridTextColumn Header="Room" Binding="{Binding Room}" Width="110" />
+                                        <DataGridTextColumn Header="Lec" Binding="{Binding Lec}" Width="70" />
+                                        <DataGridTextColumn Header="Lab" Binding="{Binding Lab}" Width="70" />
+                                        <DataGridTextColumn Header="Grade" Binding="{Binding Grade}" Width="90" />
+                                        <DataGridTextColumn Header="Compl" Binding="{Binding Compl}" Width="90" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Enroll to Block"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Margin="0,0,10,0" />
+                                <Button Content="Add"
+                                        Style="{StaticResource NeutralButtonStyle}"
+                                        Margin="0,0,10,0" />
+                                <Button Content="Delete"
+                                        Style="{StaticResource DangerButtonStyle}"
+                                        Margin="0,0,10,0" />
+                                <Button Content="Assessment"
+                                        Style="{StaticResource NeutralButtonStyle}"
+                                        Margin="0,0,10,0" />
+                                <Button Content="Print COR"
+                                        Style="{StaticResource NeutralButtonStyle}"
+                                        Margin="0,0,10,0" />
+                                <Button Content="Close"
+                                        Style="{StaticResource NeutralButtonStyle}" />
+                            </StackPanel>
+
+                            <Border Grid.Column="1"
+                                    Padding="14,9"
+                                    Background="#FFFFFFFF"
+                                    BorderBrush="{StaticResource BorderBrushSoft}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                <TextBlock Text="{Binding TotalUnitsText}"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource TextBrush}" />
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsGenericSetupVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Reference Fields"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <ItemsControl ItemsSource="{Binding GenericFields}"
+                                              ItemTemplate="{StaticResource GeneratedFieldTemplate}"
+                                              ItemsPanel="{StaticResource WrapFieldsPanelTemplate}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Records"
+                                           Style="{StaticResource LegacySectionTitleStyle}" />
+                                <DataGrid MinHeight="320"
+                                          Style="{StaticResource LegacyDataGridStyle}"
+                                          ItemsSource="{Binding GenericRows}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="150" />
+                                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*" />
+                                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="180" />
+                                        <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="220" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

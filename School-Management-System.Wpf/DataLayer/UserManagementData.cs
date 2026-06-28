@@ -327,8 +327,7 @@ WHERE table_schema = DATABASE()
                 sql,
                 CommandType.Text,
                 new[] { new MySqlParameter("@UserId", userId) });
-            if (result == null || result == DBNull.Value) return null;
-            return (byte[])result;
+            return DatabaseHelper.ToByteArray(result);
         }
 
         private bool HasPhotoDataColumn()

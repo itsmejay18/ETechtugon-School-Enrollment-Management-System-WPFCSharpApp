@@ -55,7 +55,7 @@ namespace School_Management_System.Tests
 
             Assert.That(ok, Is.False);
             Assert.That(bytes, Is.Null);
-            Assert.That(errorMessage, Is.EqualTo("The selected image is too large. Use an image up to 2 MB."));
+            Assert.That(errorMessage, Is.EqualTo("The selected image is too large. Use an image up to " + (ImageFileReader.MaxImageBytes / 1024 / 1024) + " MB."));
         }
     }
 }

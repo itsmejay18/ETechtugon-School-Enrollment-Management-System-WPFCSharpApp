@@ -34,7 +34,7 @@ namespace School_Management_System.Wpf.ViewModels
 
             StatusMessage = string.Empty;
             LoadConnectionProfiles();
-            SelectedQuickLogin = QuickLoginOptions.Count > 0 ? QuickLoginOptions[0] : null;
+            SelectedQuickLogin = QuickLoginOptions.Count > 1 ? QuickLoginOptions[1] : (QuickLoginOptions.Count > 0 ? QuickLoginOptions[0] : null);
         }
 
         public event Action<bool?> CloseRequested;
@@ -137,10 +137,11 @@ namespace School_Management_System.Wpf.ViewModels
             get { return _selectedQuickLogin; }
             set
             {
-                if (SetProperty(ref _selectedQuickLogin, value) && value != null && !string.IsNullOrWhiteSpace(value.Username))
-                {
-                    Username = value.Username;
-                }
+            if (SetProperty(ref _selectedQuickLogin, value) && value != null && !string.IsNullOrWhiteSpace(value.Username))
+            {
+                Username = value.Username;
+                SetStatus("Ready to sign in as " + value.Label + ".", false, true);
+            }
             }
         }
 

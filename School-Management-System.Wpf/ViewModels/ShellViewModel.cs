@@ -8,6 +8,7 @@ using School_Management_System.Common;
 using School_Management_System.DataLayer.Configuration;
 using School_Management_System.Models;
 using School_Management_System.Wpf.Infrastructure;
+using School_Management_System.Wpf.ViewModels.Academic;
 using School_Management_System.Wpf.Services;
 using School_Management_System.Wpf.ViewModels.Calendar;
 using School_Management_System.Wpf.ViewModels.Courses;
@@ -92,8 +93,10 @@ namespace School_Management_System.Wpf.ViewModels
             ShowProfileCommand = new RelayCommand(ShowProfile);
             ShowNotificationsCommand = new RelayCommand(ToggleNotifications);
             CloseNotificationsCommand = new RelayCommand(CloseNotifications);
+            OpenLegacyFormCommand = new RelayCommand<string>(OpenLegacyForm);
             BackCommand = new RelayCommand(ShowDashboard, () => CanGoBack);
             LogoutCommand = new RelayCommand(Logout);
+            ExitCommand = new RelayCommand(ExitApplication);
 
             SchoolBranding.BrandingChanged += SchoolBranding_BrandingChanged;
             if (_activityLogService != null)
@@ -299,8 +302,10 @@ namespace School_Management_System.Wpf.ViewModels
         public RelayCommand ShowProfileCommand { get; private set; }
         public RelayCommand ShowNotificationsCommand { get; private set; }
         public RelayCommand CloseNotificationsCommand { get; private set; }
+        public RelayCommand<string> OpenLegacyFormCommand { get; private set; }
         public RelayCommand BackCommand { get; private set; }
         public RelayCommand LogoutCommand { get; private set; }
+        public RelayCommand ExitCommand { get; private set; }
 
         public bool IsNotificationModalOpen
         {
@@ -401,6 +406,13 @@ namespace School_Management_System.Wpf.ViewModels
             Activate("profile", Profile, "Profile", "Signed-in account details and session information.");
         }
 
+        private void OpenLegacyForm(string formKey)
+        {
+            var workspace = new LegacyAcademicWorkspaceViewModel(formKey);
+            var key = "legacy-" + (workspace.FormKey ?? string.Empty).ToLowerInvariant();
+            Activate(key, workspace, workspace.Title, workspace.Description);
+        }
+
         private void ToggleNotifications()
         {
             if (!IsNotificationModalOpen)
@@ -422,6 +434,14 @@ namespace School_Management_System.Wpf.ViewModels
             if (action != null)
             {
                 action();
+            }
+        }
+
+        private static void ExitApplication()
+        {
+            if (Application.Current != null)
+            {
+                Application.Current.Shutdown(0);
             }
         }
 

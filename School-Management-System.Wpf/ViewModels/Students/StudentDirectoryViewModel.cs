@@ -621,7 +621,7 @@ namespace School_Management_System.Wpf.ViewModels.Students
                 Title = "Select student photo"
             };
 
-            if (dialog.ShowDialog() != true)
+            if (dialog.ShowDialog(GetDialogOwner()) != true)
             {
                 return;
             }
@@ -631,6 +631,7 @@ namespace School_Management_System.Wpf.ViewModels.Students
             if (!ImageFileReader.TryReadImageBytes(dialog.FileName, out bytes, out photoError))
             {
                 MessageBox.Show(
+                    GetDialogOwner(),
                     photoError,
                     "Student Photo",
                     MessageBoxButton.OK,
@@ -642,6 +643,11 @@ namespace School_Management_System.Wpf.ViewModels.Students
             _selectedPhotoBytes = bytes;
             StudentPhoto = WpfUiDataHelper.LoadImage(_selectedPhotoBytes);
             ModalStatusMessage = "Student photo loaded. Save the record to keep the new photo.";
+        }
+
+        private static Window GetDialogOwner()
+        {
+            return Application.Current == null ? null : Application.Current.MainWindow;
         }
 
         private void RemovePhoto()
