@@ -22,6 +22,7 @@ namespace School_Management_System.Wpf.ViewModels
 {
     public sealed class ShellViewModel : ViewModelBase
     {
+        private readonly AppBootstrapper _bootstrapper;
         private readonly Action _logoutAction;
         private readonly ActivityLogService _activityLogService;
         private INotifyPropertyChanged _modalHostNotifier;
@@ -35,50 +36,11 @@ namespace School_Management_System.Wpf.ViewModels
         {
             if (bootstrapper == null) throw new ArgumentNullException(nameof(bootstrapper));
 
+            _bootstrapper = bootstrapper;
             CurrentUser = currentUser;
             _logoutAction = logoutAction;
             _activityLogService = bootstrapper.ActivityLogService;
 
-            Dashboard = new DashboardHomeViewModel(bootstrapper, currentUser);
-            Analytics = new AnalyticsViewModel(bootstrapper);
-            Settings = new SettingsViewModel(bootstrapper, currentUser, SettingsWorkspaceKind.System);
-            CurriculumSettings = new SettingsViewModel(bootstrapper, currentUser, SettingsWorkspaceKind.Curriculum);
-            Students = new StudentDirectoryViewModel(
-                bootstrapper.StudentService,
-                bootstrapper.SystemSettingService,
-                bootstrapper.ActivityLogService,
-                bootstrapper.CurriculumService);
-            Faculty = new FacultyDirectoryViewModel(
-                bootstrapper.FacultyService,
-                bootstrapper.ClassScheduleService);
-            Enrollment = new EnrollmentWorkspaceViewModel(
-                bootstrapper.StudentService,
-                bootstrapper.EnrollmentService,
-                bootstrapper.CourseService,
-                bootstrapper.LookupService,
-                bootstrapper.SectionService,
-                bootstrapper.CurriculumService,
-                bootstrapper.ClassScheduleService,
-                bootstrapper.SystemSettingService,
-                bootstrapper.ActivityLogService);
-            Schedule = new ScheduleBoardViewModel(
-                bootstrapper.SectionService,
-                bootstrapper.FacultyService,
-                bootstrapper.ClassScheduleService,
-                bootstrapper.SystemSettingService);
-            Calendar = new AcademicCalendarViewModel(
-                bootstrapper.LookupService,
-                bootstrapper.SectionService);
-            Profile = new ProfileWorkspaceViewModel(
-                SchoolBranding.ApplicationTitle,
-                SchoolBranding.ShellWorkspaceTagline,
-                SchoolBranding.SupportEmail + "  |  " + SchoolBranding.SupportPhoneNumber,
-                CurrentModeDisplay,
-                CurrentUserDisplay,
-                CurrentUserRole,
-                WorkspaceLabel,
-                ShowDashboard,
-                Logout);
             Notifications = new ObservableCollection<NotificationItemViewModel>();
 
             ShowDashboardCommand = new RelayCommand(ShowDashboard);
@@ -103,7 +65,6 @@ namespace School_Management_System.Wpf.ViewModels
             {
                 _activityLogService.ActivityLogged += ActivityLogService_ActivityLogged;
             }
-            RefreshNotifications();
             ShowDashboard();
         }
 
@@ -355,6 +316,7 @@ namespace School_Management_System.Wpf.ViewModels
 
         private void ShowDashboard()
         {
+            EnsureDashboard();
             Dashboard.RefreshMetrics();
             Dashboard.RefreshClock();
             Activate("dashboard", Dashboard, "Launch board", "Dashboard tiles and academic workspace status.");
@@ -362,48 +324,167 @@ namespace School_Management_System.Wpf.ViewModels
 
         private void ShowStudents()
         {
+            EnsureStudents();
             Activate("students", Students, "Student Profile", "Student records, academic history, curriculum, and enrollment entry points.");
         }
 
         private void ShowFaculty()
         {
+            EnsureFaculty();
             Activate("faculty", Faculty, "Faculty", "Faculty records and teaching staff management.");
         }
 
         private void ShowEnrollment()
         {
+            EnsureEnrollment();
             Activate("enrollment", Enrollment, "Enrollment", "Enrollment intake and student subject confirmation.");
         }
 
         private void ShowSchedule()
         {
+            EnsureSchedule();
             Activate("schedule", Schedule, "Schedule", "Section scheduling, room usage, and faculty load.");
         }
 
         private void ShowCalendar()
         {
+            EnsureCalendar();
             Activate("calendar", Calendar, "Calendar", "Academic dates, reminders, and school timeline planning.");
         }
 
         private void ShowAnalytics()
         {
+            EnsureAnalytics();
             Analytics.RefreshMetrics();
             Activate("analytics", Analytics, "Analytics", "Record counts and school database overview.");
         }
 
         private void ShowCurriculumSettings()
         {
+            EnsureCurriculumSettings();
             Activate("curriculum-settings", CurriculumSettings, "Curriculum Settings", "Curriculum codes, subject codes, sections, and academic references.");
         }
 
         private void ShowSettings()
         {
+            EnsureSettings();
             Activate("settings", Settings, "System Settings", "Company branding, database activity, user access, and system controls.");
         }
 
         private void ShowProfile()
         {
+            EnsureProfile();
             Activate("profile", Profile, "Profile", "Signed-in account details and session information.");
+        }
+
+        private void EnsureDashboard()
+        {
+            if (Dashboard == null)
+            {
+                Dashboard = new DashboardHomeViewModel(_bootstrapper, CurrentUser);
+            }
+        }
+
+        private void EnsureAnalytics()
+        {
+            if (Analytics == null)
+            {
+                Analytics = new AnalyticsViewModel(_bootstrapper);
+            }
+        }
+
+        private void EnsureStudents()
+        {
+            if (Students == null)
+            {
+                Students = new StudentDirectoryViewModel(
+                    _bootstrapper.StudentService,
+                    _bootstrapper.SystemSettingService,
+                    _bootstrapper.ActivityLogService,
+                    _bootstrapper.CurriculumService);
+            }
+        }
+
+        private void EnsureFaculty()
+        {
+            if (Faculty == null)
+            {
+                Faculty = new FacultyDirectoryViewModel(
+                    _bootstrapper.FacultyService,
+                    _bootstrapper.ClassScheduleService);
+            }
+        }
+
+        private void EnsureEnrollment()
+        {
+            if (Enrollment == null)
+            {
+                Enrollment = new EnrollmentWorkspaceViewModel(
+                    _bootstrapper.StudentService,
+                    _bootstrapper.EnrollmentService,
+                    _bootstrapper.CourseService,
+                    _bootstrapper.LookupService,
+                    _bootstrapper.SectionService,
+                    _bootstrapper.CurriculumService,
+                    _bootstrapper.ClassScheduleService,
+                    _bootstrapper.SystemSettingService,
+                    _bootstrapper.ActivityLogService);
+            }
+        }
+
+        private void EnsureSchedule()
+        {
+            if (Schedule == null)
+            {
+                Schedule = new ScheduleBoardViewModel(
+                    _bootstrapper.SectionService,
+                    _bootstrapper.FacultyService,
+                    _bootstrapper.ClassScheduleService,
+                    _bootstrapper.SystemSettingService);
+            }
+        }
+
+        private void EnsureCalendar()
+        {
+            if (Calendar == null)
+            {
+                Calendar = new AcademicCalendarViewModel(
+                    _bootstrapper.LookupService,
+                    _bootstrapper.SectionService);
+            }
+        }
+
+        private void EnsureSettings()
+        {
+            if (Settings == null)
+            {
+                Settings = new SettingsViewModel(_bootstrapper, CurrentUser, SettingsWorkspaceKind.System);
+            }
+        }
+
+        private void EnsureCurriculumSettings()
+        {
+            if (CurriculumSettings == null)
+            {
+                CurriculumSettings = new SettingsViewModel(_bootstrapper, CurrentUser, SettingsWorkspaceKind.Curriculum);
+            }
+        }
+
+        private void EnsureProfile()
+        {
+            if (Profile == null)
+            {
+                Profile = new ProfileWorkspaceViewModel(
+                    SchoolBranding.ApplicationTitle,
+                    SchoolBranding.ShellWorkspaceTagline,
+                    SchoolBranding.SupportEmail + "  |  " + SchoolBranding.SupportPhoneNumber,
+                    CurrentModeDisplay,
+                    CurrentUserDisplay,
+                    CurrentUserRole,
+                    WorkspaceLabel,
+                    ShowDashboard,
+                    Logout);
+            }
         }
 
         private void OpenLegacyForm(string formKey)

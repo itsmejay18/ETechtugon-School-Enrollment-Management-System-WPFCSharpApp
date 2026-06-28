@@ -11,6 +11,8 @@ namespace School_Management_System.DataLayer
 {
     public sealed class DatabaseHelper
     {
+        private static readonly object ConnectionResolutionSync = new object();
+        private static readonly Dictionary<string, string> ResolvedConnectionCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly string _connectionString;
 
         public DatabaseHelper(string connectionString)
@@ -70,6 +72,15 @@ namespace School_Management_System.DataLayer
                 return connectionString;
             }
 
+            lock (ConnectionResolutionSync)
+            {
+                string cached;
+                if (ResolvedConnectionCache.TryGetValue(connectionString, out cached))
+                {
+                    return cached;
+                }
+            }
+
             FileLogger.LogInfo("DatabaseHelper.ResolveBestConnectionString: Online mode detected. Probing connection candidates.");
             foreach (var candidate in BuildOnlineCandidates(connectionString))
             {
@@ -77,12 +88,27 @@ namespace School_Management_System.DataLayer
                 if (CanOpen(candidate))
                 {
                     FileLogger.LogInfo("DatabaseHelper.ResolveBestConnectionString: Connected using " + DescribeConnection(candidate));
+                    CacheResolvedConnection(connectionString, candidate);
                     return candidate;
                 }
             }
 
             FileLogger.LogInfo("DatabaseHelper.ResolveBestConnectionString: All online candidates failed. Falling back to original connection string.");
+            CacheResolvedConnection(connectionString, connectionString);
             return connectionString;
+        }
+
+        private static void CacheResolvedConnection(string connectionString, string resolvedConnectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString) || string.IsNullOrWhiteSpace(resolvedConnectionString))
+            {
+                return;
+            }
+
+            lock (ConnectionResolutionSync)
+            {
+                ResolvedConnectionCache[connectionString] = resolvedConnectionString;
+            }
         }
 
         private static IEnumerable<string> BuildOnlineCandidates(string connectionString)

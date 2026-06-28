@@ -313,7 +313,7 @@ namespace School_Management_System.Wpf.ViewModels.Shared
             return WpfUiDataHelper.FormatValue(row.Row[columnName]);
         }
 
-        private void OpenDetails()
+        protected virtual void OpenDetails()
         {
             if (CurrentSelectedRecord == null)
             {
@@ -323,7 +323,7 @@ namespace School_Management_System.Wpf.ViewModels.Shared
             IsDetailsModalOpen = true;
         }
 
-        private void CloseDetails()
+        protected virtual void CloseDetails()
         {
             IsDetailsModalOpen = false;
         }

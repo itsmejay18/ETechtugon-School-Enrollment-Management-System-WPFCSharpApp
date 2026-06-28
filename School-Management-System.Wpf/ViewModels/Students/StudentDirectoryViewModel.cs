@@ -290,10 +290,21 @@ namespace School_Management_System.Wpf.ViewModels.Students
             PopulateDetailFields(CurrentSelectedRecord, "StudentId", "PhotoPath");
             if (!IsEditorActive)
             {
-                LoadSelectedStudentData();
+                LoadSelectedStudentPreview();
             }
 
             RaiseCommandStates();
+        }
+
+        protected override void OpenDetails()
+        {
+            if (CurrentSelectedRecord == null)
+            {
+                return;
+            }
+
+            LoadSelectedStudentData();
+            base.OpenDetails();
         }
 
         public override void Refresh()
@@ -789,6 +800,45 @@ namespace School_Management_System.Wpf.ViewModels.Students
                 FailedSubjects = new DataView(new DataTable());
                 RemainingSubjects = new DataView(new DataTable());
                 ProfileSummary = "Student details loaded, but related subject records are unavailable right now.";
+            }
+        }
+
+        private void LoadSelectedStudentPreview()
+        {
+            if (CurrentSelectedRecord == null)
+            {
+                _editingStudentId = 0;
+                StudentPhoto = null;
+                EnrolledSubjects = new DataView(new DataTable());
+                EnrollmentHistory = new DataView(new DataTable());
+                CompletedSubjects = new DataView(new DataTable());
+                FailedSubjects = new DataView(new DataTable());
+                RemainingSubjects = new DataView(new DataTable());
+                ProfileSummary = "Select a student record to load profile details and enrolled subjects.";
+                return;
+            }
+
+            try
+            {
+                _editingStudentId = Convert.ToInt32(CurrentSelectedRecord["StudentId"]);
+                var studentNumber = GetColumnValue(CurrentSelectedRecord, "StudentNumber");
+                var lastName = GetColumnValue(CurrentSelectedRecord, "LastName");
+                var firstName = GetColumnValue(CurrentSelectedRecord, "FirstName");
+                var studentType = GetColumnValue(CurrentSelectedRecord, "StudentType");
+                var academicStatus = GetColumnValue(CurrentSelectedRecord, "AcademicStatus");
+
+                ProfileSummary = BuildProfileSummary(studentNumber, lastName, firstName, studentType, academicStatus);
+                StudentPhoto = null;
+                EnrolledSubjects = new DataView(new DataTable());
+                EnrollmentHistory = new DataView(new DataTable());
+                CompletedSubjects = new DataView(new DataTable());
+                FailedSubjects = new DataView(new DataTable());
+                RemainingSubjects = new DataView(new DataTable());
+                ModalStatusMessage = "Open the selected student to load photo and academic history.";
+            }
+            catch
+            {
+                ProfileSummary = "Student selected. Open the profile to load full details.";
             }
         }
 

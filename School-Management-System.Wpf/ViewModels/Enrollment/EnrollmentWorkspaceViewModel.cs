@@ -111,7 +111,6 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                 {
                     InvalidateSavedEnrollment();
                     UpdateSelectedStudentSummary();
-                    LoadStudentProfilePreview();
                     RaiseCommandStates();
                 }
             }

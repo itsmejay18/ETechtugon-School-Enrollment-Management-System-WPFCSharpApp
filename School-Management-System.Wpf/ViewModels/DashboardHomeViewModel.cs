@@ -1,4 +1,6 @@
 using System;
+using System.Threading.Tasks;
+using System.Windows;
 using School_Management_System.DataLayer.Configuration;
 using School_Management_System.Models;
 using School_Management_System.Wpf.Infrastructure;
@@ -18,6 +20,9 @@ namespace School_Management_System.Wpf.ViewModels
         private int _coursesCount;
         private int _subjectsCount;
         private int _departmentsCount;
+        private bool _hasMetricsLoaded;
+        private bool _isMetricsRefreshInProgress;
+        private DateTime _lastMetricsRefreshUtc;
 
         public DashboardHomeViewModel(AppBootstrapper bootstrapper, User currentUser)
         {
@@ -229,11 +234,56 @@ namespace School_Management_System.Wpf.ViewModels
 
         public void RefreshMetrics()
         {
-            StudentsCount = LoadCount(() => _bootstrapper.StudentService.GetActiveCount());
-            FacultyCount = LoadCount(() => _bootstrapper.FacultyService.GetActiveCount());
-            CoursesCount = LoadCount(() => _bootstrapper.CourseService.GetActiveCount());
-            SubjectsCount = LoadCount(() => _bootstrapper.SubjectService.GetActiveCount());
-            DepartmentsCount = LoadCount(() => _bootstrapper.DepartmentService.GetActiveCount());
+            if (_hasMetricsLoaded && DateTime.UtcNow - _lastMetricsRefreshUtc < TimeSpan.FromSeconds(60))
+            {
+                return;
+            }
+
+            if (_isMetricsRefreshInProgress)
+            {
+                return;
+            }
+
+            _isMetricsRefreshInProgress = true;
+            Task.Run(new Func<MetricsSnapshot>(LoadMetricsSnapshot))
+                .ContinueWith(ApplyMetricsSnapshot);
+        }
+
+        private MetricsSnapshot LoadMetricsSnapshot()
+        {
+            return new MetricsSnapshot
+            {
+                Students = LoadCount(() => _bootstrapper.StudentService.GetActiveCount()),
+                Faculty = LoadCount(() => _bootstrapper.FacultyService.GetActiveCount()),
+                Courses = LoadCount(() => _bootstrapper.CourseService.GetActiveCount()),
+                Subjects = LoadCount(() => _bootstrapper.SubjectService.GetActiveCount()),
+                Departments = LoadCount(() => _bootstrapper.DepartmentService.GetActiveCount())
+            };
+        }
+
+        private void ApplyMetricsSnapshot(Task<MetricsSnapshot> task)
+        {
+            var dispatcher = Application.Current == null ? null : Application.Current.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
+            {
+                dispatcher.BeginInvoke(new Action(() => ApplyMetricsSnapshot(task)));
+                return;
+            }
+
+            _isMetricsRefreshInProgress = false;
+            if (task == null || task.IsFaulted || task.IsCanceled || task.Result == null)
+            {
+                return;
+            }
+
+            var snapshot = task.Result;
+            StudentsCount = snapshot.Students;
+            FacultyCount = snapshot.Faculty;
+            CoursesCount = snapshot.Courses;
+            SubjectsCount = snapshot.Subjects;
+            DepartmentsCount = snapshot.Departments;
+            _hasMetricsLoaded = true;
+            _lastMetricsRefreshUtc = DateTime.UtcNow;
         }
 
         private static int LoadCount(Func<int> getter)
@@ -256,6 +306,15 @@ namespace School_Management_System.Wpf.ViewModels
             OnPropertyChanged(nameof(DashboardSubtitle));
             OnPropertyChanged(nameof(SerialNumber));
             OnPropertyChanged(nameof(SupportLine));
+        }
+
+        private sealed class MetricsSnapshot
+        {
+            public int Students { get; set; }
+            public int Faculty { get; set; }
+            public int Courses { get; set; }
+            public int Subjects { get; set; }
+            public int Departments { get; set; }
         }
     }
 }

@@ -158,7 +158,6 @@ namespace School_Management_System.Wpf.ViewModels
                     IsConnectionReady = false;
                     OnPropertyChanged(nameof(SelectedConnectionCaption));
                     OnPropertyChanged(nameof(SelectedConnectionDetails));
-                    LoadBrandingForSelectedConnection();
                 }
             }
         }

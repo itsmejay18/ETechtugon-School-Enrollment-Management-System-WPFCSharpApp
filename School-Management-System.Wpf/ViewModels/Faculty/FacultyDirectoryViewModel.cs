@@ -66,7 +66,18 @@ namespace School_Management_System.Wpf.ViewModels.Faculty
         protected override void OnSelectedRecordChanged()
         {
             PopulateDetailFields(CurrentSelectedRecord, "FacultyId", "PhotoPath");
+            LoadSelectedFacultyPreview();
+        }
+
+        protected override void OpenDetails()
+        {
+            if (CurrentSelectedRecord == null)
+            {
+                return;
+            }
+
             LoadSelectedFacultyData();
+            base.OpenDetails();
         }
 
         public override void Refresh()
@@ -110,6 +121,24 @@ namespace School_Management_System.Wpf.ViewModels.Faculty
                 Assignments = new DataView(new DataTable());
                 ProfileSummary = "Faculty details loaded, but schedule assignments are unavailable right now.";
             }
+        }
+
+        private void LoadSelectedFacultyPreview()
+        {
+            if (CurrentSelectedRecord == null)
+            {
+                FacultyPhoto = null;
+                Assignments = new DataView(new DataTable());
+                ProfileSummary = "Select a faculty record to inspect assignments and profile information.";
+                return;
+            }
+
+            var facultyCode = WpfUiDataHelper.FormatValue(CurrentSelectedRecord["FacultyCode"]);
+            var lastName = WpfUiDataHelper.FormatValue(CurrentSelectedRecord["LastName"]);
+            var firstName = WpfUiDataHelper.FormatValue(CurrentSelectedRecord["FirstName"]);
+            FacultyPhoto = null;
+            Assignments = new DataView(new DataTable());
+            ProfileSummary = facultyCode + " | " + lastName + ", " + firstName;
         }
 
         protected override string GetDetailsModalTitle()
