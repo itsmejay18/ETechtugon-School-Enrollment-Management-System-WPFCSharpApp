@@ -15,6 +15,7 @@
         <SolidColorBrush x:Key="TileCalendarBrush" Color="#FF62ACE7" />
         <SolidColorBrush x:Key="TileSettingsBrush" Color="#FF226CB2" />
         <SolidColorBrush x:Key="TileDateBrush" Color="#FF123E6B" />
+        <SolidColorBrush x:Key="BrandTileBrush" Color="#FF62ACE7" />
         <SolidColorBrush x:Key="TileStatusBrush" Color="#FFF1F8FF" />
         <SolidColorBrush x:Key="TileCountOneBrush" Color="#FFF7FBFF" />
         <SolidColorBrush x:Key="TileCountTwoBrush" Color="#FFE7F2FC" />
@@ -22,7 +23,6 @@
         <SolidColorBrush x:Key="TileCountFourBrush" Color="#FFC9E0F6" />
         <SolidColorBrush x:Key="TileCountFiveBrush" Color="#FFB9D6F2" />
         <SolidColorBrush x:Key="TileLogoutBrush" Color="#FF2B78C6" />
-        <SolidColorBrush x:Key="BrandTileBrush" Color="#FFEAF5FF" />
 
         <Style x:Key="MetroTileButtonStyle" TargetType="Button">
             <Setter Property="Foreground" Value="White" />
@@ -271,20 +271,19 @@
                 Grid.Column="4"
                 Grid.ColumnSpan="2"
                 Margin="1"
-                Background="#FFF4FAFF"
-                BorderBrush="#FFBDD8F0"
+                Background="{StaticResource BrandTileBrush}"
+                BorderBrush="#28FFFFFF"
                 BorderThickness="1"
-                Padding="14">
-            <Border Background="White"
-                    BorderBrush="#FFBDD8F0"
-                    BorderThickness="1"
-                    CornerRadius="18"
-                    Padding="10"
+                Padding="10"
+                ClipToBounds="True">
+            <Border Background="Transparent"
+                    BorderThickness="0"
+                    Padding="0"
                     SnapsToDevicePixels="True">
                 <Image x:Name="HeroBrandLogoImage"
                        Stretch="Uniform"
-                       HorizontalAlignment="Stretch"
-                       VerticalAlignment="Stretch"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
                        RenderOptions.BitmapScalingMode="HighQuality" />
             </Border>
         </Border>

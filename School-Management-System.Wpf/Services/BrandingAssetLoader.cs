@@ -16,16 +16,15 @@ namespace School_Management_System.Wpf.Services
 
         public static ImageSource LoadClientLogo()
         {
-            return LoadImageSource(SchoolBranding.BrandLogoData, true)
-                   ?? LoadImageSource(FindClientLogoAssetPath(), true)
+            return LoadImageSource(FindClientLogoAssetPath(), true)
+                   ?? LoadImageSource(SchoolBranding.BrandLogoData, true)
                    ?? LoadImageSource(FindRasterBrandAssetPath(), true)
                    ?? LoadImageSource(FindAppIconAssetPath());
         }
 
         public static ImageSource LoadClientLogoMark()
         {
-            var source = LoadClientLogo();
-            return CropLogoTagline(source) ?? source;
+            return LoadClientLogo();
         }
 
         public static ImageSource LoadCompanyLogo()
@@ -35,9 +34,9 @@ namespace School_Management_System.Wpf.Services
 
         public static ImageSource LoadHeaderLogo()
         {
-            return LoadImageSource(SchoolBranding.CompactLogoData, true)
+            return LoadImageSource(FindCompanyLogoAssetPath(), true)
+                   ?? LoadImageSource(SchoolBranding.CompactLogoData, true)
                    ?? LoadImageSource(SchoolBranding.BrandLogoData, true)
-                   ?? LoadImageSource(FindCompanyLogoAssetPath(), true)
                    ?? LoadBrandLogo();
         }
 
@@ -397,6 +396,7 @@ namespace School_Management_System.Wpf.Services
         {
             return FindExistingAssetPath(new[]
             {
+                "finallogo.png",
                 "newbranding +.png",
                 "newbranding.png",
                 "brand-logo.png",
@@ -410,6 +410,7 @@ namespace School_Management_System.Wpf.Services
         {
             return FindExistingAssetPath(new[]
             {
+                "finallogo.png",
                 "clientlogo.png",
                 "client-logo.png",
                 "client_logo.png"

@@ -31,6 +31,10 @@
       <Link>assets\newbranding.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\finallogo.png">
+      <Link>assets\finallogo.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="..\companylogo.png">
       <Link>assets\companylogo.png</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

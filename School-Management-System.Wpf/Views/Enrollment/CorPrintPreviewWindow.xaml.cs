@@ -389,8 +389,10 @@ namespace School_Management_System.Wpf.Views.Enrollment
             var baseDir = AppDomain.CurrentDomain.BaseDirectory ?? string.Empty;
             var candidates = new[]
             {
+                Path.Combine(baseDir, "assets", "finallogo.png"),
                 Path.Combine(baseDir, "assets", "newbranding.png"),
                 Path.Combine(baseDir, "assets", "brand-logo.png"),
+                Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "finallogo.png")),
                 Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "newbranding.png"))
             };
 
