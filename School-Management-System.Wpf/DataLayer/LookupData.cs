@@ -45,11 +45,11 @@ ORDER BY
     CASE
         WHEN Name = '1st Semester' THEN 1
         WHEN Name = '2nd Semester' THEN 2
+        WHEN Name = 'Summer' THEN 3
         ELSE 100 + SortOrder
     END,
     SortOrder,
-    SemesterId
-LIMIT 2;";
+    SemesterId;";
 
             return _db.ExecuteDataTable(sql, CommandType.Text, null);
         }

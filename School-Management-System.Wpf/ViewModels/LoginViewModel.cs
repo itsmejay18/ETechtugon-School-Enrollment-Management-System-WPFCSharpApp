@@ -137,11 +137,20 @@ namespace School_Management_System.Wpf.ViewModels
             get { return _selectedQuickLogin; }
             set
             {
-            if (SetProperty(ref _selectedQuickLogin, value) && value != null && !string.IsNullOrWhiteSpace(value.Username))
-            {
+                if (!SetProperty(ref _selectedQuickLogin, value))
+                {
+                    return;
+                }
+
+                if (value == null || !value.IsValidAccount)
+                {
+                    Username = string.Empty;
+                    SetStatus("Select a valid account before signing in.", true, false);
+                    return;
+                }
+
                 Username = value.Username;
                 SetStatus("Ready to sign in as " + value.Label + ".", false, true);
-            }
             }
         }
 
@@ -216,6 +225,12 @@ namespace School_Management_System.Wpf.ViewModels
 
         public bool TryLogin(string password)
         {
+            if (HasQuickLoginOptions && (SelectedQuickLogin == null || !SelectedQuickLogin.IsValidAccount))
+            {
+                SetStatus("Select a valid user account before signing in.", true, false);
+                return false;
+            }
+
             if (SelectedConnectionProfile == null)
             {
                 SetStatus("Select a database connection profile first.", true, false);
@@ -352,6 +367,7 @@ namespace School_Management_System.Wpf.ViewModels
             public string Label { get; private set; }
             public string Username { get; private set; }
             public string Password { get; private set; }
+            public bool IsValidAccount { get { return !string.IsNullOrWhiteSpace(Username); } }
 
             public override string ToString()
             {

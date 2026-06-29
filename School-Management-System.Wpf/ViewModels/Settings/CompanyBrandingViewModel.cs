@@ -229,22 +229,22 @@ namespace School_Management_System.Wpf.ViewModels.Settings
 
             _brandLogoBytes = profile.BrandLogoData;
             _compactLogoBytes = profile.CompactLogoData;
-            BrandLogo = WpfUiDataHelper.LoadImage(_brandLogoBytes);
-            CompactLogo = WpfUiDataHelper.LoadImage(_compactLogoBytes);
+            BrandLogo = BrandingAssetLoader.LoadLogoPreview(_brandLogoBytes);
+            CompactLogo = BrandingAssetLoader.LoadLogoPreview(_compactLogoBytes);
             StatusMessage = "Company branding is loaded from the active database profile.";
         }
 
         private void UploadBrandLogo()
         {
-            var bytes = ChooseImageBytes("Select the header branding logo");
+            var bytes = ChooseImageBytes("Select the main DSSC branding logo");
             if (bytes == null)
             {
                 return;
             }
 
             _brandLogoBytes = bytes;
-            BrandLogo = WpfUiDataHelper.LoadImage(bytes);
-            StatusMessage = "Header branding logo loaded. Save settings to apply it.";
+            BrandLogo = BrandingAssetLoader.LoadLogoPreview(bytes);
+            StatusMessage = "Main DSSC branding logo loaded. Save settings to apply it.";
         }
 
         private void RemoveBrandLogo()
@@ -256,15 +256,15 @@ namespace School_Management_System.Wpf.ViewModels.Settings
 
         private void UploadCompactLogo()
         {
-            var bytes = ChooseImageBytes("Select the dashboard company logo");
+            var bytes = ChooseImageBytes("Select the eTechTugon header logo");
             if (bytes == null)
             {
                 return;
             }
 
             _compactLogoBytes = bytes;
-            CompactLogo = WpfUiDataHelper.LoadImage(bytes);
-            StatusMessage = "Dashboard company logo loaded. Save settings to apply it.";
+            CompactLogo = BrandingAssetLoader.LoadLogoPreview(bytes);
+            StatusMessage = "eTechTugon header logo loaded. Save settings to apply it.";
         }
 
         private void RemoveCompactLogo()

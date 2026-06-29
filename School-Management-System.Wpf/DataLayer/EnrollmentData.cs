@@ -53,6 +53,7 @@ INSERT INTO enrollment
     SectionId,
     CurriculumId,
     StudentType,
+    ScholarshipStatus,
     EnrollDate,
     TotalUnits,
     `Status`,
@@ -69,6 +70,7 @@ VALUES
     @SectionId,
     @CurriculumId,
     @StudentType,
+    @ScholarshipStatus,
     @EnrollDate,
     @TotalUnits,
     @Status,
@@ -87,6 +89,7 @@ VALUES
                     cmd.Parameters.Add(new MySqlParameter("@SectionId", enrollment.SectionId));
                     cmd.Parameters.Add(new MySqlParameter("@CurriculumId", (object)enrollment.CurriculumId ?? DBNull.Value));
                     cmd.Parameters.Add(new MySqlParameter("@StudentType", NormalizeStudentType(enrollment.StudentType)));
+                    cmd.Parameters.Add(new MySqlParameter("@ScholarshipStatus", (object)NormalizeScholarship(enrollment.ScholarshipStatus) ?? DBNull.Value));
                     cmd.Parameters.Add(new MySqlParameter("@EnrollDate", enrollment.EnrollDate.Date));
                     cmd.Parameters.Add(new MySqlParameter("@TotalUnits", enrollment.TotalUnits));
                     cmd.Parameters.Add(new MySqlParameter("@Status", (object)enrollment.Status ?? "Posted"));
@@ -330,6 +333,13 @@ WHERE e.StudentId = @StudentId
             }
 
             return "Regular";
+        }
+
+        private static string NormalizeScholarship(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) || string.Equals(value, "None", StringComparison.OrdinalIgnoreCase)
+                ? null
+                : value.Trim();
         }
     }
 }

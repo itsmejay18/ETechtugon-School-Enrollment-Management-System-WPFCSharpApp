@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.IO;
 using MySqlConnector;
 using School_Management_System.Common;
 
@@ -24,6 +25,9 @@ namespace School_Management_System.DataLayer.Configuration
                 ApplyMigration2026041701(db);
                 ApplyMigration2026050801(db);
                 ApplyMigration2026051901(db);
+                ApplyMigration2026062901(db);
+                ApplyMigration2026063001(db);
+                ApplyMigration2026063002(db);
             }
         }
 
@@ -153,6 +157,7 @@ ON DUPLICATE KEY UPDATE
 
             EnsureSemesterRow(db, 1, "1st Semester", 1);
             EnsureSemesterRow(db, 2, "2nd Semester", 2);
+            EnsureSemesterRow(db, 3, "Summer", 3);
 
             const string normalizeCurrentSemesterSql = @"
 UPDATE `systemsetting`
@@ -177,21 +182,23 @@ SET
   `Name` = CASE
       WHEN `SemesterId` = 1 THEN '1st Semester'
       WHEN `SemesterId` = 2 THEN '2nd Semester'
+      WHEN `SemesterId` = 3 THEN 'Summer'
       ELSE `Name`
   END,
   `SortOrder` = CASE
       WHEN `SemesterId` = 1 THEN 1
       WHEN `SemesterId` = 2 THEN 2
+      WHEN `SemesterId` = 3 THEN 3
       ELSE `SortOrder`
   END,
   `IsActive` = CASE
-      WHEN `SemesterId` IN (1, 2) THEN 1
+      WHEN `SemesterId` IN (1, 2, 3) THEN 1
       ELSE 0
   END;";
 
             db.ExecuteNonQuery(normalizeSemesterRowsSql, CommandType.Text, null);
 
-            MarkApplied(db, migrationId, "Normalize semester catalog to 1st and 2nd semester only.");
+            MarkApplied(db, migrationId, "Normalize semester catalog to 1st, 2nd, and Summer.");
         }
 
         private static void ApplyMigration2026041701(DatabaseHelper db)
@@ -369,6 +376,88 @@ WHERE (`SectionCode` IS NULL OR `SectionCode` = '')
                 "Default Faculty");
 
             MarkApplied(db, migrationId, "Ensure starter login accounts match documented credentials.");
+        }
+
+        private static void ApplyMigration2026062901(DatabaseHelper db)
+        {
+            const string migrationId = "2026062901";
+            if (IsApplied(db, migrationId))
+            {
+                return;
+            }
+
+            EnsureColumnExists(db, "student", "Suffix", "ALTER TABLE `student` ADD COLUMN `Suffix` varchar(20) DEFAULT NULL AFTER `MiddleName`;");
+            EnsureColumnExists(db, "student", "ZipCode", "ALTER TABLE `student` ADD COLUMN `ZipCode` varchar(20) DEFAULT NULL AFTER `Address`;");
+            EnsureColumnExists(db, "student", "BirthPlace", "ALTER TABLE `student` ADD COLUMN `BirthPlace` varchar(160) DEFAULT NULL AFTER `BirthDate`;");
+            EnsureColumnExists(db, "student", "CivilStatus", "ALTER TABLE `student` ADD COLUMN `CivilStatus` varchar(40) DEFAULT NULL AFTER `Gender`;");
+            EnsureColumnExists(db, "student", "Citizenship", "ALTER TABLE `student` ADD COLUMN `Citizenship` varchar(80) DEFAULT NULL AFTER `CivilStatus`;");
+            EnsureColumnExists(db, "student", "Religion", "ALTER TABLE `student` ADD COLUMN `Religion` varchar(80) DEFAULT NULL AFTER `Citizenship`;");
+            EnsureColumnExists(db, "student", "FatherName", "ALTER TABLE `student` ADD COLUMN `FatherName` varchar(160) DEFAULT NULL AFTER `ZipCode`;");
+            EnsureColumnExists(db, "student", "MotherName", "ALTER TABLE `student` ADD COLUMN `MotherName` varchar(160) DEFAULT NULL AFTER `FatherName`;");
+            EnsureColumnExists(db, "student", "ParentsAddress", "ALTER TABLE `student` ADD COLUMN `ParentsAddress` varchar(300) DEFAULT NULL AFTER `MotherName`;");
+            EnsureColumnExists(db, "student", "SpouseName", "ALTER TABLE `student` ADD COLUMN `SpouseName` varchar(160) DEFAULT NULL AFTER `ParentsAddress`;");
+            EnsureColumnExists(db, "student", "SpouseAddress", "ALTER TABLE `student` ADD COLUMN `SpouseAddress` varchar(300) DEFAULT NULL AFTER `SpouseName`;");
+            EnsureColumnExists(db, "student", "GuardianName", "ALTER TABLE `student` ADD COLUMN `GuardianName` varchar(160) DEFAULT NULL AFTER `SpouseAddress`;");
+            EnsureColumnExists(db, "student", "GuardianContactNo", "ALTER TABLE `student` ADD COLUMN `GuardianContactNo` varchar(40) DEFAULT NULL AFTER `GuardianName`;");
+            EnsureColumnExists(db, "student", "NstpSerialNo", "ALTER TABLE `student` ADD COLUMN `NstpSerialNo` varchar(80) DEFAULT NULL AFTER `GuardianContactNo`;");
+            EnsureColumnExists(db, "student", "PaymentScheme", "ALTER TABLE `student` ADD COLUMN `PaymentScheme` varchar(80) DEFAULT NULL AFTER `NstpSerialNo`;");
+            EnsureColumnExists(db, "student", "CurrentSchoolYear", "ALTER TABLE `student` ADD COLUMN `CurrentSchoolYear` varchar(30) DEFAULT NULL AFTER `PaymentScheme`;");
+            EnsureColumnExists(db, "student", "CurrentSemester", "ALTER TABLE `student` ADD COLUMN `CurrentSemester` varchar(30) DEFAULT NULL AFTER `CurrentSchoolYear`;");
+
+            MarkApplied(db, migrationId, "Ensure legacy student information profile fields.");
+        }
+
+        private static void ApplyMigration2026063001(DatabaseHelper db)
+        {
+            const string migrationId = "2026063001";
+            if (IsApplied(db, migrationId))
+            {
+                return;
+            }
+
+            EnsureSemesterRow(db, 1, "1st Semester", 1);
+            EnsureSemesterRow(db, 2, "2nd Semester", 2);
+            EnsureSemesterRow(db, 3, "Summer", 3);
+            EnsureColumnExists(db, "enrollment", "ScholarshipStatus", "ALTER TABLE `enrollment` ADD COLUMN `ScholarshipStatus` varchar(120) DEFAULT NULL AFTER `StudentType`;");
+
+            MarkApplied(db, migrationId, "Add Summer semester and enrollment scholarship status.");
+        }
+
+        private static void ApplyMigration2026063002(DatabaseHelper db)
+        {
+            const string migrationId = "2026063002";
+            if (IsApplied(db, migrationId))
+            {
+                return;
+            }
+
+            EnsureBrandingProfileTable(db);
+
+            var mainLogo = TryReadBundledAssetBytes("finallogo.png", "clientlogo.png");
+            var headerLogo = TryReadBundledAssetBytes("companylogo.png");
+
+            if (mainLogo != null || headerLogo != null)
+            {
+                const string sql = @"
+UPDATE `brandingprofile`
+SET
+  `BrandLogoData` = COALESCE(@BrandLogoData, `BrandLogoData`),
+  `CompactLogoData` = COALESCE(@CompactLogoData, `CompactLogoData`),
+  `UpdatedAt` = UTC_TIMESTAMP()
+WHERE `BrandingProfileId` = @BrandingProfileId;";
+
+                db.ExecuteNonQuery(
+                    sql,
+                    CommandType.Text,
+                    new[]
+                    {
+                        new MySqlParameter("@BrandingProfileId", BrandingDefaults.ProfileId),
+                        new MySqlParameter("@BrandLogoData", (object)mainLogo ?? DBNull.Value),
+                        new MySqlParameter("@CompactLogoData", (object)headerLogo ?? DBNull.Value)
+                    });
+            }
+
+            MarkApplied(db, migrationId, "Align database branding images with DSSC main logo and eTechTugon header logo.");
         }
 
         private static void EnsureStarterLoginAccount(
@@ -726,6 +815,56 @@ ON DUPLICATE KEY UPDATE
                     new MySqlParameter("@Key", key),
                     new MySqlParameter("@Value", defaultValue ?? string.Empty)
                 });
+        }
+
+        private static byte[] TryReadBundledAssetBytes(params string[] assetNames)
+        {
+            if (assetNames == null || assetNames.Length == 0)
+            {
+                return null;
+            }
+
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(baseDir))
+            {
+                return null;
+            }
+
+            var assetDirectories = new[]
+            {
+                Path.Combine(baseDir, "assets"),
+                Path.Combine(baseDir, "..", "assets"),
+                Path.Combine(baseDir, "..", "..", "assets"),
+                Path.Combine(baseDir, "..", "..", "..", "assets"),
+                Path.Combine(baseDir, "..", "..", "..", "..", "assets"),
+                Path.Combine(baseDir, "..", "..", "..", ".."),
+                Path.Combine(baseDir, "..", "..", "..", "..", "..")
+            };
+
+            for (var i = 0; i < assetDirectories.Length; i++)
+            {
+                for (var j = 0; j < assetNames.Length; j++)
+                {
+                    if (string.IsNullOrWhiteSpace(assetNames[j]))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        var path = Path.GetFullPath(Path.Combine(assetDirectories[i], assetNames[j]));
+                        if (File.Exists(path))
+                        {
+                            return File.ReadAllBytes(path);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

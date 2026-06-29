@@ -140,6 +140,13 @@ namespace School_Management_System.Wpf.Views
             var selected = QuickLoginCombo.SelectedItem as LoginViewModel.QuickLoginOption;
             if (selected == null || string.IsNullOrWhiteSpace(selected.Username))
             {
+                var emptyVm = DataContext as LoginViewModel;
+                if (emptyVm != null)
+                {
+                    emptyVm.Username = string.Empty;
+                }
+
+                SetPasswordText(string.Empty);
                 return;
             }
 

@@ -336,6 +336,75 @@ WHERE StudentId = @StudentId;";
             _db.ExecuteNonQuery(sql, CommandType.Text, parameters);
         }
 
+        public void UpdateLegacyProfile(Student student)
+        {
+            Guard.NotNull(student, nameof(student));
+
+            const string sql = @"
+UPDATE student
+SET
+    StudentNumber = @StudentNumber,
+    FirstName = @FirstName,
+    LastName = @LastName,
+    MiddleName = @MiddleName,
+    Suffix = @Suffix,
+    Gender = @Gender,
+    BirthDate = @BirthDate,
+    BirthPlace = @BirthPlace,
+    Phone = @Phone,
+    Address = @Address,
+    ZipCode = @ZipCode,
+    CivilStatus = @CivilStatus,
+    Citizenship = @Citizenship,
+    Religion = @Religion,
+    FatherName = @FatherName,
+    MotherName = @MotherName,
+    ParentsAddress = @ParentsAddress,
+    SpouseName = @SpouseName,
+    SpouseAddress = @SpouseAddress,
+    GuardianName = @GuardianName,
+    GuardianContactNo = @GuardianContactNo,
+    NstpSerialNo = @NstpSerialNo,
+    PaymentScheme = @PaymentScheme,
+    CurrentSchoolYear = @CurrentSchoolYear,
+    CurrentSemester = @CurrentSemester,
+    UpdatedAt = UTC_TIMESTAMP()
+WHERE StudentId = @StudentId;";
+
+            _db.ExecuteNonQuery(
+                sql,
+                CommandType.Text,
+                new[]
+                {
+                    new MySqlParameter("@StudentId", student.StudentId),
+                    new MySqlParameter("@StudentNumber", (object)student.StudentNumber ?? DBNull.Value),
+                    new MySqlParameter("@FirstName", (object)student.FirstName ?? DBNull.Value),
+                    new MySqlParameter("@LastName", (object)student.LastName ?? DBNull.Value),
+                    new MySqlParameter("@MiddleName", (object)student.MiddleName ?? DBNull.Value),
+                    new MySqlParameter("@Suffix", (object)student.Suffix ?? DBNull.Value),
+                    new MySqlParameter("@Gender", (object)student.Gender ?? DBNull.Value),
+                    new MySqlParameter("@BirthDate", (object)student.BirthDate ?? DBNull.Value),
+                    new MySqlParameter("@Phone", (object)student.Phone ?? DBNull.Value),
+                    new MySqlParameter("@Address", (object)student.Address ?? DBNull.Value),
+                    new MySqlParameter("@ZipCode", (object)student.ZipCode ?? DBNull.Value),
+                    new MySqlParameter("@BirthPlace", (object)student.BirthPlace ?? DBNull.Value),
+                    new MySqlParameter("@CivilStatus", (object)student.CivilStatus ?? DBNull.Value),
+                    new MySqlParameter("@Citizenship", (object)student.Citizenship ?? DBNull.Value),
+                    new MySqlParameter("@Religion", (object)student.Religion ?? DBNull.Value),
+                    new MySqlParameter("@FatherName", (object)student.FatherName ?? DBNull.Value),
+                    new MySqlParameter("@MotherName", (object)student.MotherName ?? DBNull.Value),
+                    new MySqlParameter("@ParentsAddress", (object)student.ParentsAddress ?? DBNull.Value),
+                    new MySqlParameter("@SpouseName", (object)student.SpouseName ?? DBNull.Value),
+                    new MySqlParameter("@SpouseAddress", (object)student.SpouseAddress ?? DBNull.Value),
+                    new MySqlParameter("@GuardianName", (object)student.GuardianName ?? DBNull.Value),
+                    new MySqlParameter("@GuardianContactNo", (object)student.GuardianContactNo ?? DBNull.Value),
+                    new MySqlParameter("@NstpSerialNo", (object)student.NstpSerialNo ?? DBNull.Value),
+                    new MySqlParameter("@PaymentScheme", (object)student.PaymentScheme ?? DBNull.Value),
+                    new MySqlParameter("@CurrentSchoolYear", (object)student.CurrentSchoolYear ?? DBNull.Value),
+                    new MySqlParameter("@CurrentSemester", (object)student.CurrentSemester ?? DBNull.Value)
+                });
+        }
+
         public void Delete(int studentId)
         {
             const string sql = @"UPDATE student SET IsActive = 0, UpdatedAt = UTC_TIMESTAMP() WHERE StudentId = @StudentId;";
@@ -354,6 +423,7 @@ WHERE StudentId = @StudentId;";
 SELECT
     e.EnrollmentNumber,
     e.EnrollDate,
+    e.ScholarshipStatus,
     ay.Name AS AcademicYear,
     sem.Name AS Semester,
     yl.Name AS YearLevel,
@@ -400,6 +470,7 @@ SELECT
     e.EnrollDate,
     e.Status,
     e.StudentType,
+    e.ScholarshipStatus,
     c.CourseCode,
     c.CourseName,
     ay.Name AS AcademicYear,

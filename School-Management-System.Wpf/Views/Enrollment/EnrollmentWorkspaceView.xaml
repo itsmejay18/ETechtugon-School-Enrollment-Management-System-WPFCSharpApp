@@ -116,6 +116,11 @@
                                       ItemsSource="{Binding Sections}"
                                       SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
                                       DisplayMemberPath="DisplayName" />
+                            <ComboBox Width="220"
+                                      MinWidth="200"
+                                      Margin="0,0,10,10"
+                                      ItemsSource="{Binding ScholarshipOptions}"
+                                      SelectedItem="{Binding SelectedScholarship, Mode=TwoWay}" />
                             <CheckBox VerticalAlignment="Center"
                                       Margin="0,10,14,0"
                                       Content="By section"
@@ -139,6 +144,8 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="170" />
                         </Grid.RowDefinitions>
 
                         <StackPanel Margin="0,0,0,12">
@@ -157,6 +164,17 @@
                                 <DataGridTextColumn Binding="{Binding ScheduleText}" Header="Schedule" Width="220" />
                             </DataGrid.Columns>
                         </DataGrid>
+
+                        <StackPanel Grid.Row="2" Margin="0,14,0,8">
+                            <TextBlock Text="Enrolled subjects"
+                                       FontSize="18"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}" />
+                        </StackPanel>
+
+                        <DataGrid Grid.Row="3"
+                                  AutoGenerateColumns="True"
+                                  ItemsSource="{Binding CurrentEnrolledSubjects}" />
                     </Grid>
 
                     <Grid Grid.Row="2">

@@ -149,6 +149,11 @@ namespace School_Management_System.BusinessLayer.Services
             _studentData.Update(student);
         }
 
+        public void UpdateLegacyProfile(Student student)
+        {
+            _studentData.UpdateLegacyProfile(student);
+        }
+
         public void Delete(int studentId)
         {
             _studentData.Delete(studentId);

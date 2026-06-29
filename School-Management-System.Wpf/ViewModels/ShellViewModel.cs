@@ -55,7 +55,7 @@ namespace School_Management_System.Wpf.ViewModels
             ShowProfileCommand = new RelayCommand(ShowProfile);
             ShowNotificationsCommand = new RelayCommand(ToggleNotifications);
             CloseNotificationsCommand = new RelayCommand(CloseNotifications);
-            OpenLegacyFormCommand = new RelayCommand<string>(OpenLegacyForm);
+            OpenLegacyFormCommand = new RelayCommand<string>(OpenLegacyForm, CanOpenLegacyForm);
             BackCommand = new RelayCommand(ShowDashboard, () => CanGoBack);
             LogoutCommand = new RelayCommand(Logout);
             ExitCommand = new RelayCommand(ExitApplication);
@@ -187,6 +187,11 @@ namespace School_Management_System.Wpf.ViewModels
         }
 
         public bool CanAccessSettings
+        {
+            get { return IsAdmin; }
+        }
+
+        public bool CanAccessAdministrativeModule
         {
             get { return IsAdmin; }
         }
@@ -489,9 +494,84 @@ namespace School_Management_System.Wpf.ViewModels
 
         private void OpenLegacyForm(string formKey)
         {
-            var workspace = new LegacyAcademicWorkspaceViewModel(formKey);
+            if (!CanOpenLegacyForm(formKey))
+            {
+                MessageBox.Show(
+                    "Your account does not have access to this module.",
+                    "Access restricted",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            var workspace = new LegacyAcademicWorkspaceViewModel(
+                formKey,
+                _bootstrapper.StudentService,
+                _bootstrapper.SubjectService,
+                _bootstrapper.ActivityLogService);
             var key = "legacy-" + (workspace.FormKey ?? string.Empty).ToLowerInvariant();
             Activate(key, workspace, workspace.Title, workspace.Description);
+        }
+
+        private bool CanOpenLegacyForm(string formKey)
+        {
+            var key = string.IsNullOrWhiteSpace(formKey) ? string.Empty : formKey.Trim();
+            if (IsAdministrativeLegacyForm(key))
+            {
+                return CanAccessAdministrativeModule;
+            }
+
+            if (string.Equals(key, "StudentData", StringComparison.OrdinalIgnoreCase))
+            {
+                return CanAccessStudents;
+            }
+
+            if (string.Equals(key, "Registration", StringComparison.OrdinalIgnoreCase))
+            {
+                return CanAccessEnrollment;
+            }
+
+            if (string.Equals(key, "SubjectEntry", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(key, "SubjectPrerequisite", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(key, "ProgramMajor", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(key, "SubjectOffering", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(key, "BlockSetup", StringComparison.OrdinalIgnoreCase))
+            {
+                return CanAccessCurriculumSettings;
+            }
+
+            return IsAdmin || IsRegistrar || IsFaculty;
+        }
+
+        private static bool IsAdministrativeLegacyForm(string formKey)
+        {
+            if (string.IsNullOrWhiteSpace(formKey))
+            {
+                return false;
+            }
+
+            switch (formKey.Trim())
+            {
+                case "SemesterList":
+                case "ChangeSemester":
+                case "College":
+                case "Department":
+                case "FacultyData":
+                case "FacultyEntry":
+                case "BlockList":
+                case "Scholarship":
+                case "Fees":
+                case "MiscFeeMatrix":
+                case "TuitionMatrix":
+                case "LaboratoryMatrix":
+                case "CompFeeMatrix":
+                case "EntranceFeeMatrix":
+                case "ValidGrades":
+                case "ClassRooms":
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private void ToggleNotifications()

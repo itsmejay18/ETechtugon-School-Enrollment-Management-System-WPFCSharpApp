@@ -517,7 +517,8 @@
                     <MenuItem Header="Cashier"
                               Command="{Binding OpenLegacyFormCommand}"
                               CommandParameter="Cashier" />
-                    <MenuItem Header="Administrative Module">
+                    <MenuItem Header="Administrative Module"
+                              Visibility="{Binding CanAccessAdministrativeModule, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <MenuItem Header="Semester"
                                   Command="{Binding OpenLegacyFormCommand}"
                                   CommandParameter="SemesterList" />
@@ -574,7 +575,8 @@
                     </MenuItem>
                     <MenuItem Header="Change Semester"
                               Command="{Binding OpenLegacyFormCommand}"
-                              CommandParameter="ChangeSemester" />
+                              CommandParameter="ChangeSemester"
+                              Visibility="{Binding CanAccessAdministrativeModule, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <MenuItem Header="Exit"
                               Command="{Binding ExitCommand}" />
                 </Menu>

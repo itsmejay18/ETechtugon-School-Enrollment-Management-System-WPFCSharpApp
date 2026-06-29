@@ -34,6 +34,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         private LookupOptionViewModel _selectedYearLevel;
         private LookupOptionViewModel _selectedSemester;
         private LookupOptionViewModel _selectedSection;
+        private string _selectedScholarship;
         private bool _useSectionMode;
         private string _statusMessage;
         private string _selectedStudentSummary;
@@ -41,6 +42,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         private bool _enrollmentSaved;
         private string _savedEnrollmentNumber;
         private bool _isStudentProfileOpen;
+        private DataView _currentEnrolledSubjects;
         private DataView _profileCompletedSubjects;
         private DataView _profileFailedSubjects;
         private DataView _profileRemainingSubjects;
@@ -63,11 +65,14 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             YearLevels = new ObservableCollection<LookupOptionViewModel>();
             Semesters = new ObservableCollection<LookupOptionViewModel>();
             Sections = new ObservableCollection<LookupOptionViewModel>();
+            ScholarshipOptions = new ObservableCollection<string>();
             AvailableSubjects = new ObservableCollection<EnrollmentSubjectOptionViewModel>();
+            CurrentEnrolledSubjects = new DataView(new DataTable());
             ProfileCompletedSubjects = new DataView(new DataTable());
             ProfileFailedSubjects = new DataView(new DataTable());
             ProfileRemainingSubjects = new DataView(new DataTable());
             ProfileEnrollmentHistory = new DataView(new DataTable());
+            LoadScholarshipOptions();
 
             SearchStudentsCommand = new RelayCommand(LoadStudents);
             RefreshLookupsCommand = new RelayCommand(RefreshLookups);
@@ -90,6 +95,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         public ObservableCollection<LookupOptionViewModel> YearLevels { get; private set; }
         public ObservableCollection<LookupOptionViewModel> Semesters { get; private set; }
         public ObservableCollection<LookupOptionViewModel> Sections { get; private set; }
+        public ObservableCollection<string> ScholarshipOptions { get; private set; }
         public ObservableCollection<EnrollmentSubjectOptionViewModel> AvailableSubjects { get; private set; }
         public RelayCommand SearchStudentsCommand { get; private set; }
         public RelayCommand RefreshLookupsCommand { get; private set; }
@@ -111,6 +117,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                 {
                     InvalidateSavedEnrollment();
                     UpdateSelectedStudentSummary();
+                    LoadCurrentEnrolledSubjects();
                     RaiseCommandStates();
                 }
             }
@@ -118,27 +125,40 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         public LookupOptionViewModel SelectedCourse
         {
             get { return _selectedCourse; }
-            set { if (SetProperty(ref _selectedCourse, value)) { LoadSections(); LoadSubjects(); } }
+            set { if (SetProperty(ref _selectedCourse, value)) { LoadSections(); LoadSubjects(); LoadCurrentEnrolledSubjects(); } }
         }
         public LookupOptionViewModel SelectedAcademicYear
         {
             get { return _selectedAcademicYear; }
-            set { if (SetProperty(ref _selectedAcademicYear, value)) { LoadSections(); LoadSubjects(); } }
+            set { if (SetProperty(ref _selectedAcademicYear, value)) { LoadSections(); LoadSubjects(); LoadCurrentEnrolledSubjects(); } }
         }
         public LookupOptionViewModel SelectedYearLevel
         {
             get { return _selectedYearLevel; }
-            set { if (SetProperty(ref _selectedYearLevel, value)) { LoadSections(); LoadSubjects(); } }
+            set { if (SetProperty(ref _selectedYearLevel, value)) { LoadSections(); LoadSubjects(); LoadCurrentEnrolledSubjects(); } }
         }
         public LookupOptionViewModel SelectedSemester
         {
             get { return _selectedSemester; }
-            set { if (SetProperty(ref _selectedSemester, value)) { LoadSections(); LoadSubjects(); } }
+            set { if (SetProperty(ref _selectedSemester, value)) { LoadSections(); LoadSubjects(); LoadCurrentEnrolledSubjects(); } }
         }
         public LookupOptionViewModel SelectedSection
         {
             get { return _selectedSection; }
-            set { if (SetProperty(ref _selectedSection, value)) { LoadSubjects(); } }
+            set { if (SetProperty(ref _selectedSection, value)) { LoadSubjects(); LoadCurrentEnrolledSubjects(); } }
+        }
+        public string SelectedScholarship
+        {
+            get { return _selectedScholarship; }
+            set
+            {
+                if (SetProperty(ref _selectedScholarship, value))
+                {
+                    InvalidateSavedEnrollment();
+                    BuildSummary();
+                    RaiseCommandStates();
+                }
+            }
         }
         public bool UseSectionMode
         {
@@ -161,6 +181,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         }
 
         public bool IsModalOpen { get { return IsStudentProfileOpen; } }
+        public DataView CurrentEnrolledSubjects { get { return _currentEnrolledSubjects; } private set { SetProperty(ref _currentEnrolledSubjects, value); } }
         public DataView ProfileCompletedSubjects { get { return _profileCompletedSubjects; } private set { SetProperty(ref _profileCompletedSubjects, value); } }
         public DataView ProfileFailedSubjects { get { return _profileFailedSubjects; } private set { SetProperty(ref _profileFailedSubjects, value); } }
         public DataView ProfileRemainingSubjects { get { return _profileRemainingSubjects; } private set { SetProperty(ref _profileRemainingSubjects, value); } }
@@ -206,6 +227,20 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             if (SelectedSemester == null && Semesters.Count > 0) SelectedSemester = activeTerm.SemesterId.HasValue ? FindOption(Semesters, activeTerm.SemesterId.Value) : Semesters[0];
             LoadSections();
             LoadSubjects();
+            LoadCurrentEnrolledSubjects();
+        }
+
+        private void LoadScholarshipOptions()
+        {
+            ScholarshipOptions.Clear();
+            ScholarshipOptions.Add("None");
+            ScholarshipOptions.Add("Academic Scholarship");
+            ScholarshipOptions.Add("Government Scholarship");
+            ScholarshipOptions.Add("Athletic Scholarship");
+            ScholarshipOptions.Add("Private Scholarship");
+            ScholarshipOptions.Add("Full Scholarship");
+            ScholarshipOptions.Add("Partial Scholarship");
+            SelectedScholarship = ScholarshipOptions[0];
         }
 
         private void LoadSections()
@@ -283,16 +318,6 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
 
         private void EnrollAll()
         {
-            if (!IsRegularStudent)
-            {
-                MessageBox.Show(
-                    "Enroll All is available for Regular students only. Select individual subjects for Irregular or Summer students.",
-                    "Enroll All",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-                return;
-            }
-
             foreach (var subject in AvailableSubjects)
             {
                 if (subject != null && !subject.IsFull)
@@ -311,6 +336,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         {
             if (SelectedStudent == null)
             {
+                CurrentEnrolledSubjects = new DataView(new DataTable());
                 ProfileCompletedSubjects = new DataView(new DataTable());
                 ProfileFailedSubjects = new DataView(new DataTable());
                 ProfileRemainingSubjects = new DataView(new DataTable());
@@ -325,13 +351,36 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                 ProfileFailedSubjects = (_studentService.GetFailedSubjects(studentId) ?? new DataTable()).DefaultView;
                 ProfileRemainingSubjects = (_studentService.GetRemainingSubjects(studentId, SelectedStudentCurriculumId) ?? new DataTable()).DefaultView;
                 ProfileEnrollmentHistory = (_studentService.GetEnrollmentHistory(studentId) ?? new DataTable()).DefaultView;
+                LoadCurrentEnrolledSubjects();
             }
             catch
             {
+                CurrentEnrolledSubjects = new DataView(new DataTable());
                 ProfileCompletedSubjects = new DataView(new DataTable());
                 ProfileFailedSubjects = new DataView(new DataTable());
                 ProfileRemainingSubjects = new DataView(new DataTable());
                 ProfileEnrollmentHistory = new DataView(new DataTable());
+            }
+        }
+
+        private void LoadCurrentEnrolledSubjects()
+        {
+            if (SelectedStudent == null)
+            {
+                CurrentEnrolledSubjects = new DataView(new DataTable());
+                return;
+            }
+
+            try
+            {
+                var studentId = Convert.ToInt32(SelectedStudent["StudentId"]);
+                var academicYearId = SelectedAcademicYear == null ? (int?)null : SelectedAcademicYear.Id;
+                var semesterId = SelectedSemester == null ? (int?)null : SelectedSemester.Id;
+                CurrentEnrolledSubjects = (_studentService.GetProfileSubjects(studentId, academicYearId, semesterId) ?? new DataTable()).DefaultView;
+            }
+            catch
+            {
+                CurrentEnrolledSubjects = new DataView(new DataTable());
             }
         }
 
@@ -423,6 +472,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                     SectionId = SelectedSection == null ? 0 : SelectedSection.Id,
                     CurriculumId = SelectedStudentCurriculumId,
                     StudentType = SelectedStudentType,
+                    ScholarshipStatus = NormalizeScholarship(SelectedScholarship),
                     EnrollDate = DateTime.Now.Date,
                     Status = "Posted"
                 };
@@ -440,6 +490,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
                 LogEnrollmentTransaction(enrollmentId, details.Count, enrollment.EnrollmentNumber);
                 StatusMessage = "Enrollment saved successfully as " + enrollment.EnrollmentNumber + ".";
                 SummaryText = BuildSummaryText(enrollment.EnrollmentNumber);
+                LoadCurrentEnrolledSubjects();
                 RaiseCommandStates();
 
                 if (showSavedMessage)
@@ -486,6 +537,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             sb.AppendLine("Student: " + (SelectedStudentSummary ?? "(none)"));
             sb.AppendLine("Student Type: " + SelectedStudentType);
             sb.AppendLine("Academic Status: " + (string.IsNullOrWhiteSpace(SelectedAcademicStatus) ? "Active" : SelectedAcademicStatus));
+            sb.AppendLine("Scholarship: " + DisplayScholarship(SelectedScholarship));
             sb.AppendLine("Course: " + (SelectedCourse == null ? "(none)" : SelectedCourse.Title));
             sb.AppendLine("Academic Year: " + (SelectedAcademicYear == null ? "(none)" : SelectedAcademicYear.Title));
             sb.AppendLine("Year Level: " + (SelectedYearLevel == null ? "(none)" : SelectedYearLevel.Title));
@@ -635,6 +687,7 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
             data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Semester", Value = SelectedSemester == null ? string.Empty : SelectedSemester.Title });
             data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Section", Value = SelectedSection == null ? string.Empty : SelectedSection.DisplayName });
             data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Enrollment Type", Value = SelectedStudentType + " | " + (UseSectionMode ? "By Section" : "By Subject") });
+            data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Scholarship", Value = DisplayScholarship(SelectedScholarship) });
             data.SummaryRows.Add(new CorPrintKeyValueRow { Label = "Status", Value = includeSavedNotice ? "Posted / Ready for COR printing" : "Pending save" });
 
             foreach (var subject in details)
@@ -740,6 +793,19 @@ namespace School_Management_System.Wpf.ViewModels.Enrollment
         private static string BuildEligibilityStatus(DataRow row)
         {
             return IsFull(row) ? "Full" : "Available";
+        }
+
+        private static string NormalizeScholarship(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) || string.Equals(value, "None", StringComparison.OrdinalIgnoreCase)
+                ? null
+                : value.Trim();
+        }
+
+        private static string DisplayScholarship(string value)
+        {
+            var scholarship = NormalizeScholarship(value);
+            return string.IsNullOrWhiteSpace(scholarship) ? "None" : scholarship;
         }
 
         private static bool IsFull(DataRow row)

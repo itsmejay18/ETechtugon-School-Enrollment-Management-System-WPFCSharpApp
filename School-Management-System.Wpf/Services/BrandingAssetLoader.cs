@@ -16,8 +16,8 @@ namespace School_Management_System.Wpf.Services
 
         public static ImageSource LoadClientLogo()
         {
-            return LoadImageSource(FindClientLogoAssetPath(), true)
-                   ?? LoadImageSource(SchoolBranding.BrandLogoData, true)
+            return LoadImageSource(SchoolBranding.BrandLogoData, true)
+                   ?? LoadImageSource(FindClientLogoAssetPath(), true)
                    ?? LoadImageSource(FindRasterBrandAssetPath(), true)
                    ?? LoadImageSource(FindAppIconAssetPath());
         }
@@ -34,9 +34,9 @@ namespace School_Management_System.Wpf.Services
 
         public static ImageSource LoadHeaderLogo()
         {
-            return LoadImageSource(FindCompanyLogoAssetPath(), true)
-                   ?? LoadImageSource(SchoolBranding.CompactLogoData, true)
+            return LoadImageSource(SchoolBranding.CompactLogoData, true)
                    ?? LoadImageSource(SchoolBranding.BrandLogoData, true)
+                   ?? LoadImageSource(FindCompanyLogoAssetPath(), true)
                    ?? LoadBrandLogo();
         }
 
@@ -47,6 +47,11 @@ namespace School_Management_System.Wpf.Services
                    ?? LoadImageSource(SchoolBranding.CompactLogoData)
                    ?? LoadImageSource(FindAppIconAssetPath())
                    ?? LoadBrandLogo();
+        }
+
+        public static ImageSource LoadLogoPreview(byte[] bytes)
+        {
+            return LoadImageSource(bytes, true);
         }
 
         private static ImageSource LoadImageSource(byte[] bytes, bool stripSolidWhiteBackground = false)

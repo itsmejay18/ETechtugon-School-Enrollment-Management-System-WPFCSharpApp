@@ -164,11 +164,28 @@
                                            Foreground="{StaticResource MutedTextBrush}" />
                             </StackPanel>
 
-                            <Button Grid.Column="2"
-                                    Margin="18,0,0,0"
-                                    VerticalAlignment="Top"
-                                    Style="{StaticResource ModalCloseButtonStyle}"
-                                    Command="{Binding CloseDetailsCommand}" />
+                            <StackPanel Grid.Column="2"
+                                        Margin="18,0,0,0"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Top">
+                                <Button Margin="0,0,10,0"
+                                        Style="{StaticResource NeutralButtonStyle}"
+                                        Command="{Binding EditProfileCommand}"
+                                        Content="Edit profile"
+                                        Visibility="{Binding IsEditingProfile, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                <Button Margin="0,0,10,0"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding SaveProfileCommand}"
+                                        Content="Save profile"
+                                        Visibility="{Binding IsEditingProfile, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <Button Margin="0,0,10,0"
+                                        Style="{StaticResource NeutralButtonStyle}"
+                                        Command="{Binding CancelProfileEditCommand}"
+                                        Content="Cancel"
+                                        Visibility="{Binding IsEditingProfile, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <Button Style="{StaticResource ModalCloseButtonStyle}"
+                                        Command="{Binding CloseDetailsCommand}" />
+                            </StackPanel>
                         </Grid>
                     </Border>
 
@@ -200,31 +217,68 @@
                                                Foreground="{StaticResource MutedTextBrush}" />
                                 </StackPanel>
 
-                                <ItemsControl Grid.Row="1"
-                                              ItemsSource="{Binding DetailFields}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Style="{StaticResource DetailCardStyle}">
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Label}"
-                                                               FontSize="12"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{StaticResource PrimaryBrush}" />
-                                                    <TextBlock Margin="0,4,0,0"
-                                                               Text="{Binding Value}"
-                                                               TextWrapping="Wrap"
-                                                               FontSize="13.5"
-                                                               Foreground="{StaticResource TextBrush}" />
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <Grid Grid.Row="1">
+                                    <ItemsControl ItemsSource="{Binding DetailFields}"
+                                                  Visibility="{Binding IsEditingProfile, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Style="{StaticResource DetailCardStyle}">
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Label}"
+                                                                   FontSize="12"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource PrimaryBrush}" />
+                                                        <TextBlock Margin="0,4,0,0"
+                                                                   Text="{Binding Value}"
+                                                                   TextWrapping="Wrap"
+                                                                   FontSize="13.5"
+                                                                   Foreground="{StaticResource TextBrush}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <WrapPanel Visibility="{Binding IsEditingProfile, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <StackPanel Width="220" Margin="0,0,10,12">
+                                            <TextBlock Text="Faculty Code" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" />
+                                            <TextBox Margin="0,6,0,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding EditorFacultyCode, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                        <StackPanel Width="220" Margin="0,0,10,12">
+                                            <TextBlock Text="First Name" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" />
+                                            <TextBox Margin="0,6,0,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding EditorFirstName, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                        <StackPanel Width="220" Margin="0,0,10,12">
+                                            <TextBlock Text="Last Name" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" />
+                                            <TextBox Margin="0,6,0,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding EditorLastName, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                        <StackPanel Width="220" Margin="0,0,10,12">
+                                            <TextBlock Text="Middle Name" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" />
+                                            <TextBox Margin="0,6,0,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding EditorMiddleName, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                        <StackPanel Width="220" Margin="0,0,10,12">
+                                            <TextBlock Text="Email" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" />
+                                            <TextBox Margin="0,6,0,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding EditorEmail, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                        <StackPanel Width="220" Margin="0,0,10,12">
+                                            <TextBlock Text="Phone" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" />
+                                            <TextBox Margin="0,6,0,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding EditorPhone, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                        <StackPanel Width="220" Margin="0,0,10,12">
+                                            <TextBlock Text="Hire Date" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" />
+                                            <TextBox Margin="0,6,0,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding EditorHireDate, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                        <StackPanel Width="450" Margin="0,0,10,12">
+                                            <TextBlock Text="Address" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" />
+                                            <TextBox Margin="0,6,0,0" Style="{StaticResource ToolbarTextBoxStyle}" Text="{Binding EditorAddress, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                    </WrapPanel>
+                                </Grid>
                             </Grid>
                         </Border>
 

@@ -11,6 +11,7 @@ namespace School_Management_System.DataLayer.Interfaces
         string GetNextStudentNumber();
         int Insert(Student student);
         void Update(Student student);
+        void UpdateLegacyProfile(Student student);
         void Delete(int studentId);
         DataTable GetEnrolledSubjects(int studentId, int? academicYearId, int? semesterId);
         DataTable GetEnrollmentHistory(int studentId);

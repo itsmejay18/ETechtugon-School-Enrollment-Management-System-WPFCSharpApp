@@ -123,6 +123,27 @@
                 <Grid>
                     <StackPanel Visibility="{Binding IsStudentDataFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <DockPanel LastChildFill="False">
+                                <StackPanel DockPanel.Dock="Left">
+                                    <TextBlock Text="Student record actions"
+                                               Style="{StaticResource LegacySectionTitleStyle}" />
+                                </StackPanel>
+
+                                <StackPanel DockPanel.Dock="Right"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Button Command="{Binding SaveStudentCommand}"
+                                            Content="Save Student"
+                                            Style="{StaticResource PrimaryButtonStyle}" />
+                                    <Button Margin="10,0,0,0"
+                                            Command="{Binding ClearStudentCommand}"
+                                            Content="Clear"
+                                            Style="{StaticResource NeutralButtonStyle}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
                             <StackPanel>
                                 <TextBlock Text="Header fields"
                                            Style="{StaticResource LegacySectionTitleStyle}" />
@@ -164,6 +185,27 @@
                     </StackPanel>
 
                     <StackPanel Visibility="{Binding IsSubjectEntryFormVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Border Style="{StaticResource LegacySectionBorderStyle}">
+                            <DockPanel LastChildFill="False">
+                                <StackPanel DockPanel.Dock="Left">
+                                    <TextBlock Text="Subject record actions"
+                                               Style="{StaticResource LegacySectionTitleStyle}" />
+                                </StackPanel>
+
+                                <StackPanel DockPanel.Dock="Right"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Button Command="{Binding SaveSubjectCommand}"
+                                            Content="Save Subject"
+                                            Style="{StaticResource PrimaryButtonStyle}" />
+                                    <Button Margin="10,0,0,0"
+                                            Command="{Binding ClearSubjectCommand}"
+                                            Content="Clear"
+                                            Style="{StaticResource NeutralButtonStyle}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+
                         <Border Style="{StaticResource LegacySectionBorderStyle}">
                             <StackPanel>
                                 <TextBlock Text="Inputs"

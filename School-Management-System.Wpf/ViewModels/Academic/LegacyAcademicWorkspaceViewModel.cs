@@ -1,5 +1,11 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Data;
+using System.Globalization;
+using System.Windows;
+using School_Management_System.BusinessLayer.Services;
+using School_Management_System.Common;
+using School_Management_System.Models;
 using School_Management_System.Wpf.Infrastructure;
 
 namespace School_Management_System.Wpf.ViewModels.Academic
@@ -8,15 +14,26 @@ namespace School_Management_System.Wpf.ViewModels.Academic
     {
         private string _selectedLabType;
         private string _offeringType;
+        private string _statusText;
         private string _totalUnitsText;
+        private readonly StudentService _studentService;
+        private readonly SubjectService _subjectService;
+        private readonly ActivityLogService _activityLogService;
 
-        public LegacyAcademicWorkspaceViewModel(string formKey)
+        public LegacyAcademicWorkspaceViewModel(string formKey, StudentService studentService = null, SubjectService subjectService = null, ActivityLogService activityLogService = null)
         {
+            _studentService = studentService;
+            _subjectService = subjectService;
+            _activityLogService = activityLogService;
             FormKey = NormalizeFormKey(formKey);
             Title = ResolveTitle(FormKey);
             Description = ResolveDescription(FormKey);
             StatusText = "Encoding layout ready. Fields are arranged to match the requested registrar workflow.";
             MatrixTitle = ResolveMatrixTitle(FormKey);
+            SaveStudentCommand = new RelayCommand(SaveStudent, () => IsStudentDataFormVisible && _studentService != null);
+            ClearStudentCommand = new RelayCommand(ClearStudentForm, () => IsStudentDataFormVisible);
+            SaveSubjectCommand = new RelayCommand(SaveSubject, () => IsSubjectEntryFormVisible && _subjectService != null);
+            ClearSubjectCommand = new RelayCommand(ClearSubjectForm, () => IsSubjectEntryFormVisible);
 
             StudentHeaderFields = CreateFields(
                 "Student ID No.",
@@ -169,7 +186,12 @@ namespace School_Management_System.Wpf.ViewModels.Academic
         public string FormKey { get; private set; }
         public string Title { get; private set; }
         public string Description { get; private set; }
-        public string StatusText { get; private set; }
+        public string StatusText
+        {
+            get { return _statusText; }
+            private set { SetProperty(ref _statusText, value); }
+        }
+
         public string MatrixTitle { get; private set; }
 
         public ObservableCollection<FormFieldViewModel> StudentHeaderFields { get; private set; }
@@ -193,6 +215,10 @@ namespace School_Management_System.Wpf.ViewModels.Academic
         public ObservableCollection<PrerequisiteRow> PrerequisiteRows { get; private set; }
         public ObservableCollection<FormFieldViewModel> GenericFields { get; private set; }
         public ObservableCollection<SimpleSetupRow> GenericRows { get; private set; }
+        public RelayCommand SaveStudentCommand { get; private set; }
+        public RelayCommand ClearStudentCommand { get; private set; }
+        public RelayCommand SaveSubjectCommand { get; private set; }
+        public RelayCommand ClearSubjectCommand { get; private set; }
 
         public string SelectedLabType
         {
@@ -243,6 +269,461 @@ namespace School_Management_System.Wpf.ViewModels.Academic
         private bool IsForm(string key)
         {
             return string.Equals(FormKey, key, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void SaveStudent()
+        {
+            if (_studentService == null)
+            {
+                MessageBox.Show(
+                    "Student saving service is not available for this screen.",
+                    "Student Information",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            string validationError;
+            var student = BuildStudentFromForm(out validationError);
+            if (!string.IsNullOrWhiteSpace(validationError))
+            {
+                MessageBox.Show(
+                    validationError,
+                    "Student Information",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            var validation = _studentService.Validate(student);
+            if (!validation.IsValid)
+            {
+                MessageBox.Show(
+                    validation.ToString(),
+                    "Student Information",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                var existingStudentId = FindExistingStudentId(student.StudentNumber);
+                string action;
+                int savedStudentId;
+
+                if (existingStudentId.HasValue)
+                {
+                    student.StudentId = existingStudentId.Value;
+                    savedStudentId = existingStudentId.Value;
+                    action = AppConstants.ActivityActions.Update;
+                }
+                else
+                {
+                    savedStudentId = _studentService.Create(student);
+                    student.StudentId = savedStudentId;
+                    action = AppConstants.ActivityActions.Create;
+                }
+
+                _studentService.UpdateLegacyProfile(student);
+                LogStudentTransaction(action, savedStudentId, student);
+
+                StatusText = existingStudentId.HasValue
+                    ? "Student information updated successfully."
+                    : "Student information saved successfully.";
+
+                MessageBox.Show(
+                    StatusText,
+                    "Student Information",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Student Information",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void ClearStudentForm()
+        {
+            ClearFields(StudentHeaderFields);
+            ClearFields(StudentPersonalFields);
+            ClearFields(StudentOtherInfoFields);
+            ClearFields(StudentFooterFields);
+            StatusText = "Student information form cleared.";
+        }
+
+        private Student BuildStudentFromForm(out string validationError)
+        {
+            validationError = null;
+
+            var studentNumber = GetFieldValue(StudentHeaderFields, "Student ID No.");
+            if (string.IsNullOrWhiteSpace(studentNumber) && _studentService != null)
+            {
+                studentNumber = _studentService.GetNextStudentNumber();
+                SetFieldValue(StudentHeaderFields, "Student ID No.", studentNumber);
+            }
+
+            DateTime? birthDate;
+            if (!TryParseOptionalDate(GetFieldValue(StudentPersonalFields, "BirthDate"), out birthDate))
+            {
+                validationError = "BirthDate is invalid. Use a valid date like 2004-06-18.";
+                return null;
+            }
+
+            return new Student
+            {
+                StudentNumber = Clean(studentNumber),
+                StudentType = "Regular",
+                AcademicStatus = "Active",
+                LastName = Clean(GetFieldValue(StudentHeaderFields, "Family Name")),
+                FirstName = Clean(GetFieldValue(StudentHeaderFields, "First Name")),
+                MiddleName = Clean(GetFieldValue(StudentHeaderFields, "Middle Name")),
+                Suffix = Clean(GetFieldValue(StudentHeaderFields, "Suffix")),
+                Phone = Clean(GetFieldValue(StudentHeaderFields, "Contact No.")),
+                Address = Clean(GetFieldValue(StudentPersonalFields, "Permanent Address")),
+                ZipCode = Clean(GetFieldValue(StudentPersonalFields, "Zip Code")),
+                BirthDate = birthDate,
+                BirthPlace = Clean(GetFieldValue(StudentPersonalFields, "BirthPlace")),
+                Gender = Clean(GetFieldValue(StudentPersonalFields, "Gender")),
+                CivilStatus = Clean(GetFieldValue(StudentPersonalFields, "Civil Status")),
+                Citizenship = Clean(GetFieldValue(StudentPersonalFields, "Citizenship")),
+                Religion = Clean(GetFieldValue(StudentPersonalFields, "Religion")),
+                FatherName = Clean(GetFieldValue(StudentOtherInfoFields, "Father's Name")),
+                MotherName = Clean(GetFieldValue(StudentOtherInfoFields, "Mother's Name")),
+                ParentsAddress = Clean(GetFieldValue(StudentOtherInfoFields, "Address of Parents")),
+                SpouseName = Clean(GetFieldValue(StudentOtherInfoFields, "Spouse Name")),
+                SpouseAddress = Clean(GetFieldValue(StudentOtherInfoFields, "Address of Spouse")),
+                GuardianName = Clean(GetFieldValue(StudentOtherInfoFields, "Guardian Name")),
+                GuardianContactNo = Clean(GetFieldValue(StudentOtherInfoFields, "Contact No. of Guardian")),
+                NstpSerialNo = Clean(GetFieldValue(StudentFooterFields, "NSTP Serial No.")),
+                PaymentScheme = Clean(GetFieldValue(StudentFooterFields, "Payment Scheme")),
+                CurrentSchoolYear = Clean(GetFieldValue(StudentFooterFields, "Current SY")),
+                CurrentSemester = Clean(GetFieldValue(StudentFooterFields, "Current SEM"))
+            };
+        }
+
+        private int? FindExistingStudentId(string studentNumber)
+        {
+            if (string.IsNullOrWhiteSpace(studentNumber) || _studentService == null)
+            {
+                return null;
+            }
+
+            var students = _studentService.GetStudents(studentNumber.Trim());
+            if (students == null)
+            {
+                return null;
+            }
+
+            foreach (DataRow row in students.Rows)
+            {
+                var rowStudentNumber = Convert.ToString(row["StudentNumber"]);
+                if (!string.Equals(rowStudentNumber, studentNumber.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                return Convert.ToInt32(row["StudentId"]);
+            }
+
+            return null;
+        }
+
+        private void LogStudentTransaction(string action, int studentId, Student student)
+        {
+            if (_activityLogService == null)
+            {
+                return;
+            }
+
+            var name = ((student.LastName ?? string.Empty) + ", " + (student.FirstName ?? string.Empty)).Trim(' ', ',');
+            _activityLogService.LogTransaction(
+                action,
+                AppConstants.Entities.Student,
+                studentId,
+                action + " student information " + student.StudentNumber + " - " + name + ".");
+        }
+
+        private void SaveSubject()
+        {
+            if (_subjectService == null)
+            {
+                MessageBox.Show(
+                    "Subject saving service is not available for this screen.",
+                    "Subject Entry",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            string validationError;
+            var subject = BuildSubjectFromForm(out validationError);
+            if (!string.IsNullOrWhiteSpace(validationError))
+            {
+                MessageBox.Show(
+                    validationError,
+                    "Subject Entry",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            var validation = _subjectService.Validate(subject);
+            if (!validation.IsValid)
+            {
+                MessageBox.Show(
+                    validation.ToString(),
+                    "Subject Entry",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                var existing = FindExistingSubject(subject.SubjectCode);
+                string action;
+                int savedSubjectId;
+
+                if (existing != null)
+                {
+                    subject.SubjectId = Convert.ToInt32(existing["SubjectId"]);
+                    subject.CourseId = GetNullableInt(existing, "CourseId");
+                    subject.MaxStudents = GetNullableInt(existing, "MaxStudents");
+                    _subjectService.Update(subject);
+                    savedSubjectId = subject.SubjectId;
+                    action = AppConstants.ActivityActions.Update;
+                }
+                else
+                {
+                    savedSubjectId = _subjectService.Create(subject);
+                    action = AppConstants.ActivityActions.Create;
+                }
+
+                LogSubjectTransaction(action, savedSubjectId, subject);
+
+                StatusText = existing == null
+                    ? "Subject record saved successfully."
+                    : "Subject record updated successfully.";
+
+                MessageBox.Show(
+                    StatusText,
+                    "Subject Entry",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Subject Entry",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void ClearSubjectForm()
+        {
+            ClearFields(SubjectCoreFields);
+            ClearFields(SubjectUnitsFields);
+            ClearFields(SubjectOtherFields);
+            SelectedLabType = LabTypeOptions != null && LabTypeOptions.Count > 0 ? LabTypeOptions[0] : "BLANK";
+            IncludeGradeInGpa = false;
+            OnPropertyChanged(nameof(IncludeGradeInGpa));
+            StatusText = "Subject entry form cleared.";
+        }
+
+        private Subject BuildSubjectFromForm(out string validationError)
+        {
+            validationError = null;
+
+            var units = ParseSubjectUnits(out validationError);
+            if (!string.IsNullOrWhiteSpace(validationError))
+            {
+                return null;
+            }
+
+            return new Subject
+            {
+                SubjectCode = Clean(GetFieldValue(SubjectCoreFields, "Subject Code")),
+                SubjectName = Clean(GetFieldValue(SubjectCoreFields, "Description")),
+                Units = units,
+                IsActive = true
+            };
+        }
+
+        private int ParseSubjectUnits(out string validationError)
+        {
+            validationError = null;
+
+            int credit;
+            if (TryParseOptionalInteger(GetFieldValue(SubjectUnitsFields, "Credit"), out credit) && credit > 0)
+            {
+                return credit;
+            }
+
+            int lecUnits;
+            int labUnits;
+            TryParseOptionalInteger(GetFieldValue(SubjectUnitsFields, "Lec Units"), out lecUnits);
+            TryParseOptionalInteger(GetFieldValue(SubjectUnitsFields, "Lab Units"), out labUnits);
+
+            var total = lecUnits + labUnits;
+            if (total > 0)
+            {
+                return total;
+            }
+
+            validationError = "Enter Credit or Lec Units/Lab Units greater than 0.";
+            return 0;
+        }
+
+        private DataRow FindExistingSubject(string subjectCode)
+        {
+            if (string.IsNullOrWhiteSpace(subjectCode) || _subjectService == null)
+            {
+                return null;
+            }
+
+            var subjects = _subjectService.GetSubjects(subjectCode.Trim());
+            if (subjects == null)
+            {
+                return null;
+            }
+
+            foreach (DataRow row in subjects.Rows)
+            {
+                var rowSubjectCode = Convert.ToString(row["SubjectCode"]);
+                if (string.Equals(rowSubjectCode, subjectCode.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return row;
+                }
+            }
+
+            return null;
+        }
+
+        private void LogSubjectTransaction(string action, int subjectId, Subject subject)
+        {
+            if (_activityLogService == null)
+            {
+                return;
+            }
+
+            _activityLogService.LogTransaction(
+                action,
+                AppConstants.Entities.Subject,
+                subjectId,
+                action + " subject " + subject.SubjectCode + " - " + subject.SubjectName + ".");
+        }
+
+        private static string GetFieldValue(ObservableCollection<FormFieldViewModel> fields, string label)
+        {
+            var field = FindField(fields, label);
+            return field == null ? string.Empty : field.Value;
+        }
+
+        private static void SetFieldValue(ObservableCollection<FormFieldViewModel> fields, string label, string value)
+        {
+            var field = FindField(fields, label);
+            if (field != null)
+            {
+                field.Value = value ?? string.Empty;
+            }
+        }
+
+        private static FormFieldViewModel FindField(ObservableCollection<FormFieldViewModel> fields, string label)
+        {
+            if (fields == null)
+            {
+                return null;
+            }
+
+            foreach (var field in fields)
+            {
+                if (field != null && string.Equals(field.Label, label, StringComparison.OrdinalIgnoreCase))
+                {
+                    return field;
+                }
+            }
+
+            return null;
+        }
+
+        private static void ClearFields(ObservableCollection<FormFieldViewModel> fields)
+        {
+            if (fields == null)
+            {
+                return;
+            }
+
+            foreach (var field in fields)
+            {
+                if (field != null)
+                {
+                    field.Value = string.Empty;
+                }
+            }
+        }
+
+        private static string Clean(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        private static bool TryParseOptionalInteger(string value, out int number)
+        {
+            number = 0;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return true;
+            }
+
+            decimal parsed;
+            if (!decimal.TryParse(value.Trim(), NumberStyles.Number, CultureInfo.CurrentCulture, out parsed) &&
+                !decimal.TryParse(value.Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out parsed))
+            {
+                return false;
+            }
+
+            number = Convert.ToInt32(Math.Round(parsed, MidpointRounding.AwayFromZero));
+            return true;
+        }
+
+        private static int? GetNullableInt(DataRow row, string columnName)
+        {
+            if (row == null ||
+                row.Table == null ||
+                !row.Table.Columns.Contains(columnName) ||
+                row[columnName] == DBNull.Value)
+            {
+                return null;
+            }
+
+            return Convert.ToInt32(row[columnName]);
+        }
+
+        private static bool TryParseOptionalDate(string value, out DateTime? date)
+        {
+            date = null;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return true;
+            }
+
+            DateTime parsed;
+            if (DateTime.TryParse(value.Trim(), CultureInfo.CurrentCulture, DateTimeStyles.None, out parsed) ||
+                DateTime.TryParse(value.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed))
+            {
+                date = parsed.Date;
+                return true;
+            }
+
+            return false;
         }
 
         private static ObservableCollection<FormFieldViewModel> CreateFields(params string[] labels)
